@@ -251,7 +251,7 @@ export function LocationsSheet({
                 if (!v.trim()) setNewAddress(null);
               }}
               onSelect={handleNewSelect}
-              placeholder="e.g. Bethlehem High School"
+              placeholder="e.g. Bethlehem Central High School"
             />
             {newAddress && (
               <p className="text-xs text-slate-500 line-clamp-2">{newAddress}</p>

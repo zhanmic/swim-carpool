@@ -2,7 +2,6 @@
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
 import { getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
-import { formatWeekSummary } from "@/lib/summary";
 import type { AssignmentRole, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
 import { useEffect, useMemo, useState } from "react";
@@ -26,7 +25,6 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   const [activeFamilyId, setActiveFamilyIdState] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
     `/api/teams/${slug}/week?start=${weekStart}`,
@@ -96,14 +94,6 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
     await mutate();
   }
 
-  async function copySummary() {
-    if (!data) return;
-    const text = formatWeekSummary(data.team, data.sessions, data.weekStart);
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   function shiftWeek(delta: number) {
     const d = addDays(parseDateOnly(weekStart), delta * 7);
     setWeekStart(formatDateOnly(getMonday(d)));
@@ -139,14 +129,6 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
             Next ›
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={copySummary}
-          className="touch-target w-full rounded-xl border border-sky-200 bg-sky-50 text-sky-800 font-medium"
-        >
-          {copied ? "Copied!" : "Copy week summary for iMessage"}
-        </button>
 
         <div className="flex flex-col gap-3">
           {data.sessions.map((session: SessionWithAssignments) => (

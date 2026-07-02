@@ -11,7 +11,7 @@ interface DayCardProps {
 function assignmentLabel(session: SessionWithAssignments, role: AssignmentRole): { text: string; open: boolean } {
   const a = session.assignments.find((x) => x.role === role);
   if (a?.family_name) return { text: a.family_name, open: false };
-  return { text: "tap", open: true };
+  return { text: "empty", open: true };
 }
 
 export function DayCard({ session, onOpen }: DayCardProps) {

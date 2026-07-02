@@ -1,5 +1,6 @@
 "use client";
 
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
@@ -7,6 +8,10 @@ export default function SetupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [familiesText, setFamiliesText] = useState("Emily\nEmma\nRia");
+  const [locationName, setLocationName] = useState("");
+  const [locationAddress, setLocationAddress] = useState<string | null>(null);
+  const [startTime, setStartTime] = useState("05:45");
+  const [endTime, setEndTime] = useState("08:15");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,11 +25,24 @@ export default function SetupPage() {
       .map((line) => line.trim())
       .filter(Boolean);
 
+    if (!locationName.trim()) {
+      setError("Practice location is required");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, families }),
+        body: JSON.stringify({
+          name,
+          families,
+          location_name: locationName.trim(),
+          location_address: locationAddress,
+          start_time: startTime,
+          end_time: endTime,
+        }),
       });
 
       const data = await res.json();
@@ -71,11 +89,56 @@ export default function SetupPage() {
             />
           </label>
 
+          <div className="block">
+            <span className="text-sm font-medium text-slate-700">Practice location</span>
+            <p className="mt-0.5 text-xs text-slate-500">Search for your pool or practice site.</p>
+            <div className="mt-1">
+              <LocationAutocomplete
+                value={locationName}
+                onChange={(value) => {
+                  setLocationName(value);
+                  if (!value.trim()) setLocationAddress(null);
+                }}
+                onSelect={(place) => {
+                  setLocationName(place.name);
+                  setLocationAddress(place.address);
+                }}
+                placeholder="e.g. Bethlehem Central High School"
+              />
+            </div>
+            {locationAddress && (
+              <p className="mt-1 text-xs text-slate-500 line-clamp-2">{locationAddress}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Start time</span>
+              <input
+                type="time"
+                required
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">End time</span>
+              <input
+                type="time"
+                required
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
+              />
+            </label>
+          </div>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !locationName.trim()}
             className="touch-target w-full rounded-xl bg-sky-500 text-white font-semibold disabled:opacity-50"
           >
             {loading ? "Creating…" : "Create team & get link"}

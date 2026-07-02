@@ -1,5 +1,4 @@
 import { createTeam, ensureSchema } from "@/lib/db";
-import type { CreateTeamTemplate } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -7,10 +6,13 @@ export async function POST(request: NextRequest) {
     await ensureSchema();
 
     const body = await request.json();
-    const { name, families, templates } = body as {
+    const { name, families, location_name, location_address, start_time, end_time } = body as {
       name?: string;
       families?: string[];
-      templates?: CreateTeamTemplate[];
+      location_name?: string;
+      location_address?: string;
+      start_time?: string;
+      end_time?: string;
     };
 
     if (!name?.trim()) {
@@ -22,7 +24,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "At least one family is required" }, { status: 400 });
     }
 
-    const result = await createTeam(name.trim(), familyNames, templates);
+    if (!location_name?.trim()) {
+      return NextResponse.json({ error: "Practice location is required" }, { status: 400 });
+    }
+
+    if (!start_time?.trim() || !end_time?.trim()) {
+      return NextResponse.json({ error: "Practice start and end times are required" }, { status: 400 });
+    }
+
+    const result = await createTeam(name.trim(), familyNames, {
+      location_name: location_name.trim(),
+      location_address: location_address?.trim() || null,
+      start_time: start_time.trim(),
+      end_time: end_time.trim(),
+    });
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
     console.error(err);

@@ -3,6 +3,7 @@
 import { formatDayLabel, parseDateOnly } from "@/lib/dates";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
 import { useState } from "react";
+import { LocationAutocomplete } from "./LocationAutocomplete";
 
 interface DaySheetProps {
   session: SessionWithAssignments;
@@ -174,7 +175,7 @@ export function DaySheet({
 
           <div className="block">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">Location</span>
+              <span className="text-sm font-medium text-slate-700">Location this day</span>
               <button
                 type="button"
                 onClick={onManageLocations}
@@ -183,6 +184,7 @@ export function DaySheet({
                 Edit locations
               </button>
             </div>
+            <p className="mt-0.5 text-xs text-slate-500">Each day can be different — changes here affect only this day.</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {locations.map((loc) => (
                 <button
@@ -199,9 +201,14 @@ export function DaySheet({
                 </button>
               ))}
             </div>
-            {!locations.some((l) => l.name === locationName) && locationName && (
-              <p className="mt-2 text-xs text-amber-700">Custom: {locationName}</p>
-            )}
+            <div className="mt-2">
+              <LocationAutocomplete
+                value={locationName}
+                onChange={setLocationName}
+                onSelect={(place) => setLocationName(place.name)}
+                placeholder="Search another place for this day"
+              />
+            </div>
           </div>
 
           <label className="block">

@@ -161,7 +161,7 @@ export function LocationsSheet({
 
         <div className="p-4 space-y-4 max-w-lg mx-auto">
           <p className="text-sm text-slate-600">
-            Week of {weekStart} — tap a location to set all days.
+            Save places here. Set all days is a shortcut for the whole week — tap any day on the schedule to set that day only.
           </p>
           <ul className="space-y-3">
             {locations.map((loc) => (
@@ -234,7 +234,7 @@ export function LocationsSheet({
                           : "bg-sky-100 text-sky-800 active:bg-sky-200"
                       } disabled:opacity-50`}
                     >
-                      {appliedId === loc.id ? "Applied to this week" : "Apply to this week"}
+                      {appliedId === loc.id ? "Applied to all days" : "Set all days this week"}
                     </button>
                   </div>
                 )}

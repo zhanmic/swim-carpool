@@ -50,7 +50,15 @@ export interface WeekData {
   team: Team;
   families: Family[];
   sessions: SessionWithAssignments[];
+  locations: SavedLocation[];
   weekStart: string;
+}
+
+export interface SavedLocation {
+  id: string;
+  team_id: string;
+  name: string;
+  sort_order: number;
 }
 
 export interface SessionUpdate {

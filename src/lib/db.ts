@@ -10,6 +10,7 @@ import type {
   SessionUpdate,
   SessionWithAssignments,
   Team,
+  SavedLocation,
   WeekData,
 } from "./types";
 
@@ -59,6 +60,78 @@ export async function getFamilies(teamId: string): Promise<Family[]> {
     ORDER BY name
   `;
   return rows as Family[];
+}
+
+export async function getSavedLocations(teamId: string): Promise<SavedLocation[]> {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, team_id, name, sort_order
+    FROM saved_locations
+    WHERE team_id = ${teamId}
+    ORDER BY sort_order, name
+  `;
+  return rows as SavedLocation[];
+}
+
+export async function ensureSavedLocations(teamId: string): Promise<void> {
+  const sql = getSql();
+  const existing = await sql`
+    SELECT id FROM saved_locations WHERE team_id = ${teamId} LIMIT 1
+  `;
+  if (existing.length > 0) return;
+
+  await sql`
+    INSERT INTO saved_locations (team_id, name, sort_order)
+    VALUES (${teamId}, 'Main Pool', 0)
+    ON CONFLICT (team_id, name) DO NOTHING
+  `;
+
+  const fromTemplates = await sql`
+    SELECT DISTINCT location_name FROM recurring_templates
+    WHERE team_id = ${teamId} AND location_name <> 'Main Pool'
+  `;
+  let order = 1;
+  for (const row of fromTemplates as { location_name: string }[]) {
+    await sql`
+      INSERT INTO saved_locations (team_id, name, sort_order)
+      VALUES (${teamId}, ${row.location_name}, ${order})
+      ON CONFLICT (team_id, name) DO NOTHING
+    `;
+    order++;
+  }
+}
+
+export async function addSavedLocation(teamId: string, name: string): Promise<SavedLocation | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const sql = getSql();
+  const maxOrder = await sql`
+    SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
+    FROM saved_locations WHERE team_id = ${teamId}
+  `;
+  const sortOrder = (maxOrder[0] as { next_order: number }).next_order;
+  const rows = await sql`
+    INSERT INTO saved_locations (team_id, name, sort_order)
+    VALUES (${teamId}, ${trimmed}, ${sortOrder})
+    ON CONFLICT (team_id, name) DO UPDATE SET name = EXCLUDED.name
+    RETURNING id, team_id, name, sort_order
+  `;
+  return (rows[0] as SavedLocation | undefined) ?? null;
+}
+
+export async function deleteSavedLocation(teamId: string, locationId: string): Promise<boolean> {
+  const sql = getSql();
+  const count = await sql`
+    SELECT COUNT(*)::int AS n FROM saved_locations WHERE team_id = ${teamId}
+  `;
+  if ((count[0] as { n: number }).n <= 1) return false;
+
+  const result = await sql`
+    DELETE FROM saved_locations
+    WHERE id = ${locationId} AND team_id = ${teamId}
+    RETURNING id
+  `;
+  return result.length > 0;
 }
 
 type TemplateRow = {
@@ -155,16 +228,18 @@ export async function getWeekData(slug: string, weekStartStr: string): Promise<W
   if (!team) return null;
 
   await ensureWeekSessions(team.id, weekStartStr);
+  await ensureSavedLocations(team.id);
 
   const weekStart = parseDateOnly(weekStartStr);
   const weekEnd = formatDateOnly(getWeekEnd(weekStart));
 
-  const [families, sessions] = await Promise.all([
+  const [families, sessions, locations] = await Promise.all([
     getFamilies(team.id),
     getSessionsWithAssignments(team.id, weekStartStr, weekEnd),
+    getSavedLocations(team.id),
   ]);
 
-  return { team, families, sessions, weekStart: weekStartStr };
+  return { team, families, sessions, locations, weekStart: weekStartStr };
 }
 
 export async function claimAssignment(sessionId: string, familyId: string, role: AssignmentRole): Promise<{ ok: boolean; error?: string }> {
@@ -292,6 +367,12 @@ export async function createTeam(
       `;
     }
   }
+
+  await sql`
+    INSERT INTO saved_locations (team_id, name, sort_order)
+    VALUES (${team.id}, 'Main Pool', 0)
+    ON CONFLICT (team_id, name) DO NOTHING
+  `;
 
   return { team, families };
 }

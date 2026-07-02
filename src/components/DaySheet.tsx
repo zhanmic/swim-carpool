@@ -1,15 +1,17 @@
 "use client";
 
 import { formatDayLabel, parseDateOnly } from "@/lib/dates";
-import type { AssignmentRole, Family, SessionWithAssignments } from "@/lib/types";
+import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
 import { useState } from "react";
 
 interface DaySheetProps {
   session: SessionWithAssignments;
   families: Family[];
+  locations: SavedLocation[];
   activeFamilyId: string | null;
   activeFamilyName: string | null;
   onClose: () => void;
+  onManageLocations: () => void;
   onSaveSchedule: (data: {
     start_time: string;
     end_time: string;
@@ -22,9 +24,11 @@ interface DaySheetProps {
 
 export function DaySheet({
   session,
+  locations,
   activeFamilyId,
   activeFamilyName,
   onClose,
+  onManageLocations,
   onSaveSchedule,
   onClaim,
 }: DaySheetProps) {
@@ -168,15 +172,37 @@ export function DaySheet({
             </div>
           )}
 
-          <label className="block">
-            <span className="text-sm text-slate-600">Location</span>
-            <input
-              type="text"
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
-            />
-          </label>
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Location</span>
+              <button
+                type="button"
+                onClick={onManageLocations}
+                className="text-xs font-medium text-sky-600"
+              >
+                Edit list
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {locations.map((loc) => (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => setLocationName(loc.name)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    locationName === loc.name
+                      ? "bg-sky-500 text-white"
+                      : "bg-slate-100 text-slate-700 active:bg-slate-200"
+                  }`}
+                >
+                  {loc.name}
+                </button>
+              ))}
+            </div>
+            {!locations.some((l) => l.name === locationName) && locationName && (
+              <p className="mt-2 text-xs text-amber-700">Custom: {locationName}</p>
+            )}
+          </div>
 
           <label className="block">
             <span className="text-sm text-slate-600">Notes</span>

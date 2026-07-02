@@ -2,13 +2,14 @@
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
 import { getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
-import type { AssignmentRole, SessionWithAssignments, WeekData } from "@/lib/types";
+import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
 import { useEffect, useMemo, useState } from "react";
 import { DayCard } from "./DayCard";
 import { DaySheet } from "./DaySheet";
 import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
+import { LocationsSheet } from "./LocationsSheet";
 
 const fetcher = (url: string) => fetch(url).then((r) => {
   if (!r.ok) throw new Error("Failed to fetch");
@@ -25,6 +26,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   const [activeFamilyId, setActiveFamilyIdState] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  const [showLocations, setShowLocations] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
     `/api/teams/${slug}/week?start=${weekStart}`,
@@ -94,6 +96,10 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
     await mutate();
   }
 
+  function updateLocations(locations: SavedLocation[]) {
+    void mutate({ ...data!, locations }, { revalidate: false });
+  }
+
   function shiftWeek(delta: number) {
     const d = addDays(parseDateOnly(weekStart), delta * 7);
     setWeekStart(formatDateOnly(getMonday(d)));
@@ -145,11 +151,24 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
         <DaySheet
           session={openSession}
           families={data.families}
+          locations={data.locations}
           activeFamilyId={activeFamilyId}
           activeFamilyName={activeFamily?.name ?? null}
           onClose={() => setOpenSessionId(null)}
+          onManageLocations={() => setShowLocations(true)}
           onSaveSchedule={handleSaveSchedule}
           onClaim={handleClaim}
+        />
+      )}
+
+      {showLocations && (
+        <LocationsSheet
+          locations={data.locations}
+          slug={slug}
+          onClose={() => setShowLocations(false)}
+          onUpdated={(locations) => {
+            updateLocations(locations);
+          }}
         />
       )}
     </div>

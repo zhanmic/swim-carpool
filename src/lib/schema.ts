@@ -52,6 +52,17 @@ CREATE INDEX IF NOT EXISTS idx_families_team ON families(team_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_team_date ON practice_sessions(team_id, session_date);
 CREATE INDEX IF NOT EXISTS idx_templates_team ON recurring_templates(team_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_session ON assignments(session_id);
+
+CREATE TABLE IF NOT EXISTS saved_locations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  sort_order SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (team_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_saved_locations_team ON saved_locations(team_id);
 `;
 
 export function getSchemaStatements(): string[] {

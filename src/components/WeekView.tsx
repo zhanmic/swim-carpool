@@ -129,7 +129,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
         onSwitchFamily={() => setShowPicker(true)}
       />
 
-      <div className="mx-auto w-full max-w-lg flex-1 px-4 py-4 space-y-4">
+      <div className="mx-auto w-full max-w-lg flex-1 px-4 py-3 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <button type="button" onClick={() => shiftWeek(-1)} className="touch-target-sm rounded-lg border border-slate-200 bg-white px-3 font-medium">
             ‹ Prev

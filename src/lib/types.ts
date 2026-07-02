@@ -58,7 +58,13 @@ export interface SavedLocation {
   id: string;
   team_id: string;
   name: string;
+  address: string | null;
   sort_order: number;
+}
+
+export interface PlaceSuggestion {
+  name: string;
+  address: string;
 }
 
 export interface SessionUpdate {

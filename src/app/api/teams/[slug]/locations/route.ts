@@ -4,6 +4,7 @@ import {
   ensureSchema,
   getSavedLocations,
   getTeamBySlug,
+  updateSavedLocation,
 } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -38,7 +39,12 @@ export async function POST(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    const body = (await request.json()) as { name?: string; action?: string; id?: string };
+    const body = (await request.json()) as {
+      name?: string;
+      address?: string | null;
+      action?: string;
+      id?: string;
+    };
 
     if (body.action === "delete" && body.id) {
       const ok = await deleteSavedLocation(team.id, body.id);
@@ -49,11 +55,23 @@ export async function POST(
       return NextResponse.json({ locations });
     }
 
+    if (body.action === "update" && body.id) {
+      if (!body.name?.trim()) {
+        return NextResponse.json({ error: "Location name is required" }, { status: 400 });
+      }
+      const location = await updateSavedLocation(team.id, body.id, body.name, body.address ?? null);
+      if (!location) {
+        return NextResponse.json({ error: "Location not found" }, { status: 404 });
+      }
+      const locations = await getSavedLocations(team.id);
+      return NextResponse.json({ location, locations });
+    }
+
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Location name is required" }, { status: 400 });
     }
 
-    const location = await addSavedLocation(team.id, body.name);
+    const location = await addSavedLocation(team.id, body.name, body.address ?? null);
     const locations = await getSavedLocations(team.id);
     return NextResponse.json({ location, locations }, { status: 201 });
   } catch (err) {

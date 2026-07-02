@@ -180,7 +180,7 @@ export function DaySheet({
                 onClick={onManageLocations}
                 className="text-xs font-medium text-sky-600"
               >
-                Edit list
+                Edit locations
               </button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">

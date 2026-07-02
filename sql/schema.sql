@@ -64,3 +64,5 @@ CREATE TABLE IF NOT EXISTS saved_locations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_saved_locations_team ON saved_locations(team_id);
+
+ALTER TABLE saved_locations ADD COLUMN IF NOT EXISTS address TEXT;

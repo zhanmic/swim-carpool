@@ -81,7 +81,7 @@ export async function getFamilies(teamId: string): Promise<Family[]> {
 export async function getSavedLocations(teamId: string): Promise<SavedLocation[]> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, team_id, name, sort_order
+    SELECT id, team_id, name, address, sort_order
     FROM saved_locations
     WHERE team_id = ${teamId}
     ORDER BY sort_order, name
@@ -117,7 +117,11 @@ export async function ensureSavedLocations(teamId: string): Promise<void> {
   }
 }
 
-export async function addSavedLocation(teamId: string, name: string): Promise<SavedLocation | null> {
+export async function addSavedLocation(
+  teamId: string,
+  name: string,
+  address?: string | null
+): Promise<SavedLocation | null> {
   const trimmed = name.trim();
   if (!trimmed) return null;
   const sql = getSql();
@@ -127,10 +131,29 @@ export async function addSavedLocation(teamId: string, name: string): Promise<Sa
   `;
   const sortOrder = (maxOrder[0] as { next_order: number }).next_order;
   const rows = await sql`
-    INSERT INTO saved_locations (team_id, name, sort_order)
-    VALUES (${teamId}, ${trimmed}, ${sortOrder})
-    ON CONFLICT (team_id, name) DO UPDATE SET name = EXCLUDED.name
-    RETURNING id, team_id, name, sort_order
+    INSERT INTO saved_locations (team_id, name, address, sort_order)
+    VALUES (${teamId}, ${trimmed}, ${address ?? null}, ${sortOrder})
+    ON CONFLICT (team_id, name) DO UPDATE SET
+      address = COALESCE(EXCLUDED.address, saved_locations.address)
+    RETURNING id, team_id, name, address, sort_order
+  `;
+  return (rows[0] as SavedLocation | undefined) ?? null;
+}
+
+export async function updateSavedLocation(
+  teamId: string,
+  locationId: string,
+  name: string,
+  address?: string | null
+): Promise<SavedLocation | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const sql = getSql();
+  const rows = await sql`
+    UPDATE saved_locations
+    SET name = ${trimmed}, address = ${address ?? null}
+    WHERE id = ${locationId} AND team_id = ${teamId}
+    RETURNING id, team_id, name, address, sort_order
   `;
   return (rows[0] as SavedLocation | undefined) ?? null;
 }

@@ -136,6 +136,16 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
           </button>
         </div>
 
+        <div className="mb-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowLocations(true)}
+            className="w-full rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50"
+          >
+            Edit locations
+          </button>
+        </div>
+
         <div className="flex min-h-0 flex-1 flex-col gap-2.5">
           {data.sessions.map((session: SessionWithAssignments) => (
             <DayCard key={session.id} session={session} onOpen={() => setOpenSessionId(session.id)} />

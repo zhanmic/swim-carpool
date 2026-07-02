@@ -208,8 +208,8 @@ export async function ensureWeekSessions(teamId: string, weekStartDate: string):
     if (existing.length > 0) continue;
 
     const tmpl = templateByDay.get(dayOfWeek);
-    const startTime = normalizeTime(tmpl?.start_time?.slice(0, 5) ?? "16:00");
-    const endTime = normalizeTime(tmpl?.end_time?.slice(0, 5) ?? "18:00");
+    const startTime = normalizeTime(tmpl?.start_time?.slice(0, 5) ?? "05:45");
+    const endTime = normalizeTime(tmpl?.end_time?.slice(0, 5) ?? "08:15");
     const locationName = tmpl?.location_name ?? "Main Pool";
     const cancelled = tmpl?.cancelled ?? false;
 
@@ -493,8 +493,8 @@ export async function createTeam(
         VALUES (
           ${team.id},
           ${t.day_of_week},
-          ${normalizeTime(t.start_time ?? "16:00")},
-          ${normalizeTime(t.end_time ?? "18:00")},
+          ${normalizeTime(t.start_time ?? "05:45")},
+          ${normalizeTime(t.end_time ?? "08:15")},
           ${t.location_name ?? "Main Pool"},
           ${t.cancelled ?? false}
         )
@@ -509,7 +509,7 @@ export async function createTeam(
     for (let day = 0; day < 6; day++) {
       await sql`
         INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name)
-        VALUES (${team.id}, ${day}, '16:00', '18:00', 'Main Pool')
+        VALUES (${team.id}, ${day}, '05:45', '08:15', 'Main Pool')
         ON CONFLICT (team_id, day_of_week) DO NOTHING
       `;
     }

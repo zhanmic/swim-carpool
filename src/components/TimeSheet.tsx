@@ -15,8 +15,8 @@ interface TimeSheetProps {
 function defaultTimes(sessions: SessionWithAssignments[]): { start: string; end: string } {
   const active = sessions.find((s) => !s.cancelled) ?? sessions[0];
   return {
-    start: active?.start_time ?? "16:00",
-    end: active?.end_time ?? "18:00",
+    start: active?.start_time ?? "05:45",
+    end: active?.end_time ?? "08:15",
   };
 }
 

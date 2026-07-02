@@ -17,7 +17,7 @@ export function Header({ teamName, familyName, onSwitchFamily, onManageTeam }: H
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
             href="/"
-            className="min-w-0 truncate text-sm font-semibold text-slate-900 active:text-sky-700 dark:text-slate-100 dark:active:text-sky-400"
+            className="min-w-0 truncate text-base font-semibold text-slate-900 active:text-sky-700 dark:text-slate-100 dark:active:text-sky-400"
           >
             {teamName}
           </Link>
@@ -25,7 +25,7 @@ export function Header({ teamName, familyName, onSwitchFamily, onManageTeam }: H
             <button
               type="button"
               onClick={onManageTeam}
-              className="w-fit text-xs font-medium text-sky-600 dark:text-sky-400"
+              className="w-fit text-[11px] font-normal text-slate-500 active:text-sky-600 dark:text-slate-400 dark:active:text-sky-400"
             >
               Rename/remove
             </button>

@@ -42,6 +42,19 @@ export function formatDayLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
+export const TIME_STEP_MINUTES = 5;
+export const TIME_STEP_SECONDS = TIME_STEP_MINUTES * 60;
+
+/** Snap HH:MM to the nearest increment (default 5 minutes). */
+export function snapTimeToStep(time: string, stepMinutes = TIME_STEP_MINUTES): string {
+  const [hStr, mStr] = time.split(":");
+  const totalMinutes = Number(hStr) * 60 + Number(mStr?.slice(0, 2) ?? 0);
+  const snapped = Math.round(totalMinutes / stepMinutes) * stepMinutes;
+  const hours = Math.floor(snapped / 60) % 24;
+  const minutes = snapped % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 export function formatTime12(time: string): string {
   const [hStr, mStr] = time.split(":");
   let h = Number(hStr);

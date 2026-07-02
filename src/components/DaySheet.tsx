@@ -1,9 +1,10 @@
 "use client";
 
-import { formatDayLabel, parseDateOnly } from "@/lib/dates";
+import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
 import { useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
+import { TimeInput } from "./TimeInput";
 
 interface DaySheetProps {
   session: SessionWithAssignments;
@@ -32,8 +33,8 @@ export function DaySheet({
   onSaveSchedule,
   onClaim,
 }: DaySheetProps) {
-  const [startTime, setStartTime] = useState(session.start_time);
-  const [endTime, setEndTime] = useState(session.end_time);
+  const [startTime, setStartTime] = useState(() => snapTimeToStep(session.start_time));
+  const [endTime, setEndTime] = useState(() => snapTimeToStep(session.end_time));
   const [locationName, setLocationName] = useState(session.location_name);
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
@@ -153,19 +154,17 @@ export function DaySheet({
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Start</span>
-                <input
-                  type="time"
+                <TimeInput
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  onChange={setStartTime}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
                 />
               </label>
               <label className="block">
                 <span className="text-sm text-slate-600 dark:text-slate-400">End</span>
-                <input
-                  type="time"
+                <TimeInput
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={setEndTime}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
                 />
               </label>

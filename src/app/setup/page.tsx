@@ -1,6 +1,7 @@
 "use client";
 
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
+import { TimeInput } from "@/components/TimeInput";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -118,21 +119,19 @@ export default function SetupPage() {
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Start time</span>
-              <input
-                type="time"
+              <TimeInput
                 required
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={setStartTime}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
               />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-slate-700">End time</span>
-              <input
-                type="time"
+              <TimeInput
                 required
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={setEndTime}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
               />
             </label>

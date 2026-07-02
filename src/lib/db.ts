@@ -51,6 +51,22 @@ export async function getTeamBySlug(slug: string): Promise<Team | null> {
   return (rows[0] as Team | undefined) ?? null;
 }
 
+export async function listTeams(): Promise<Team[]> {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, name, secret_slug
+    FROM teams
+    ORDER BY name
+  `;
+  return rows as Team[];
+}
+
+export async function deleteAllTeams(): Promise<number> {
+  const sql = getSql();
+  const rows = await sql`DELETE FROM teams RETURNING id`;
+  return rows.length;
+}
+
 export async function getFamilies(teamId: string): Promise<Family[]> {
   const sql = getSql();
   const rows = await sql`

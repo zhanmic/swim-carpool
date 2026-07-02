@@ -51,6 +51,25 @@ export function formatTime12(time: string): string {
   return `${h}:${m} ${ampm}`;
 }
 
+function formatTimeCompact(time: string): { label: string; period: "AM" | "PM" } {
+  const [hStr, mStr] = time.split(":");
+  let h = Number(hStr);
+  const m = Number(mStr?.slice(0, 2) ?? "0");
+  const period = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  const label = m === 0 ? `${h}` : `${h}:${String(m).padStart(2, "0")}`;
+  return { label, period };
+}
+
+export function formatTimeRangeCompact(start: string, end: string): string {
+  const s = formatTimeCompact(start);
+  const e = formatTimeCompact(end);
+  if (s.period === e.period) {
+    return `${s.label}–${e.label} ${s.period}`;
+  }
+  return `${s.label} ${s.period}–${e.label} ${e.period}`;
+}
+
 export function isToday(dateStr: string): boolean {
   return formatDateOnly(new Date()) === dateStr;
 }

@@ -175,9 +175,13 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
         <LocationsSheet
           locations={data.locations}
           slug={slug}
+          weekStart={weekStart}
           onClose={() => setShowLocations(false)}
           onUpdated={(locations) => {
             updateLocations(locations);
+          }}
+          onWeekApplied={() => {
+            void mutate();
           }}
         />
       )}

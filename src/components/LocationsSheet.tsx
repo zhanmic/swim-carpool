@@ -7,11 +7,20 @@ import { FormEvent, useState } from "react";
 interface LocationsSheetProps {
   locations: SavedLocation[];
   slug: string;
+  weekStart: string;
   onClose: () => void;
   onUpdated: (locations: SavedLocation[]) => void;
+  onWeekApplied: () => void;
 }
 
-export function LocationsSheet({ locations, slug, onClose, onUpdated }: LocationsSheetProps) {
+export function LocationsSheet({
+  locations,
+  slug,
+  weekStart,
+  onClose,
+  onUpdated,
+  onWeekApplied,
+}: LocationsSheetProps) {
   const [newName, setNewName] = useState("");
   const [newAddress, setNewAddress] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -19,6 +28,7 @@ export function LocationsSheet({ locations, slug, onClose, onUpdated }: Location
   const [editAddress, setEditAddress] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appliedId, setAppliedId] = useState<string | null>(null);
 
   function startEdit(loc: SavedLocation) {
     setEditingId(loc.id);
@@ -94,6 +104,29 @@ export function LocationsSheet({ locations, slug, onClose, onUpdated }: Location
     }
   }
 
+  async function handleApplyWeek(loc: SavedLocation) {
+    setBusy(true);
+    setError(null);
+    setAppliedId(null);
+    try {
+      const res = await fetch(`/api/teams/${slug}/week/location`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStart, locationName: loc.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Could not apply location to week");
+        return;
+      }
+      setAppliedId(loc.id);
+      onWeekApplied();
+      setTimeout(() => setAppliedId(null), 2000);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleDelete(id: string) {
     setBusy(true);
     setError(null);
@@ -127,6 +160,9 @@ export function LocationsSheet({ locations, slug, onClose, onUpdated }: Location
         </div>
 
         <div className="p-4 space-y-4 max-w-lg mx-auto">
+          <p className="text-sm text-slate-600">
+            Week of {weekStart} — tap a location to set all days.
+          </p>
           <ul className="space-y-3">
             {locations.map((loc) => (
               <li key={loc.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -161,31 +197,45 @@ export function LocationsSheet({ locations, slug, onClose, onUpdated }: Location
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-800">{loc.name}</p>
-                      {loc.address && (
-                        <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{loc.address}</p>
-                      )}
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800">{loc.name}</p>
+                        {loc.address && (
+                          <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{loc.address}</p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => startEdit(loc)}
+                          className="text-sm font-medium text-sky-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || locations.length <= 1}
+                          onClick={() => handleDelete(loc.id)}
+                          className="text-sm text-red-600 disabled:opacity-30"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => startEdit(loc)}
-                        className="text-sm font-medium text-sky-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || locations.length <= 1}
-                        onClick={() => handleDelete(loc.id)}
-                        className="text-sm text-red-600 disabled:opacity-30"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => handleApplyWeek(loc)}
+                      className={`w-full rounded-lg py-2 text-sm font-medium ${
+                        appliedId === loc.id
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-sky-100 text-sky-800 active:bg-sky-200"
+                      } disabled:opacity-50`}
+                    >
+                      {appliedId === loc.id ? "Applied to this week" : "Apply to this week"}
+                    </button>
                   </div>
                 )}
               </li>

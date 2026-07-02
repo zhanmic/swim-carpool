@@ -351,6 +351,27 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
   };
 }
 
+export async function applyLocationToWeek(
+  teamId: string,
+  weekStartStr: string,
+  locationName: string
+): Promise<number> {
+  const trimmed = locationName.trim();
+  if (!trimmed) return 0;
+
+  const sql = getSql();
+  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
+  const rows = await sql`
+    UPDATE practice_sessions
+    SET location_name = ${trimmed}
+    WHERE team_id = ${teamId}
+      AND session_date >= ${weekStartStr}
+      AND session_date <= ${weekEnd}
+    RETURNING id
+  `;
+  return rows.length;
+}
+
 export async function createTeam(
   name: string,
   familyNames: string[],

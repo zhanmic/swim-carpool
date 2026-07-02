@@ -17,9 +17,13 @@ export function Header({ teamName, familyName, onSwitchFamily, onManageTeam }: H
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <Link
             href="/"
-            className="min-w-0 truncate text-base font-semibold text-slate-900 active:text-sky-700 dark:text-slate-100 dark:active:text-sky-400"
+            aria-label={`${teamName}, back to all teams`}
+            className="group flex min-w-0 items-center gap-1 truncate text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
           >
-            {teamName}
+            <span aria-hidden className="shrink-0 text-sm font-medium">
+              ‹
+            </span>
+            <span className="truncate">{teamName}</span>
           </Link>
           {onManageTeam && (
             <button

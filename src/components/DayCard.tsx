@@ -59,13 +59,13 @@ export function DayCard({ session, onOpen }: DayCardProps) {
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm">
             <span>
-              <span className="text-slate-500">Drop </span>
+              <span className="text-slate-500">Drop Off </span>
               <span className={drop.open ? "font-medium text-amber-700" : "font-medium text-emerald-700"}>
                 {drop.text}
               </span>
             </span>
             <span>
-              <span className="text-slate-500">Pick </span>
+              <span className="text-slate-500">Pick Up </span>
               <span className={pick.open ? "font-medium text-amber-700" : "font-medium text-emerald-700"}>
                 {pick.text}
               </span>

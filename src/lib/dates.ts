@@ -27,8 +27,15 @@ export function addDays(date: Date, days: number): Date {
   return d;
 }
 
+/** Practice runs Monday–Saturday (no Sunday). */
+export const PRACTICE_DAYS_PER_WEEK = 6;
+
 export function getWeekDates(weekStart: Date): Date[] {
-  return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  return Array.from({ length: PRACTICE_DAYS_PER_WEEK }, (_, i) => addDays(weekStart, i));
+}
+
+export function getWeekEnd(weekStart: Date): Date {
+  return addDays(weekStart, PRACTICE_DAYS_PER_WEEK - 1);
 }
 
 export function formatDayLabel(date: Date): string {

@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { addDays, formatDateOnly, getWeekDates, parseDateOnly } from "./dates";
+import { addDays, formatDateOnly, getWeekDates, getWeekEnd, parseDateOnly } from "./dates";
 import { getSchemaStatements } from "./schema";
 import type {
   Assignment,
@@ -82,7 +82,7 @@ export async function ensureWeekSessions(teamId: string, weekStartDate: string):
 
   const templateByDay = new Map(templates.map((t) => [t.day_of_week, t]));
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < dates.length; i++) {
     const date = dates[i];
     const dateStr = formatDateOnly(date);
     const jsDay = date.getDay();
@@ -157,7 +157,7 @@ export async function getWeekData(slug: string, weekStartStr: string): Promise<W
   await ensureWeekSessions(team.id, weekStartStr);
 
   const weekStart = parseDateOnly(weekStartStr);
-  const weekEnd = formatDateOnly(addDays(weekStart, 6));
+  const weekEnd = formatDateOnly(getWeekEnd(weekStart));
 
   const [families, sessions] = await Promise.all([
     getFamilies(team.id),
@@ -284,7 +284,7 @@ export async function createTeam(
       `;
     }
   } else {
-    for (let day = 0; day < 7; day++) {
+    for (let day = 0; day < 6; day++) {
       await sql`
         INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name)
         VALUES (${team.id}, ${day}, '16:00', '18:00', 'Main Pool')

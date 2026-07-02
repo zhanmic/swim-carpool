@@ -4,7 +4,6 @@ import { getSchemaStatements } from "./schema";
 import type {
   Assignment,
   AssignmentRole,
-  CreateTeamTemplate,
   Family,
   PracticeSession,
   SessionUpdate,
@@ -503,10 +502,18 @@ export async function copyScheduleFromPreviousWeek(
 export async function createTeam(
   name: string,
   familyNames: string[],
-  templates?: CreateTeamTemplate[]
+  schedule: {
+    location_name: string;
+    location_address?: string | null;
+    start_time: string;
+    end_time: string;
+  }
 ): Promise<{ team: Team; families: Family[] }> {
   const sql = getSql();
   const slug = slugify(name);
+  const locationName = schedule.location_name.trim();
+  const startTime = normalizeTime(schedule.start_time);
+  const endTime = normalizeTime(schedule.end_time);
 
   const teamRows = await sql`
     INSERT INTO teams (name, secret_slug)
@@ -527,39 +534,22 @@ export async function createTeam(
     families.push(rows[0] as Family);
   }
 
-  if (templates && templates.length > 0) {
-    for (const t of templates) {
-      await sql`
-        INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled)
-        VALUES (
-          ${team.id},
-          ${t.day_of_week},
-          ${normalizeTime(t.start_time ?? "05:45")},
-          ${normalizeTime(t.end_time ?? "08:15")},
-          ${t.location_name ?? "Main Pool"},
-          ${t.cancelled ?? false}
-        )
-        ON CONFLICT (team_id, day_of_week) DO UPDATE SET
-          start_time = EXCLUDED.start_time,
-          end_time = EXCLUDED.end_time,
-          location_name = EXCLUDED.location_name,
-          cancelled = EXCLUDED.cancelled
-      `;
-    }
-  } else {
-    for (let day = 0; day < 6; day++) {
-      await sql`
-        INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name)
-        VALUES (${team.id}, ${day}, '05:45', '08:15', 'Main Pool')
-        ON CONFLICT (team_id, day_of_week) DO NOTHING
-      `;
-    }
+  for (let day = 0; day < 6; day++) {
+    await sql`
+      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name)
+      VALUES (${team.id}, ${day}, ${startTime}, ${endTime}, ${locationName})
+      ON CONFLICT (team_id, day_of_week) DO UPDATE SET
+        start_time = EXCLUDED.start_time,
+        end_time = EXCLUDED.end_time,
+        location_name = EXCLUDED.location_name
+    `;
   }
 
   await sql`
-    INSERT INTO saved_locations (team_id, name, sort_order)
-    VALUES (${team.id}, 'Main Pool', 0)
-    ON CONFLICT (team_id, name) DO NOTHING
+    INSERT INTO saved_locations (team_id, name, address, sort_order)
+    VALUES (${team.id}, ${locationName}, ${schedule.location_address ?? null}, 0)
+    ON CONFLICT (team_id, name) DO UPDATE SET
+      address = COALESCE(EXCLUDED.address, saved_locations.address)
   `;
 
   return { team, families };

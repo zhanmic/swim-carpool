@@ -22,10 +22,11 @@ export function LocationAutocomplete({
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (value.trim().length < 2) {
+    if (!focused || value.trim().length < 2) {
       setSuggestions([]);
       setOpen(false);
       return;
@@ -46,7 +47,7 @@ export function LocationAutocomplete({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [value]);
+  }, [value, focused]);
 
   function pick(place: PlaceSuggestion) {
     onSelect(place);
@@ -62,8 +63,12 @@ export function LocationAutocomplete({
         value={value}
         autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        onFocus={() => {
+          setFocused(true);
+          if (suggestions.length > 0) setOpen(true);
+        }}
         onBlur={() => {
+          setFocused(false);
           blurTimer.current = setTimeout(() => setOpen(false), 150);
         }}
         placeholder={placeholder}

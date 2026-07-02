@@ -41,6 +41,8 @@ export function DaySheet({
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showLocationSearch, setShowLocationSearch] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
 
   const date = parseDateOnly(session.session_date);
   const drop = session.assignments.find((a) => a.role === "dropoff");
@@ -190,7 +192,11 @@ export function DaySheet({
                 <button
                   key={loc.id}
                   type="button"
-                  onClick={() => setLocationName(loc.name)}
+                  onClick={() => {
+                    setLocationName(loc.name);
+                    setLocationSearchQuery("");
+                    setShowLocationSearch(false);
+                  }}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     locationName === loc.name
                       ? "bg-sky-500 text-white"
@@ -202,12 +208,30 @@ export function DaySheet({
               ))}
             </div>
             <div className="mt-2">
-              <LocationAutocomplete
-                value={locationName}
-                onChange={setLocationName}
-                onSelect={(place) => setLocationName(place.name)}
-                placeholder="Search another place for this day"
-              />
+              {showLocationSearch ? (
+                <LocationAutocomplete
+                  value={locationSearchQuery}
+                  onChange={setLocationSearchQuery}
+                  onSelect={(place) => {
+                    setLocationName(place.name);
+                    setLocationSearchQuery("");
+                    setShowLocationSearch(false);
+                  }}
+                  placeholder="Search another place for this day"
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocationSearchQuery("");
+                    setShowLocationSearch(true);
+                  }}
+                  className="text-sm font-medium text-sky-600"
+                >
+                  Search another place
+                </button>
+              )}
             </div>
           </div>
 

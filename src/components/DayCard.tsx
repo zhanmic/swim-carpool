@@ -24,7 +24,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
     <button
       type="button"
       onClick={onOpen}
-      className={`touch-target w-full rounded-2xl border p-4 text-left transition-colors active:scale-[0.99] ${
+      className={`block w-full rounded-2xl border p-4 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70"
           : today

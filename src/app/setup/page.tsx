@@ -6,7 +6,7 @@ import { FormEvent, useState } from "react";
 export default function SetupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [familiesText, setFamiliesText] = useState("Smith\nChen\nPatel\nLee");
+  const [familiesText, setFamiliesText] = useState("Emily\nEmma\nRia");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -372,6 +372,37 @@ export async function applyLocationToWeek(
   return rows.length;
 }
 
+export async function applyTimeToWeek(
+  teamId: string,
+  weekStartStr: string,
+  startTime: string,
+  endTime: string
+): Promise<number> {
+  const sql = getSql();
+  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
+  const start = normalizeTime(startTime);
+  const end = normalizeTime(endTime);
+
+  const rows = await sql`
+    UPDATE practice_sessions
+    SET start_time = ${start}, end_time = ${end}
+    WHERE team_id = ${teamId}
+      AND session_date >= ${weekStartStr}
+      AND session_date <= ${weekEnd}
+    RETURNING id
+  `;
+
+  for (let day = 0; day < 6; day++) {
+    await sql`
+      UPDATE recurring_templates
+      SET start_time = ${start}, end_time = ${end}
+      WHERE team_id = ${teamId} AND day_of_week = ${day}
+    `;
+  }
+
+  return rows.length;
+}
+
 export async function createTeam(
   name: string,
   familyNames: string[],

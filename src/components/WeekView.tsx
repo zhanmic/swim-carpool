@@ -10,6 +10,7 @@ import { DaySheet } from "./DaySheet";
 import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
 import { LocationsSheet } from "./LocationsSheet";
+import { TimeSheet } from "./TimeSheet";
 
 const fetcher = (url: string) => fetch(url).then((r) => {
   if (!r.ok) throw new Error("Failed to fetch");
@@ -27,6 +28,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   const [showLocations, setShowLocations] = useState(false);
+  const [showTime, setShowTime] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
     `/api/teams/${slug}/week?start=${weekStart}`,
@@ -136,13 +138,20 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
           </button>
         </div>
 
-        <div className="mb-2 shrink-0">
+        <div className="mb-2 flex shrink-0 gap-2">
           <button
             type="button"
             onClick={() => setShowLocations(true)}
-            className="w-full rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50"
+            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50"
           >
             Edit locations
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTime(true)}
+            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50"
+          >
+            Edit time
           </button>
         </div>
 
@@ -180,6 +189,18 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
           onUpdated={(locations) => {
             updateLocations(locations);
           }}
+          onWeekApplied={() => {
+            void mutate();
+          }}
+        />
+      )}
+
+      {showTime && (
+        <TimeSheet
+          slug={slug}
+          weekStart={weekStart}
+          sessions={data.sessions}
+          onClose={() => setShowTime(false)}
           onWeekApplied={() => {
             void mutate();
           }}

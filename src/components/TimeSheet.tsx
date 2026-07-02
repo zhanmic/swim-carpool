@@ -1,0 +1,113 @@
+"use client";
+
+import { formatTimeRangeCompact } from "@/lib/dates";
+import type { SessionWithAssignments } from "@/lib/types";
+import { FormEvent, useState } from "react";
+
+interface TimeSheetProps {
+  slug: string;
+  weekStart: string;
+  sessions: SessionWithAssignments[];
+  onClose: () => void;
+  onWeekApplied: () => void;
+}
+
+function defaultTimes(sessions: SessionWithAssignments[]): { start: string; end: string } {
+  const active = sessions.find((s) => !s.cancelled) ?? sessions[0];
+  return {
+    start: active?.start_time ?? "16:00",
+    end: active?.end_time ?? "18:00",
+  };
+}
+
+export function TimeSheet({ slug, weekStart, sessions, onClose, onWeekApplied }: TimeSheetProps) {
+  const initial = defaultTimes(sessions);
+  const [startTime, setStartTime] = useState(initial.start);
+  const [endTime, setEndTime] = useState(initial.end);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    setApplied(false);
+    try {
+      const res = await fetch(`/api/teams/${slug}/week/time`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStart, start_time: startTime, end_time: endTime }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Could not update times");
+        return;
+      }
+      setApplied(true);
+      onWeekApplied();
+      setTimeout(() => setApplied(false), 2000);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/40">
+      <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
+      <div className="rounded-t-2xl bg-white safe-bottom">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h2 className="text-lg font-semibold">Edit time</h2>
+          <button type="button" onClick={onClose} className="text-sky-600 font-medium">
+            Done
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-4 space-y-4">
+          <p className="text-sm text-slate-600">
+            Set practice time for all days this week. Tap a single day on the schedule to change that day only.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">Start</span>
+              <input
+                type="time"
+                required
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700">End</span>
+              <input
+                type="time"
+                required
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
+              />
+            </label>
+          </div>
+
+          <p className="text-sm text-slate-500">
+            Preview: {formatTimeRangeCompact(startTime, endTime)}
+          </p>
+
+          <button
+            type="submit"
+            disabled={busy}
+            className={`w-full rounded-lg py-2.5 font-medium text-white disabled:opacity-50 ${
+              applied ? "bg-emerald-500" : "bg-sky-500"
+            }`}
+          >
+            {applied ? "Applied to all days" : "Set all days this week"}
+          </button>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </form>
+      </div>
+    </div>
+  );
+}

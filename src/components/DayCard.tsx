@@ -27,7 +27,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
     <button
       type="button"
       onClick={onOpen}
-      className={`block w-full rounded-2xl border px-3.5 py-3 text-left transition-colors active:scale-[0.99] ${
+      className={`flex min-h-0 flex-1 flex-col justify-center rounded-2xl border px-4 py-4 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70"
           : today
@@ -36,7 +36,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
       }`}
     >
       {session.cancelled ? (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-base">
           <span className={`font-semibold ${today ? "text-sky-800" : "text-slate-900"}`}>
             {weekday} {dateLabel}
           </span>
@@ -44,7 +44,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
         </div>
       ) : (
         <>
-          <div className="flex min-w-0 items-center gap-1.5 text-sm leading-snug">
+          <div className="flex min-w-0 items-center gap-2 text-base leading-snug">
             <span className={`shrink-0 font-semibold ${today ? "text-sky-800" : "text-slate-900"}`}>
               {weekday}
             </span>
@@ -52,12 +52,12 @@ export function DayCard({ session, onOpen }: DayCardProps) {
             <span className="shrink-0 text-slate-300">·</span>
             <span className="min-w-0 truncate font-medium text-slate-800">{session.location_name}</span>
             <span className="shrink-0 text-slate-300">·</span>
-            <span className="shrink-0 text-xs text-slate-600">
+            <span className="shrink-0 text-sm text-slate-600">
               {formatTimeRangeCompact(session.start_time, session.end_time)}
             </span>
           </div>
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm">
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
             <span>
               <span className="text-slate-500">Drop Off </span>
               <span className={drop.open ? "font-medium text-amber-700" : "font-medium text-emerald-700"}>

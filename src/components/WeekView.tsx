@@ -29,6 +29,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   const [showLocations, setShowLocations] = useState(false);
   const [showTime, setShowTime] = useState(false);
+  const [slotsBusy, setSlotsBusy] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
     `/api/teams/${slug}/week?start=${weekStart}`,
@@ -107,6 +108,52 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
     setWeekStart(formatDateOnly(getMonday(d)));
   }
 
+  async function handleClearSlots() {
+    if (!confirm("Clear all drop-off and pick-up slots for this week?")) return;
+    setSlotsBusy(true);
+    try {
+      const res = await fetch(`/api/teams/${slug}/week/assignments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clear", weekStart }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Could not clear slots");
+        return;
+      }
+      await mutate();
+    } finally {
+      setSlotsBusy(false);
+    }
+  }
+
+  async function handleCopyFromLastWeek() {
+    if (
+      !confirm(
+        "Copy driver slots from last week? This clears this week's slots first, then copies Mon–Sat from the previous week."
+      )
+    ) {
+      return;
+    }
+    setSlotsBusy(true);
+    try {
+      const res = await fetch(`/api/teams/${slug}/week/assignments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "copy_previous", weekStart }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Could not copy slots");
+        return;
+      }
+      await mutate();
+    } finally {
+      setSlotsBusy(false);
+    }
+  }
+
   if (error) {
     return (
       <div className="p-6 text-center text-red-600">
@@ -152,6 +199,25 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
             className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50"
           >
             Edit time
+          </button>
+        </div>
+
+        <div className="mb-2 flex shrink-0 gap-2">
+          <button
+            type="button"
+            disabled={slotsBusy}
+            onClick={handleCopyFromLastWeek}
+            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50"
+          >
+            Copy last week
+          </button>
+          <button
+            type="button"
+            disabled={slotsBusy}
+            onClick={handleClearSlots}
+            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-red-600 active:bg-slate-50 disabled:opacity-50"
+          >
+            Clear slots
           </button>
         </div>
 

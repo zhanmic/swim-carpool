@@ -403,6 +403,62 @@ export async function applyTimeToWeek(
   return rows.length;
 }
 
+export async function clearWeekAssignments(teamId: string, weekStartStr: string): Promise<number> {
+  const sql = getSql();
+  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
+  const rows = await sql`
+    DELETE FROM assignments a
+    USING practice_sessions ps
+    WHERE a.session_id = ps.id
+      AND ps.team_id = ${teamId}
+      AND ps.session_date >= ${weekStartStr}
+      AND ps.session_date <= ${weekEnd}
+    RETURNING a.id
+  `;
+  return rows.length;
+}
+
+export async function copyAssignmentsFromPreviousWeek(
+  teamId: string,
+  weekStartStr: string
+): Promise<{ copied: number; cleared: number }> {
+  const prevStart = formatDateOnly(addDays(parseDateOnly(weekStartStr), -7));
+
+  await ensureWeekSessions(teamId, weekStartStr);
+  await ensureWeekSessions(teamId, prevStart);
+
+  const cleared = await clearWeekAssignments(teamId, weekStartStr);
+
+  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
+  const prevEnd = formatDateOnly(getWeekEnd(parseDateOnly(prevStart)));
+
+  const [prevSessions, currSessions] = await Promise.all([
+    getSessionsWithAssignments(teamId, prevStart, prevEnd),
+    getSessionsWithAssignments(teamId, weekStartStr, weekEnd),
+  ]);
+
+  const sql = getSql();
+  let copied = 0;
+
+  for (let i = 0; i < currSessions.length && i < prevSessions.length; i++) {
+    const curr = currSessions[i];
+    const prev = prevSessions[i];
+    if (curr.cancelled) continue;
+
+    for (const a of prev.assignments) {
+      const inserted = await sql`
+        INSERT INTO assignments (session_id, family_id, role)
+        VALUES (${curr.id}, ${a.family_id}, ${a.role})
+        ON CONFLICT (session_id, role) DO NOTHING
+        RETURNING id
+      `;
+      if (inserted.length > 0) copied++;
+    }
+  }
+
+  return { copied, cleared };
+}
+
 export async function createTeam(
   name: string,
   familyNames: string[],

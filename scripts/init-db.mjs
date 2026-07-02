@@ -6,9 +6,9 @@ import { neon } from "@neondatabase/serverless";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
-const url = process.env.POSTGRES_URL;
+const url = process.env.POSTGRES_URL ?? process.env.DATABASE_URL;
 if (!url) {
-  console.error("POSTGRES_URL is not set");
+  console.error("POSTGRES_URL or DATABASE_URL is not set");
   process.exit(1);
 }
 
@@ -22,7 +22,7 @@ try {
     .filter((s) => s.length > 0 && !s.startsWith("--"));
 
   for (const statement of statements) {
-    await sql`${sql.unsafe(statement)}`;
+    await sql.query(statement);
   }
   console.log("Database schema initialized.");
 } catch (err) {

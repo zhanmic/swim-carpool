@@ -32,7 +32,7 @@ export async function ensureSchema(): Promise<void> {
     .filter((s) => s.length > 0 && !s.startsWith("--"));
 
   for (const statement of statements) {
-    await sql`${sql.unsafe(statement)}`;
+    await sql.query(statement);
   }
 }
 

@@ -10,6 +10,7 @@ import { DaySheet } from "./DaySheet";
 import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
 import { LocationsSheet } from "./LocationsSheet";
+import { RenameTeamSheet } from "./RenameTeamSheet";
 import { TimeSheet } from "./TimeSheet";
 
 const fetcher = (url: string) => fetch(url).then((r) => {
@@ -29,6 +30,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   const [showLocations, setShowLocations] = useState(false);
   const [showTime, setShowTime] = useState(false);
+  const [showRename, setShowRename] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
@@ -172,6 +174,7 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
         teamName={data.team.name}
         familyName={activeFamily?.name ?? null}
         onSwitchFamily={() => setShowPicker(true)}
+        onRenameTeam={() => setShowRename(true)}
       />
 
       <div className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))]">
@@ -269,6 +272,17 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
           onClose={() => setShowTime(false)}
           onWeekApplied={() => {
             void mutate();
+          }}
+        />
+      )}
+
+      {showRename && (
+        <RenameTeamSheet
+          teamName={data.team.name}
+          slug={slug}
+          onClose={() => setShowRename(false)}
+          onRenamed={(name) => {
+            void mutate({ ...data, team: { ...data.team, name } }, { revalidate: false });
           }}
         />
       )}

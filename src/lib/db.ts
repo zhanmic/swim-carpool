@@ -61,6 +61,19 @@ export async function listTeams(): Promise<Team[]> {
   return rows as Team[];
 }
 
+export async function updateTeamName(slug: string, name: string): Promise<Team | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const sql = getSql();
+  const rows = await sql`
+    UPDATE teams
+    SET name = ${trimmed}
+    WHERE secret_slug = ${slug}
+    RETURNING id, name, secret_slug
+  `;
+  return (rows[0] as Team | undefined) ?? null;
+}
+
 export async function deleteAllTeams(): Promise<number> {
   const sql = getSql();
   const rows = await sql`DELETE FROM teams RETURNING id`;

@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { addDays, formatDateOnly, getMonday, getWeekDates, getWeekEnd, parseDateOnly, weekStartForDate } from "./dates";
+import { addDays, formatDateOnly, getMonday, getWeekDates, getWeekEnd, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
 import { getSchemaStatements } from "./schema";
 import type {
   Assignment,
@@ -41,7 +41,8 @@ function slugify(name: string): string {
 }
 
 function normalizeTime(t: string): string {
-  return t.length === 5 ? `${t}:00` : t;
+  const snapped = snapTimeToStep(t.slice(0, 5));
+  return `${snapped}:00`;
 }
 
 export async function getTeamBySlug(slug: string): Promise<Team | null> {

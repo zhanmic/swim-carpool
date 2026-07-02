@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -42,32 +43,35 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50 safe-top safe-bottom">
-      <div className="mx-auto max-w-md px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Set up your team</h1>
-        <p className="text-slate-600 mb-6">One-time setup. Share the link with your carpool group.</p>
+    <div className="min-h-full bg-slate-50 safe-top safe-bottom dark:bg-slate-900">
+      <div className="relative mx-auto max-w-md px-4 py-8">
+        <div className="absolute right-0 top-8">
+          <ThemeToggle />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2 dark:text-slate-100">Set up your team</h1>
+        <p className="text-slate-600 mb-6 dark:text-slate-400">One-time setup. Share the link with your carpool group.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Team name</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team name</span>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Sharks Swim Team"
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base dark:border-slate-600"
             />
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Families (one per line)</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Families (one per line)</span>
             <textarea
               required
               rows={5}
               value={familiesText}
               onChange={(e) => setFamiliesText(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base font-mono"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base font-mono dark:border-slate-600"
             />
           </label>
 

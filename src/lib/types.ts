@@ -4,6 +4,7 @@ export interface Team {
   id: string;
   name: string;
   secret_slug: string;
+  created_at: string;
 }
 
 export interface Family {
@@ -30,7 +31,6 @@ export interface PracticeSession {
   start_time: string;
   end_time: string;
   location_name: string;
-  location_notes: string | null;
   cancelled: boolean;
 }
 
@@ -52,6 +52,7 @@ export interface WeekData {
   sessions: SessionWithAssignments[];
   locations: SavedLocation[];
   weekStart: string;
+  earliestWeekStart: string;
 }
 
 export interface SavedLocation {
@@ -71,7 +72,6 @@ export interface SessionUpdate {
   start_time?: string;
   end_time?: string;
   location_name?: string;
-  location_notes?: string | null;
   cancelled?: boolean;
 }
 

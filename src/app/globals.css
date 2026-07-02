@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -7,6 +9,12 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -59,4 +67,10 @@ textarea,
 select,
 button {
   font-size: 16px;
+}
+
+input,
+textarea,
+select {
+  @apply bg-white dark:bg-slate-800 dark:text-slate-100;
 }

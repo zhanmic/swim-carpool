@@ -29,44 +29,44 @@ export function DayCard({ session, onOpen }: DayCardProps) {
       onClick={onOpen}
       className={`flex min-h-0 flex-1 flex-col justify-center rounded-2xl border px-4 py-4 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
-          ? "border-slate-200 bg-slate-100 opacity-70"
+          ? "border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800/60"
           : today
-            ? "border-sky-400 bg-sky-50 shadow-sm"
-            : "border-slate-200 bg-white shadow-sm"
+            ? "border-sky-400 bg-sky-50 shadow-sm dark:border-sky-500 dark:bg-sky-950"
+            : "border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
       }`}
     >
       {session.cancelled ? (
         <div className="flex items-center gap-2 text-base">
-          <span className={`font-semibold ${today ? "text-sky-800" : "text-slate-900"}`}>
+          <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
             {weekday} {dateLabel}
           </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Cancelled</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cancelled</span>
         </div>
       ) : (
         <>
           <div className="flex min-w-0 items-center gap-2 text-base leading-snug">
-            <span className={`shrink-0 font-semibold ${today ? "text-sky-800" : "text-slate-900"}`}>
+            <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
               {weekday}
             </span>
-            <span className="shrink-0 text-slate-500">{dateLabel}</span>
-            <span className="shrink-0 text-slate-300">·</span>
-            <span className="min-w-0 truncate font-medium text-slate-800">{session.location_name}</span>
-            <span className="shrink-0 text-slate-300">·</span>
-            <span className="shrink-0 text-sm text-slate-600">
+            <span className="shrink-0 text-slate-500 dark:text-slate-400">{dateLabel}</span>
+            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
+            <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{session.location_name}</span>
+            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
+            <span className="shrink-0 text-sm text-slate-600 dark:text-slate-400">
               {formatTimeRangeCompact(session.start_time, session.end_time)}
             </span>
           </div>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
             <span>
-              <span className="text-slate-500">Drop Off </span>
-              <span className={drop.open ? "font-medium text-amber-700" : "font-medium text-emerald-700"}>
+              <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
+              <span className={drop.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
                 {drop.text}
               </span>
             </span>
             <span>
-              <span className="text-slate-500">Pick Up </span>
-              <span className={pick.open ? "font-medium text-amber-700" : "font-medium text-emerald-700"}>
+              <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
+              <span className={pick.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
                 {pick.text}
               </span>
             </span>

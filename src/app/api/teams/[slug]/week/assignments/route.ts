@@ -1,6 +1,6 @@
 import {
   clearWeekAssignments,
-  copyAssignmentsFromPreviousWeek,
+  copyScheduleFromPreviousWeek,
   ensureSchema,
   getTeamBySlug,
 } from "@/lib/db";
@@ -32,7 +32,7 @@ export async function POST(
     }
 
     if (action === "copy_previous") {
-      const result = await copyAssignmentsFromPreviousWeek(team.id, weekStart);
+      const result = await copyScheduleFromPreviousWeek(team.id, weekStart);
       return NextResponse.json(result);
     }
 

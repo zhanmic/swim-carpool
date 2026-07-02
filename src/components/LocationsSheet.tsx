@@ -151,21 +151,21 @@ export function LocationsSheet({
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
-      <div className="max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom">
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-          <h2 className="text-lg font-semibold">Locations</h2>
-          <button type="button" onClick={onClose} className="text-sky-600 font-medium">
+      <div className="max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
+        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="text-lg font-semibold dark:text-slate-100">Locations</h2>
+          <button type="button" onClick={onClose} className="text-sky-600 font-medium dark:text-sky-400">
             Done
           </button>
         </div>
 
         <div className="p-4 space-y-4 max-w-lg mx-auto">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Save places here. Set all days is a shortcut for the whole week — tap any day on the schedule to set that day only.
           </p>
           <ul className="space-y-3">
             {locations.map((loc) => (
-              <li key={loc.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <li key={loc.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
                 {editingId === loc.id ? (
                   <div className="space-y-2">
                     <LocationAutocomplete
@@ -176,7 +176,7 @@ export function LocationsSheet({
                       autoFocus
                     />
                     {editAddress && (
-                      <p className="text-xs text-slate-500 line-clamp-2">{editAddress}</p>
+                      <p className="text-xs text-slate-500 line-clamp-2 dark:text-slate-400">{editAddress}</p>
                     )}
                     <div className="flex gap-2">
                       <button
@@ -190,7 +190,7 @@ export function LocationsSheet({
                       <button
                         type="button"
                         onClick={cancelEdit}
-                        className="flex-1 rounded-lg border border-slate-300 bg-white py-2 text-sm font-medium"
+                        className="flex-1 rounded-lg border border-slate-300 bg-white py-2 text-sm font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                       >
                         Cancel
                       </button>
@@ -200,9 +200,9 @@ export function LocationsSheet({
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-800">{loc.name}</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{loc.name}</p>
                         {loc.address && (
-                          <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{loc.address}</p>
+                          <p className="mt-0.5 text-xs text-slate-500 line-clamp-2 dark:text-slate-400">{loc.address}</p>
                         )}
                       </div>
                       <div className="flex shrink-0 gap-2">
@@ -210,7 +210,7 @@ export function LocationsSheet({
                           type="button"
                           disabled={busy}
                           onClick={() => startEdit(loc)}
-                          className="text-sm font-medium text-sky-600"
+                          className="text-sm font-medium text-sky-600 dark:text-sky-400"
                         >
                           Edit
                         </button>
@@ -218,7 +218,7 @@ export function LocationsSheet({
                           type="button"
                           disabled={busy || locations.length <= 1}
                           onClick={() => handleDelete(loc.id)}
-                          className="text-sm text-red-600 disabled:opacity-30"
+                          className="text-sm text-red-600 disabled:opacity-30 dark:text-red-400"
                         >
                           Remove
                         </button>
@@ -230,8 +230,8 @@ export function LocationsSheet({
                       onClick={() => handleApplyWeek(loc)}
                       className={`w-full rounded-lg py-2 text-sm font-medium ${
                         appliedId === loc.id
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-sky-100 text-sky-800 active:bg-sky-200"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : "bg-sky-100 text-sky-800 active:bg-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
                       } disabled:opacity-50`}
                     >
                       {appliedId === loc.id ? "Applied to all days" : "Set all days this week"}
@@ -242,8 +242,8 @@ export function LocationsSheet({
             ))}
           </ul>
 
-          <form onSubmit={handleAdd} className="space-y-2 border-t border-slate-100 pt-4">
-            <p className="text-sm font-medium text-slate-700">Add location</p>
+          <form onSubmit={handleAdd} className="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Add location</p>
             <LocationAutocomplete
               value={newName}
               onChange={(v) => {
@@ -254,7 +254,7 @@ export function LocationsSheet({
               placeholder="e.g. Bethlehem Central High School"
             />
             {newAddress && (
-              <p className="text-xs text-slate-500 line-clamp-2">{newAddress}</p>
+              <p className="text-xs text-slate-500 line-clamp-2 dark:text-slate-400">{newAddress}</p>
             )}
             <button
               type="submit"

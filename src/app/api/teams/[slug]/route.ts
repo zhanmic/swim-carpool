@@ -1,4 +1,5 @@
-import { updateTeamName } from "@/lib/db";
+import { deleteTeamBySlug, updateTeamName } from "@/lib/db";
+import { verifyAdminPassword } from "@/lib/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -22,5 +23,32 @@ export async function PATCH(
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to rename team" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+
+  try {
+    const body = (await request.json()) as { adminPassword?: string };
+    if (!process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: "Admin delete is not configured" }, { status: 503 });
+    }
+    if (!body.adminPassword || !verifyAdminPassword(body.adminPassword)) {
+      return NextResponse.json({ error: "Incorrect admin password" }, { status: 403 });
+    }
+
+    const deleted = await deleteTeamBySlug(slug);
+    if (!deleted) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to delete team" }, { status: 500 });
   }
 }

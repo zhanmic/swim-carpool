@@ -77,3 +77,9 @@ export function isToday(dateStr: string): boolean {
 export function defaultWeekStartStr(): string {
   return formatDateOnly(getMonday(new Date()));
 }
+
+/** Monday of the week containing `date` (local time). */
+export function weekStartForDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return formatDateOnly(getMonday(d));
+}

@@ -1,7 +1,6 @@
 import { neon } from "@neondatabase/serverless";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { addDays, formatDateOnly, getWeekDates, parseDateOnly } from "./dates";
+import { getSchemaStatements } from "./schema";
 import type {
   Assignment,
   AssignmentRole,
@@ -24,12 +23,7 @@ function getSql() {
 
 export async function ensureSchema(): Promise<void> {
   const sql = getSql();
-  const schemaPath = join(process.cwd(), "sql", "schema.sql");
-  const schema = readFileSync(schemaPath, "utf-8");
-  const statements = schema
-    .split(";")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith("--"));
+  const statements = getSchemaStatements();
 
   for (const statement of statements) {
     await sql.query(statement);

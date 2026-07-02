@@ -42,24 +42,6 @@ export function formatDayLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function formatDayShort(date: Date): string {
-  return date.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
-}
-
-export function formatTimeShort(time: string): string {
-  const [hStr, mStr] = time.split(":");
-  let h = Number(hStr);
-  const m = Number(mStr?.slice(0, 2) ?? "0");
-  const suffix = h >= 12 ? "p" : "a";
-  h = h % 12 || 12;
-  if (m === 0) return `${h}${suffix}`;
-  return `${h}:${String(m).padStart(2, "0")}${suffix}`;
-}
-
-export function formatTimeRangeShort(start: string, end: string): string {
-  return `${formatTimeShort(start)}–${formatTimeShort(end)}`;
-}
-
 export function formatTime12(time: string): string {
   const [hStr, mStr] = time.split(":");
   let h = Number(hStr);

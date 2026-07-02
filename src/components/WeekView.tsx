@@ -118,33 +118,25 @@ export function WeekView({ slug, initialWeekStart }: WeekViewProps) {
   }
 
   return (
-    <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-slate-50">
+    <div className="flex min-h-full flex-col bg-slate-50">
       <Header
         teamName={data.team.name}
         familyName={activeFamily?.name ?? null}
         onSwitchFamily={() => setShowPicker(true)}
       />
 
-      <div className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col px-3 pb-[max(0.25rem,var(--safe-bottom))] pt-1">
-        <div className="mb-1 flex shrink-0 items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => shiftWeek(-1)}
-            className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium active:bg-slate-50"
-          >
+      <div className="mx-auto w-full max-w-lg flex-1 px-4 py-3 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <button type="button" onClick={() => shiftWeek(-1)} className="touch-target-sm rounded-lg border border-slate-200 bg-white px-3 font-medium">
             ‹ Prev
           </button>
-          <span className="text-xs font-medium text-slate-600">Week of {weekStart}</span>
-          <button
-            type="button"
-            onClick={() => shiftWeek(1)}
-            className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium active:bg-slate-50"
-          >
+          <span className="text-sm font-medium text-slate-600">Week of {weekStart}</span>
+          <button type="button" onClick={() => shiftWeek(1)} className="touch-target-sm rounded-lg border border-slate-200 bg-white px-3 font-medium">
             Next ›
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-1">
+        <div className="flex flex-col gap-3">
           {data.sessions.map((session: SessionWithAssignments) => (
             <DayCard key={session.id} session={session} onOpen={() => setOpenSessionId(session.id)} />
           ))}

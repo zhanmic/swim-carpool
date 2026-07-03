@@ -18,7 +18,7 @@ function assignmentLabel(
 ): { text: string; open: boolean; familyId?: string } {
   const a = session.assignments.find((x) => x.role === role);
   if (a?.family_name) return { text: a.family_name, open: false, familyId: a.family_id };
-  return { text: "empty", open: true };
+  return { text: "N/A", open: true };
 }
 
 function slotClass(open: boolean, familyId: string | undefined, familyColors: Map<string, FamilyColorClasses>) {

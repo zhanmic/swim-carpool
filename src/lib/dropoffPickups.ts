@@ -50,38 +50,6 @@ export function subtractMinutes(time: string, minutes: number): string {
   return snapTimeToStep(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`);
 }
 
-export function defaultDropoffPickups(
-  startTime: string,
-  families: Family[],
-  dropoffFamilyId?: string | null
-): DropoffPickups {
-  const pickupTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
-  return Object.fromEntries(
-    families
-      .filter((family) => family.id !== dropoffFamilyId)
-      .map((family) => [family.id, pickupTime])
-  );
-}
-
-export function resolveDropoffPickups(
-  stored: DropoffPickups | null | undefined,
-  startTime: string,
-  families: Family[],
-  dropoffFamilyId?: string | null
-): DropoffPickups {
-  const parsed = cleanDropoffPickups(parseDropoffPickups(stored), dropoffFamilyId);
-  const defaultTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
-  const resolved: DropoffPickups = {};
-
-  for (const family of families) {
-    if (dropoffFamilyId && family.id === dropoffFamilyId) continue;
-    const saved = parsed[family.id]?.trim();
-    resolved[family.id] = saved ? snapTimeToStep(saved) : defaultTime;
-  }
-
-  return resolved;
-}
-
 export function formatDropoffPickupsLine(
   pickups: DropoffPickups,
   families: Family[],
@@ -112,7 +80,7 @@ export function formatDriverNotesPreview(
   const dropoffFamilyId = dropoffDriverFamilyId(session);
   const parts: string[] = [];
   const pickupLine = formatDropoffPickupsLine(
-    resolveDropoffPickups(session.dropoff_pickups, session.start_time, families, dropoffFamilyId),
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
     families,
     dropoffFamilyId
   );

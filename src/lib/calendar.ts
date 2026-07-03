@@ -1,4 +1,4 @@
-import { dropoffDriverFamilyId, formatDropoffPickupsLine, resolveDropoffPickups } from "./dropoffPickups";
+import { dropoffDriverFamilyId, cleanDropoffPickups, formatDropoffPickupsLine, parseDropoffPickups } from "./dropoffPickups";
 import { parseDateOnly } from "./dates";
 import type { Family, SessionWithAssignments } from "./types";
 
@@ -36,7 +36,7 @@ export function buildSessionCalendarEvent(
   ];
   const dropoffFamilyId = dropoffDriverFamilyId(session);
   const pickupLine = formatDropoffPickupsLine(
-    resolveDropoffPickups(session.dropoff_pickups, session.start_time, families, dropoffFamilyId),
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
     families,
     dropoffFamilyId
   );

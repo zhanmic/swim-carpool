@@ -1,5 +1,5 @@
 import { formatDayLabel, formatTime12, parseDateOnly } from "./dates";
-import { dropoffDriverFamilyId, formatDropoffPickupsLine, resolveDropoffPickups } from "./dropoffPickups";
+import { dropoffDriverFamilyId, cleanDropoffPickups, formatDropoffPickupsLine, parseDropoffPickups } from "./dropoffPickups";
 import type { Family, SessionWithAssignments, Team } from "./types";
 
 function familyForRole(session: SessionWithAssignments, role: "dropoff" | "pickup"): string {
@@ -31,7 +31,7 @@ export function formatWeekSummary(
     lines.push(`  Drop-off: ${drop} | Pick-up: ${pick}`);
     const dropoffFamilyId = dropoffDriverFamilyId(session);
     const pickupLine = formatDropoffPickupsLine(
-      resolveDropoffPickups(session.dropoff_pickups, session.start_time, families, dropoffFamilyId),
+      cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
       families,
       dropoffFamilyId
     );

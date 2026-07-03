@@ -10,7 +10,7 @@ interface FamilyPickerProps {
   title?: string;
 }
 
-export function FamilyPicker({ families, familyColors, onSelect, title = "Who are you?" }: FamilyPickerProps) {
+export function FamilyPicker({ families, familyColors, onSelect, title = "Which family" }: FamilyPickerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4 safe-bottom">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">

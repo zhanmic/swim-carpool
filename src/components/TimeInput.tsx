@@ -14,7 +14,10 @@ export function TimeInput({ value, onChange, ...props }: TimeInputProps) {
       type="time"
       step={TIME_STEP_SECONDS}
       value={value}
-      onChange={(e) => onChange(snapTimeToStep(e.target.value))}
+      onChange={(e) => {
+        const next = e.target.value;
+        onChange(next ? snapTimeToStep(next) : "");
+      }}
       {...props}
     />
   );

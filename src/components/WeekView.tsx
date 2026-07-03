@@ -102,6 +102,7 @@ export function WeekView({ slug }: WeekViewProps) {
     end_time: string;
     location_name: string;
     location_notes: string | null;
+    dropoff_pickups: Record<string, string>;
     cancelled: boolean;
   }) {
     if (!openSession) return;
@@ -286,6 +287,7 @@ export function WeekView({ slug }: WeekViewProps) {
             <DayCard
               key={session.id}
               session={session}
+              families={data.families}
               familyColors={familyColors}
               onOpen={() => setOpenSessionId(session.id)}
             />

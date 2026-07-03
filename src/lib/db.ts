@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { addDays, formatDateOnly, getMonday, getWeekDates, getWeekEnd, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
+import { parseDropoffPickups } from "./dropoffPickups";
 import { getSchemaStatements } from "./schema";
 import type {
   Assignment,
@@ -259,6 +260,7 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
       ps.end_time::text AS end_time,
       ps.location_name,
       ps.location_notes,
+      ps.dropoff_pickups,
       ps.cancelled,
       COALESCE(
         json_agg(
@@ -282,10 +284,11 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
     ORDER BY ps.session_date
   `;
 
-  return (rows as Array<SessionWithAssignments & { assignments: Assignment[] | string }>).map((row) => ({
+  return (rows as Array<SessionWithAssignments & { assignments: Assignment[] | string; dropoff_pickups?: unknown }>).map((row) => ({
     ...row,
     start_time: row.start_time.slice(0, 5),
     end_time: row.end_time.slice(0, 5),
+    dropoff_pickups: parseDropoffPickups(row.dropoff_pickups),
     assignments: typeof row.assignments === "string" ? JSON.parse(row.assignments) : row.assignments ?? [],
   }));
 }
@@ -374,6 +377,8 @@ export async function unclaimAssignment(sessionId: string, familyId: string, rol
 
 export async function updateSession(id: string, data: SessionUpdate): Promise<PracticeSession | null> {
   const sql = getSql();
+  const dropoffPickups =
+    data.dropoff_pickups !== undefined ? JSON.stringify(data.dropoff_pickups) : null;
   const rows = await sql`
     UPDATE practice_sessions
     SET
@@ -381,6 +386,7 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       end_time = COALESCE(${data.end_time ? normalizeTime(data.end_time) : null}, end_time),
       location_name = COALESCE(${data.location_name ?? null}, location_name),
       location_notes = CASE WHEN ${data.location_notes !== undefined} THEN ${data.location_notes?.trim() || null} ELSE location_notes END,
+      dropoff_pickups = CASE WHEN ${data.dropoff_pickups !== undefined} THEN ${dropoffPickups}::jsonb ELSE dropoff_pickups END,
       cancelled = COALESCE(${data.cancelled ?? null}, cancelled)
     WHERE id = ${id}
     RETURNING
@@ -391,15 +397,17 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       end_time::text AS end_time,
       location_name,
       location_notes,
+      dropoff_pickups,
       cancelled
   `;
 
-  const row = rows[0] as PracticeSession | undefined;
+  const row = rows[0] as (PracticeSession & { dropoff_pickups?: unknown }) | undefined;
   if (!row) return null;
   return {
     ...row,
     start_time: row.start_time.slice(0, 5),
     end_time: row.end_time.slice(0, 5),
+    dropoff_pickups: parseDropoffPickups(row.dropoff_pickups),
   };
 }
 

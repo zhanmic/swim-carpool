@@ -32,6 +32,7 @@ export interface PracticeSession {
   end_time: string;
   location_name: string;
   location_notes: string | null;
+  dropoff_pickups: Record<string, string>;
   cancelled: boolean;
 }
 
@@ -74,6 +75,7 @@ export interface SessionUpdate {
   end_time?: string;
   location_name?: string;
   location_notes?: string | null;
+  dropoff_pickups?: Record<string, string>;
   cancelled?: boolean;
 }
 

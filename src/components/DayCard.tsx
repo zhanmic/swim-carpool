@@ -1,11 +1,13 @@
 "use client";
 
 import { formatTimeRangeCompact, isToday, parseDateOnly } from "@/lib/dates";
+import { formatDriverNotesPreview, hasDriverNotes } from "@/lib/dropoffPickups";
 import { getFamilyColor, OPEN_SLOT_PILL, type FamilyColorClasses } from "@/lib/familyColors";
-import type { AssignmentRole, SessionWithAssignments } from "@/lib/types";
+import type { AssignmentRole, Family, SessionWithAssignments } from "@/lib/types";
 
 interface DayCardProps {
   session: SessionWithAssignments;
+  families: Family[];
   familyColors: Map<string, FamilyColorClasses>;
   onOpen: () => void;
 }
@@ -24,12 +26,13 @@ function slotClass(open: boolean, familyId: string | undefined, familyColors: Ma
   return getFamilyColor(familyColors, familyId)?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
 }
 
-export function DayCard({ session, familyColors, onOpen }: DayCardProps) {
+export function DayCard({ session, families, familyColors, onOpen }: DayCardProps) {
   const date = parseDateOnly(session.session_date);
   const today = isToday(session.session_date);
   const drop = assignmentLabel(session, "dropoff");
   const pick = assignmentLabel(session, "pickup");
-  const note = session.location_notes?.trim();
+  const notePreview = formatDriverNotesPreview(session, families);
+  const showNote = hasDriverNotes(session, families);
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -81,19 +84,19 @@ export function DayCard({ session, familyColors, onOpen }: DayCardProps) {
                 {pick.text}
               </span>
             </span>
-            {note && (
+            {showNote && (
               <span
                 className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300"
-                title={note}
-                aria-label={`Note: ${note}`}
+                title={notePreview ?? undefined}
+                aria-label={`Note: ${notePreview}`}
               >
                 Note
               </span>
             )}
           </div>
 
-          {note && (
-            <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{note}</p>
+          {notePreview && (
+            <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{notePreview}</p>
           )}
         </>
       )}

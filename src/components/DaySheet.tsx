@@ -4,7 +4,7 @@ import { exportSessionToCalendar } from "@/lib/calendar";
 import {
   cleanDropoffPickups,
   DEFAULT_HOME_PICKUP_MINUTES_BEFORE,
-  resolveDropoffPickups,
+  parseDropoffPickups,
   subtractMinutes,
   type DropoffPickups,
 } from "@/lib/dropoffPickups";
@@ -67,12 +67,7 @@ export function DaySheet({
   );
 
   const [dropoffPickups, setDropoffPickups] = useState<DropoffPickups>(() =>
-    resolveDropoffPickups(
-      session.dropoff_pickups,
-      snapTimeToStep(session.start_time),
-      families,
-      drop?.family_id ?? null
-    )
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), drop?.family_id ?? null)
   );
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
@@ -82,27 +77,13 @@ export function DaySheet({
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
 
   useEffect(() => {
+    if (!dropoffFamilyId) return;
     setDropoffPickups((current) => {
-      const defaultTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
+      if (!current[dropoffFamilyId]) return current;
       const next = { ...current };
-      let changed = false;
-
-      if (dropoffFamilyId && next[dropoffFamilyId]) {
-        delete next[dropoffFamilyId];
-        changed = true;
-      }
-
-      for (const family of familiesNeedingPickup) {
-        if (!next[family.id]?.trim()) {
-          next[family.id] = defaultTime;
-          changed = true;
-        }
-      }
-
-      return changed ? next : current;
+      delete next[dropoffFamilyId];
+      return next;
     });
-    // Only adjust pickups when the drop-off driver assignment changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropoffFamilyId]);
 
   function setFamilyPickup(familyId: string, time: string) {
@@ -122,13 +103,15 @@ export function DaySheet({
       const oldDefault = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
       const newDefault = subtractMinutes(next, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
       const updated = { ...current };
+      let changed = false;
       for (const family of familiesNeedingPickup) {
         const currentTime = updated[family.id]?.trim();
-        if (!currentTime || currentTime === oldDefault) {
+        if (currentTime && currentTime === oldDefault) {
           updated[family.id] = newDefault;
+          changed = true;
         }
       }
-      return updated;
+      return changed ? updated : current;
     });
     setStartTime(next);
   }
@@ -138,9 +121,7 @@ export function DaySheet({
     setDropoffPickups((current) => {
       const next = { ...current };
       for (const family of familiesNeedingPickup) {
-        if (!next[family.id]?.trim()) {
-          next[family.id] = pickupTime;
-        }
+        next[family.id] = pickupTime;
       }
       return next;
     });

@@ -95,6 +95,7 @@ export function WeekView({ slug }: WeekViewProps) {
     start_time: string;
     end_time: string;
     location_name: string;
+    location_notes: string | null;
     cancelled: boolean;
   }) {
     if (!openSession) return;

@@ -19,6 +19,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
   const today = isToday(session.session_date);
   const drop = assignmentLabel(session, "dropoff");
   const pick = assignmentLabel(session, "pickup");
+  const note = session.location_notes?.trim();
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -55,6 +56,15 @@ export function DayCard({ session, onOpen }: DayCardProps) {
             <span className="shrink-0 text-sm text-slate-600 dark:text-slate-400">
               {formatTimeRangeCompact(session.start_time, session.end_time)}
             </span>
+            {note && (
+              <span
+                className="shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                title={note}
+                aria-label={`Note: ${note}`}
+              >
+                Note
+              </span>
+            )}
           </div>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
@@ -71,6 +81,13 @@ export function DayCard({ session, onOpen }: DayCardProps) {
               </span>
             </span>
           </div>
+
+          {note && (
+            <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">
+              <span aria-hidden className="mr-1">📝</span>
+              {note}
+            </p>
+          )}
         </>
       )}
     </button>

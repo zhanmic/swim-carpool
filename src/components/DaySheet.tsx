@@ -18,6 +18,7 @@ interface DaySheetProps {
     start_time: string;
     end_time: string;
     location_name: string;
+    location_notes: string | null;
     cancelled: boolean;
   }) => Promise<void>;
   onClaim: (role: AssignmentRole, action: "claim" | "unclaim") => Promise<void>;
@@ -36,6 +37,7 @@ export function DaySheet({
   const [startTime, setStartTime] = useState(() => snapTimeToStep(session.start_time));
   const [endTime, setEndTime] = useState(() => snapTimeToStep(session.end_time));
   const [locationName, setLocationName] = useState(session.location_name);
+  const [locationNotes, setLocationNotes] = useState(session.location_notes ?? "");
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
@@ -54,6 +56,7 @@ export function DaySheet({
         start_time: startTime,
         end_time: endTime,
         location_name: locationName,
+        location_notes: locationNotes.trim() || null,
         cancelled,
       });
     } finally {
@@ -230,6 +233,20 @@ export function DaySheet({
               )}
             </div>
           </div>
+
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Notes</span>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Optional — e.g. extra kids on pickup only, or drop-off only.
+            </p>
+            <input
+              type="text"
+              value={locationNotes}
+              onChange={(e) => setLocationNotes(e.target.value)}
+              placeholder="e.g. Smith family +2 on pickup"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+            />
+          </label>
 
           <button
             type="button"

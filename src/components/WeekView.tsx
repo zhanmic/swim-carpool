@@ -1,6 +1,7 @@
 "use client";
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
+import { buildFamilyColorMap } from "@/lib/familyColors";
 import { getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
 import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
@@ -60,6 +61,11 @@ export function WeekView({ slug }: WeekViewProps) {
   const activeFamily = useMemo(
     () => data?.families.find((f) => f.id === activeFamilyId) ?? null,
     [data?.families, activeFamilyId]
+  );
+
+  const familyColors = useMemo(
+    () => buildFamilyColorMap(data?.families ?? []),
+    [data?.families]
   );
 
   const openSession = data?.sessions.find((s) => s.id === openSessionId) ?? null;
@@ -277,7 +283,12 @@ export function WeekView({ slug }: WeekViewProps) {
 
         <div className="flex min-h-0 flex-1 flex-col gap-2.5">
           {data.sessions.map((session: SessionWithAssignments) => (
-            <DayCard key={session.id} session={session} onOpen={() => setOpenSessionId(session.id)} />
+            <DayCard
+              key={session.id}
+              session={session}
+              familyColors={familyColors}
+              onOpen={() => setOpenSessionId(session.id)}
+            />
           ))}
         </div>
       </div>
@@ -320,13 +331,14 @@ export function WeekView({ slug }: WeekViewProps) {
       )}
 
       {showPicker && (
-        <FamilyPicker families={data.families} onSelect={selectFamily} />
+        <FamilyPicker families={data.families} familyColors={familyColors} onSelect={selectFamily} />
       )}
 
       {openSession && (
         <DaySheet
           session={openSession}
           families={data.families}
+          familyColors={familyColors}
           locations={data.locations}
           activeFamilyId={activeFamilyId}
           activeFamilyName={activeFamily?.name ?? null}

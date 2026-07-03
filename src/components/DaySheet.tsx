@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
+import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
 import { useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
@@ -9,6 +10,7 @@ import { TimeInput } from "./TimeInput";
 interface DaySheetProps {
   session: SessionWithAssignments;
   families: Family[];
+  familyColors: Map<string, FamilyColorClasses>;
   locations: SavedLocation[];
   activeFamilyId: string | null;
   activeFamilyName: string | null;
@@ -26,6 +28,7 @@ interface DaySheetProps {
 
 export function DaySheet({
   session,
+  familyColors,
   locations,
   activeFamilyId,
   activeFamilyName,
@@ -77,8 +80,11 @@ export function DaySheet({
   }
 
   function renderClaimButton(role: AssignmentRole, label: string, currentName?: string) {
-    const isMine = session.assignments.some((a) => a.role === role && a.family_id === activeFamilyId);
+    const assignment = session.assignments.find((a) => a.role === role);
+    const isMine = assignment?.family_id === activeFamilyId;
     const taken = !!currentName && !isMine;
+    const claimedColor = getFamilyColor(familyColors, assignment?.family_id)?.button;
+    const mineColor = getFamilyColor(familyColors, activeFamilyId)?.button;
 
     return (
       <div>
@@ -114,10 +120,10 @@ export function DaySheet({
             onClick={() => setConfirmRole(role)}
             className={`touch-target w-full rounded-xl px-4 font-semibold disabled:opacity-50 ${
               isMine
-                ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700"
+                ? mineColor ?? claimedColor ?? OPEN_SLOT_BUTTON
                 : taken
-                  ? "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                  : "bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-700"
+                  ? claimedColor ?? "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                  : OPEN_SLOT_BUTTON
             }`}
           >
             {isMine

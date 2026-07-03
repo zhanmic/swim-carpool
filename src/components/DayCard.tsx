@@ -1,20 +1,30 @@
 "use client";
 
 import { formatTimeRangeCompact, isToday, parseDateOnly } from "@/lib/dates";
+import { getFamilyColor, OPEN_SLOT_PILL, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, SessionWithAssignments } from "@/lib/types";
 
 interface DayCardProps {
   session: SessionWithAssignments;
+  familyColors: Map<string, FamilyColorClasses>;
   onOpen: () => void;
 }
 
-function assignmentLabel(session: SessionWithAssignments, role: AssignmentRole): { text: string; open: boolean } {
+function assignmentLabel(
+  session: SessionWithAssignments,
+  role: AssignmentRole
+): { text: string; open: boolean; familyId?: string } {
   const a = session.assignments.find((x) => x.role === role);
-  if (a?.family_name) return { text: a.family_name, open: false };
+  if (a?.family_name) return { text: a.family_name, open: false, familyId: a.family_id };
   return { text: "empty", open: true };
 }
 
-export function DayCard({ session, onOpen }: DayCardProps) {
+function slotClass(open: boolean, familyId: string | undefined, familyColors: Map<string, FamilyColorClasses>) {
+  if (open) return OPEN_SLOT_PILL;
+  return getFamilyColor(familyColors, familyId)?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+}
+
+export function DayCard({ session, familyColors, onOpen }: DayCardProps) {
   const date = parseDateOnly(session.session_date);
   const today = isToday(session.session_date);
   const drop = assignmentLabel(session, "dropoff");
@@ -61,13 +71,13 @@ export function DayCard({ session, onOpen }: DayCardProps) {
           <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
             <span>
               <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
-              <span className={drop.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
+              <span className={`rounded-full px-2 py-0.5 text-sm font-medium ${slotClass(drop.open, drop.familyId, familyColors)}`}>
                 {drop.text}
               </span>
             </span>
             <span>
               <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
-              <span className={pick.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
+              <span className={`rounded-full px-2 py-0.5 text-sm font-medium ${slotClass(pick.open, pick.familyId, familyColors)}`}>
                 {pick.text}
               </span>
             </span>

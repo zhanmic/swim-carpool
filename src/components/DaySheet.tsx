@@ -135,24 +135,27 @@ export function DaySheet({
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
       <div className="max-h-[90vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold dark:text-slate-100">{formatDayLabel(date)}</h2>
-          <button type="button" onClick={onClose} className="touch-target-sm text-sky-600 font-medium dark:text-sky-400">
-            Done
-          </button>
+        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <h2 className="truncate text-lg font-semibold dark:text-slate-100">{formatDayLabel(date)}</h2>
+              <label className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-600 dark:text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={cancelled}
+                  onChange={(e) => setCancelled(e.target.checked)}
+                  className="h-4 w-4 rounded"
+                />
+                Cancelled
+              </label>
+            </div>
+            <button type="button" onClick={onClose} className="touch-target-sm shrink-0 text-sky-600 font-medium dark:text-sky-400">
+              Done
+            </button>
+          </div>
         </div>
 
         <div className="p-4 space-y-4 max-w-lg mx-auto">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={cancelled}
-              onChange={(e) => setCancelled(e.target.checked)}
-              className="h-5 w-5"
-            />
-            Cancelled (no practice)
-          </label>
-
           {!cancelled && (
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
@@ -174,6 +177,21 @@ export function DaySheet({
             </div>
           )}
 
+          <label className="block rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-800 dark:bg-violet-950/40">
+            <span className="text-sm font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
+            <p className="mt-0.5 text-xs text-violet-700/80 dark:text-violet-300/80">
+              e.g. extra kids on pickup only, or drop-off only.
+            </p>
+            <input
+              type="text"
+              value={locationNotes}
+              onChange={(e) => setLocationNotes(e.target.value)}
+              placeholder="Smith family +2 on pickup"
+              className="mt-2 w-full rounded-lg border border-violet-200 bg-white px-3 py-2 text-base dark:border-violet-700 dark:bg-slate-900"
+            />
+          </label>
+
+          {!cancelled && (
           <div className="block">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Location this day</span>
@@ -233,20 +251,7 @@ export function DaySheet({
               )}
             </div>
           </div>
-
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Notes</span>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              Optional — e.g. extra kids on pickup only, or drop-off only.
-            </p>
-            <input
-              type="text"
-              value={locationNotes}
-              onChange={(e) => setLocationNotes(e.target.value)}
-              placeholder="e.g. Smith family +2 on pickup"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
-            />
-          </label>
+          )}
 
           <button
             type="button"

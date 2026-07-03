@@ -3,7 +3,8 @@
 import { exportSessionToCalendar } from "@/lib/calendar";
 import {
   cleanDropoffPickups,
-  parseDropoffPickups,
+  DEFAULT_HOME_PICKUP_MINUTES_BEFORE,
+  resolveDropoffPickups,
   subtractMinutes,
   type DropoffPickups,
 } from "@/lib/dropoffPickups";
@@ -53,7 +54,7 @@ export function DaySheet({
   const [locationName, setLocationName] = useState(session.location_name);
   const [locationNotes, setLocationNotes] = useState(session.location_notes ?? "");
   const [dropoffPickups, setDropoffPickups] = useState<DropoffPickups>(() =>
-    parseDropoffPickups(session.dropoff_pickups)
+    resolveDropoffPickups(session.dropoff_pickups, snapTimeToStep(session.start_time), families)
   );
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
@@ -82,8 +83,24 @@ export function DaySheet({
     });
   }
 
-  function fillPickupsBeforePractice(minutes: number) {
-    const pickupTime = subtractMinutes(startTime, minutes);
+  function handleStartTimeChange(next: string) {
+    setDropoffPickups((current) => {
+      const oldDefault = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
+      const newDefault = subtractMinutes(next, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
+      const updated = { ...current };
+      for (const family of sortedFamilies) {
+        const currentTime = updated[family.id]?.trim();
+        if (!currentTime || currentTime === oldDefault) {
+          updated[family.id] = newDefault;
+        }
+      }
+      return updated;
+    });
+    setStartTime(next);
+  }
+
+  function fillPickupsBeforePractice() {
+    const pickupTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
     setDropoffPickups((current) => {
       const next = { ...current };
       for (const family of sortedFamilies) {
@@ -258,7 +275,7 @@ export function DaySheet({
                 <span className="text-sm text-slate-600 dark:text-slate-400">Start</span>
                 <TimeInput
                   value={startTime}
-                  onChange={setStartTime}
+                  onChange={handleStartTimeChange}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
                 />
               </label>
@@ -283,10 +300,10 @@ export function DaySheet({
                   </p>
                   <button
                     type="button"
-                    onClick={() => fillPickupsBeforePractice(15)}
+                    onClick={fillPickupsBeforePractice}
                     className="shrink-0 text-xs font-medium text-sky-600 dark:text-sky-400"
                   >
-                    15 min before practice
+                    30 min before practice
                   </button>
                 </div>
                 <ul className="space-y-2">

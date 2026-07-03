@@ -28,7 +28,7 @@ export function DayCard({ session, onOpen }: DayCardProps) {
     <button
       type="button"
       onClick={onOpen}
-      className={`flex min-h-0 flex-1 flex-col justify-center rounded-2xl border px-4 py-4 text-left transition-colors active:scale-[0.99] ${
+      className={`flex min-h-0 flex-1 items-stretch gap-3 rounded-2xl border px-4 py-4 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800/60"
           : today
@@ -36,59 +36,59 @@ export function DayCard({ session, onOpen }: DayCardProps) {
             : "border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
       }`}
     >
-      {session.cancelled ? (
-        <div className="flex items-center gap-2 text-base">
-          <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
-            {weekday} {dateLabel}
-          </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cancelled</span>
-        </div>
-      ) : (
-        <>
-          <div className="flex min-w-0 items-center gap-2 text-base leading-snug">
-            <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
-              {weekday}
+      <div className="min-w-0 flex-1">
+        {session.cancelled ? (
+          <div className="flex items-center gap-2 text-base">
+            <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
+              {weekday} {dateLabel}
             </span>
-            <span className="shrink-0 text-slate-500 dark:text-slate-400">{dateLabel}</span>
-            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
-            <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{session.location_name}</span>
-            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
-            <span className="shrink-0 text-sm text-slate-600 dark:text-slate-400">
-              {formatTimeRangeCompact(session.start_time, session.end_time)}
-            </span>
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cancelled</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex min-w-0 items-center gap-2 text-base leading-snug">
+              <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
+                {weekday}
+              </span>
+              <span className="shrink-0 text-slate-500 dark:text-slate-400">{dateLabel}</span>
+              <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
+              <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{session.location_name}</span>
+              <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
+              <span className="shrink-0 text-sm text-slate-600 dark:text-slate-400">
+                {formatTimeRangeCompact(session.start_time, session.end_time)}
+              </span>
+            </div>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
+              <span>
+                <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
+                <span className={drop.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
+                  {drop.text}
+                </span>
+              </span>
+              <span>
+                <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
+                <span className={pick.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
+                  {pick.text}
+                </span>
+              </span>
+            </div>
+
             {note && (
-              <span
-                className="shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300"
-                title={note}
-                aria-label={`Note: ${note}`}
-              >
-                Note
-              </span>
+              <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{note}</p>
             )}
-          </div>
+          </>
+        )}
+      </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
-            <span>
-              <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
-              <span className={drop.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
-                {drop.text}
-              </span>
-            </span>
-            <span>
-              <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
-              <span className={pick.open ? "font-medium text-amber-700 dark:text-amber-400" : "font-medium text-emerald-700 dark:text-emerald-400"}>
-                {pick.text}
-              </span>
-            </span>
-          </div>
-
-          {note && (
-            <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">
-              <span aria-hidden className="mr-1">📝</span>
-              {note}
-            </p>
-          )}
-        </>
+      {note && (
+        <span
+          className="flex shrink-0 items-center self-center text-lg leading-none"
+          title={note}
+          aria-label={`Note: ${note}`}
+        >
+          📝
+        </span>
       )}
     </button>
   );

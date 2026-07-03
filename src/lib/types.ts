@@ -31,6 +31,7 @@ export interface PracticeSession {
   start_time: string;
   end_time: string;
   location_name: string;
+  location_notes: string | null;
   cancelled: boolean;
 }
 
@@ -72,6 +73,7 @@ export interface SessionUpdate {
   start_time?: string;
   end_time?: string;
   location_name?: string;
+  location_notes?: string | null;
   cancelled?: boolean;
 }
 

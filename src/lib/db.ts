@@ -258,6 +258,7 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
       ps.start_time::text AS start_time,
       ps.end_time::text AS end_time,
       ps.location_name,
+      ps.location_notes,
       ps.cancelled,
       COALESCE(
         json_agg(
@@ -366,6 +367,7 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       start_time = COALESCE(${data.start_time ? normalizeTime(data.start_time) : null}, start_time),
       end_time = COALESCE(${data.end_time ? normalizeTime(data.end_time) : null}, end_time),
       location_name = COALESCE(${data.location_name ?? null}, location_name),
+      location_notes = CASE WHEN ${data.location_notes !== undefined} THEN ${data.location_notes?.trim() || null} ELSE location_notes END,
       cancelled = COALESCE(${data.cancelled ?? null}, cancelled)
     WHERE id = ${id}
     RETURNING
@@ -375,6 +377,7 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       start_time::text AS start_time,
       end_time::text AS end_time,
       location_name,
+      location_notes,
       cancelled
   `;
 

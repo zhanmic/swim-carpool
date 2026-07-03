@@ -27,6 +27,9 @@ export function formatWeekSummary(team: Team, sessions: SessionWithAssignments[]
     const pick = familyForRole(session, "pickup");
     lines.push(`${day}: ${time} @ ${session.location_name}`);
     lines.push(`  Drop-off: ${drop} | Pick-up: ${pick}`);
+    if (session.location_notes?.trim()) {
+      lines.push(`  Note: ${session.location_notes.trim()}`);
+    }
     lines.push("");
   }
 

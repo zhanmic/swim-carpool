@@ -62,6 +62,13 @@ body {
   justify-content: center;
 }
 
+.touch-target-compact {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 input,
 textarea,
 select,

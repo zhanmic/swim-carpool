@@ -233,7 +233,7 @@ export function WeekView({ slug }: WeekViewProps) {
             <div className="flex h-11 w-full items-center justify-center">
               {isCurrentWeek ? (
                 <span className="whitespace-nowrap text-sm font-semibold text-slate-600 dark:text-slate-300">
-                  Current week
+                  This week
                 </span>
               ) : (
                 <button

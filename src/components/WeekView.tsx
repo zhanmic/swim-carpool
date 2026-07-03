@@ -210,6 +210,8 @@ export function WeekView({ slug }: WeekViewProps) {
       <Header
         teamName={data.team.name}
         familyName={activeFamily?.name ?? null}
+        familyId={activeFamilyId}
+        familyColors={familyColors}
         onSwitchFamily={() => setShowPicker(true)}
         onManageTeam={() => setShowRename(true)}
       />

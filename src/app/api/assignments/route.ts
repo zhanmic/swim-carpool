@@ -1,4 +1,4 @@
-import { claimAssignment, getTeamBySlug, unclaimAssignment } from "@/lib/db";
+import { claimAssignment, getTeamBySlug, releaseAssignment, unclaimAssignment } from "@/lib/db";
 import type { AssignmentRole } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       sessionId?: string;
       familyId?: string;
       role?: AssignmentRole;
-      action?: "claim" | "unclaim";
+      action?: "claim" | "unclaim" | "release";
       slug?: string;
     };
 
@@ -29,7 +29,9 @@ export async function POST(request: NextRequest) {
     const result =
       action === "claim"
         ? await claimAssignment(sessionId, familyId, role)
-        : await unclaimAssignment(sessionId, familyId, role);
+        : action === "release"
+          ? await releaseAssignment(sessionId, role)
+          : await unclaimAssignment(sessionId, familyId, role);
 
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 409 });

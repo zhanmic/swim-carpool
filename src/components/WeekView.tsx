@@ -76,7 +76,7 @@ export function WeekView({ slug }: WeekViewProps) {
     setShowPicker(false);
   }
 
-  async function handleClaim(role: AssignmentRole, action: "claim" | "unclaim") {
+  async function handleClaim(role: AssignmentRole, action: "claim" | "release") {
     if (!openSession || !activeFamilyId) return;
     const res = await fetch("/api/assignments", {
       method: "POST",

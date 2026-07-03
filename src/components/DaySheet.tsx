@@ -25,7 +25,7 @@ interface DaySheetProps {
     location_notes: string | null;
     cancelled: boolean;
   }) => Promise<void>;
-  onClaim: (role: AssignmentRole, action: "claim" | "unclaim") => Promise<void>;
+  onClaim: (role: AssignmentRole, action: "claim" | "release") => Promise<void>;
 }
 
 export function DaySheet({
@@ -87,8 +87,9 @@ export function DaySheet({
     if (!activeFamilyId) return;
     setBusy(true);
     try {
-      const mine = session.assignments.find((a) => a.role === role && a.family_id === activeFamilyId);
-      await onClaim(role, mine ? "unclaim" : "claim");
+      const assignment = session.assignments.find((a) => a.role === role);
+      const action = assignment ? "release" : "claim";
+      await onClaim(role, action);
       setConfirmRole(null);
     } finally {
       setBusy(false);
@@ -98,27 +99,48 @@ export function DaySheet({
   function renderClaimButton(role: AssignmentRole, label: string, currentName?: string) {
     const assignment = session.assignments.find((a) => a.role === role);
     const isMine = assignment?.family_id === activeFamilyId;
-    const taken = !!currentName && !isMine;
+    const takenByOther = !!assignment && !isMine;
     const claimedColor = getFamilyColor(familyColors, assignment?.family_id)?.button;
     const mineColor = getFamilyColor(familyColors, activeFamilyId)?.button;
 
     return (
       <div>
         {confirmRole === role ? (
-          <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2 dark:border-sky-800 dark:bg-sky-950">
-            <p className="text-sm text-slate-700 dark:text-slate-300">
-              {isMine
-                ? `Release ${label.toLowerCase()} as ${activeFamilyName}?`
-                : `Claim ${label.toLowerCase()} as ${activeFamilyName}?`}
-            </p>
+          <div
+            className={`rounded-xl border p-3 space-y-2 ${
+              takenByOther
+                ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950"
+                : "border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950"
+            }`}
+          >
+            {takenByOther ? (
+              <>
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  Release {label.toLowerCase()} for {currentName}?
+                </p>
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  This clears their slot for the whole team. Only do this if {currentName} asked you to change it.
+                </p>
+              </>
+            ) : isMine ? (
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Release {label.toLowerCase()} as {activeFamilyName}?
+              </p>
+            ) : (
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                Claim {label.toLowerCase()} as {activeFamilyName}?
+              </p>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => handleClaim(role)}
-                className="touch-target flex-1 rounded-lg bg-sky-500 text-white font-medium disabled:opacity-50"
+                className={`touch-target flex-1 rounded-lg font-medium text-white disabled:opacity-50 ${
+                  takenByOther ? "bg-red-600" : "bg-sky-500"
+                }`}
               >
-                Confirm
+                {takenByOther ? "Release slot" : "Confirm"}
               </button>
               <button
                 type="button"
@@ -132,20 +154,20 @@ export function DaySheet({
         ) : (
           <button
             type="button"
-            disabled={!activeFamilyId || taken || busy}
+            disabled={!activeFamilyId || busy}
             onClick={() => setConfirmRole(role)}
             className={`touch-target w-full rounded-xl px-4 font-semibold disabled:opacity-50 ${
               isMine
                 ? mineColor ?? claimedColor ?? OPEN_SLOT_BUTTON
-                : taken
+                : takenByOther
                   ? claimedColor ?? "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                   : OPEN_SLOT_BUTTON
             }`}
           >
             {isMine
               ? `✓ ${label} — ${activeFamilyName} (tap to release)`
-              : taken
-                ? `${label}: ${currentName}`
+              : takenByOther
+                ? `${label}: ${currentName} (tap to release)`
                 : `I'll do ${label.toLowerCase()}`}
           </button>
         )}

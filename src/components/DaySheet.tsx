@@ -1,5 +1,6 @@
 "use client";
 
+import { exportSessionToCalendar } from "@/lib/calendar";
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
@@ -9,6 +10,7 @@ import { TimeInput } from "./TimeInput";
 
 interface DaySheetProps {
   session: SessionWithAssignments;
+  teamName: string;
   families: Family[];
   familyColors: Map<string, FamilyColorClasses>;
   locations: SavedLocation[];
@@ -28,6 +30,7 @@ interface DaySheetProps {
 
 export function DaySheet({
   session,
+  teamName,
   familyColors,
   locations,
   activeFamilyId,
@@ -51,6 +54,19 @@ export function DaySheet({
   const date = parseDateOnly(session.session_date);
   const drop = session.assignments.find((a) => a.role === "dropoff");
   const pick = session.assignments.find((a) => a.role === "pickup");
+
+  function handleAddToCalendar() {
+    exportSessionToCalendar(
+      {
+        ...session,
+        start_time: startTime,
+        end_time: endTime,
+        location_name: locationName,
+        location_notes: locationNotes.trim() || null,
+      },
+      teamName
+    );
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -159,6 +175,15 @@ export function DaySheet({
               Done
             </button>
           </div>
+          {!cancelled && (
+            <button
+              type="button"
+              onClick={handleAddToCalendar}
+              className="mt-2 text-sm font-medium text-sky-600 dark:text-sky-400"
+            >
+              Add to iPhone Calendar
+            </button>
+          )}
         </div>
 
         <div className="p-4 space-y-4 max-w-lg mx-auto">

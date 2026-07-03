@@ -337,6 +337,7 @@ export function WeekView({ slug }: WeekViewProps) {
       {openSession && (
         <DaySheet
           session={openSession}
+          teamName={data.team.name}
           families={data.families}
           familyColors={familyColors}
           locations={data.locations}

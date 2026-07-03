@@ -1,16 +1,28 @@
 "use client";
 
+import { getFamilyColor, type FamilyColorClasses } from "@/lib/familyColors";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   teamName: string;
   familyName: string | null;
+  familyId?: string | null;
+  familyColors?: Map<string, FamilyColorClasses>;
   onSwitchFamily: () => void;
   onManageTeam?: () => void;
 }
 
-export function Header({ teamName, familyName, onSwitchFamily, onManageTeam }: HeaderProps) {
+export function Header({
+  teamName,
+  familyName,
+  familyId,
+  familyColors,
+  onSwitchFamily,
+  onManageTeam,
+}: HeaderProps) {
+  const familyColor = getFamilyColor(familyColors ?? new Map(), familyId);
+
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur pt-[max(0.25rem,var(--safe-top))] dark:border-slate-700 dark:bg-slate-900/95">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-3 py-1.5">
@@ -40,7 +52,9 @@ export function Header({ teamName, familyName, onSwitchFamily, onManageTeam }: H
           <button
             type="button"
             onClick={onSwitchFamily}
-            className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 active:bg-sky-100 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
+            className={`rounded-full px-2.5 py-1 text-xs font-medium active:opacity-80 ${
+              familyColor?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            }`}
           >
             {familyName ?? "Pick family"} ›
           </button>

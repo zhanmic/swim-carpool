@@ -108,7 +108,17 @@ export function WeekView({ slug }: WeekViewProps) {
       alert("Could not save schedule");
       return;
     }
-    await mutate();
+    const updated = (await res.json()) as SessionWithAssignments;
+    await mutate(
+      (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          sessions: current.sessions.map((s) => (s.id === openSession.id ? { ...s, ...updated } : s)),
+        };
+      },
+      { revalidate: true }
+    );
   }
 
   function updateLocations(locations: SavedLocation[]) {

@@ -1,5 +1,6 @@
+import { formatDropoffPickupsLine } from "./dropoffPickups";
 import { parseDateOnly } from "./dates";
-import type { SessionWithAssignments } from "./types";
+import type { Family, SessionWithAssignments } from "./types";
 
 function escapeIcsText(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
@@ -20,7 +21,11 @@ function assignmentLine(session: SessionWithAssignments, role: "dropoff" | "pick
   return `${label}: ${name}`;
 }
 
-export function buildSessionCalendarEvent(session: SessionWithAssignments, teamName: string): string {
+export function buildSessionCalendarEvent(
+  session: SessionWithAssignments,
+  teamName: string,
+  families: Family[] = []
+): string {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
   const summary = escapeIcsText(`${teamName} — Swim Practice`);
   const location = escapeIcsText(session.location_name);
@@ -29,6 +34,8 @@ export function buildSessionCalendarEvent(session: SessionWithAssignments, teamN
     assignmentLine(session, "dropoff", "Drop-off"),
     assignmentLine(session, "pickup", "Pick-up"),
   ];
+  const pickupLine = formatDropoffPickupsLine(session.dropoff_pickups ?? {}, families);
+  if (pickupLine) descriptionParts.push(pickupLine);
   if (session.location_notes?.trim()) {
     descriptionParts.push(`Note: ${session.location_notes.trim()}`);
   }
@@ -75,7 +82,11 @@ export function calendarFilename(session: SessionWithAssignments, teamName: stri
   return `${safeTeam}-${session.session_date}.ics`;
 }
 
-export function exportSessionToCalendar(session: SessionWithAssignments, teamName: string): void {
-  const ics = buildSessionCalendarEvent(session, teamName);
+export function exportSessionToCalendar(
+  session: SessionWithAssignments,
+  teamName: string,
+  families: Family[] = []
+): void {
+  const ics = buildSessionCalendarEvent(session, teamName, families);
   downloadCalendarEvent(ics, calendarFilename(session, teamName));
 }

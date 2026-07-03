@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS saved_locations (
 CREATE INDEX IF NOT EXISTS idx_saved_locations_team ON saved_locations(team_id);
 
 ALTER TABLE saved_locations ADD COLUMN IF NOT EXISTS address TEXT;
+
+ALTER TABLE practice_sessions ADD COLUMN IF NOT EXISTS dropoff_pickups JSONB NOT NULL DEFAULT '{}'::jsonb;
 `;
 
 export function getSchemaStatements(): string[] {

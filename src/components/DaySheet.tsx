@@ -1,10 +1,16 @@
 "use client";
 
 import { exportSessionToCalendar } from "@/lib/calendar";
+import {
+  cleanDropoffPickups,
+  parseDropoffPickups,
+  subtractMinutes,
+  type DropoffPickups,
+} from "@/lib/dropoffPickups";
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { TimeInput } from "./TimeInput";
 
@@ -23,6 +29,7 @@ interface DaySheetProps {
     end_time: string;
     location_name: string;
     location_notes: string | null;
+    dropoff_pickups: DropoffPickups;
     cancelled: boolean;
   }) => Promise<void>;
   onClaim: (role: AssignmentRole, action: "claim" | "release") => Promise<void>;
@@ -31,6 +38,7 @@ interface DaySheetProps {
 export function DaySheet({
   session,
   teamName,
+  families,
   familyColors,
   locations,
   activeFamilyId,
@@ -44,6 +52,9 @@ export function DaySheet({
   const [endTime, setEndTime] = useState(() => snapTimeToStep(session.end_time));
   const [locationName, setLocationName] = useState(session.location_name);
   const [locationNotes, setLocationNotes] = useState(session.location_notes ?? "");
+  const [dropoffPickups, setDropoffPickups] = useState<DropoffPickups>(() =>
+    parseDropoffPickups(session.dropoff_pickups)
+  );
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
@@ -54,6 +65,35 @@ export function DaySheet({
   const date = parseDateOnly(session.session_date);
   const drop = session.assignments.find((a) => a.role === "dropoff");
   const pick = session.assignments.find((a) => a.role === "pickup");
+  const sortedFamilies = useMemo(
+    () => [...families].sort((a, b) => a.name.localeCompare(b.name)),
+    [families]
+  );
+
+  function setFamilyPickup(familyId: string, time: string) {
+    setDropoffPickups((current) => {
+      const next = { ...current };
+      if (!time.trim()) {
+        delete next[familyId];
+        return next;
+      }
+      next[familyId] = time;
+      return next;
+    });
+  }
+
+  function fillPickupsBeforePractice(minutes: number) {
+    const pickupTime = subtractMinutes(startTime, minutes);
+    setDropoffPickups((current) => {
+      const next = { ...current };
+      for (const family of sortedFamilies) {
+        if (!next[family.id]?.trim()) {
+          next[family.id] = pickupTime;
+        }
+      }
+      return next;
+    });
+  }
 
   function handleAddToCalendar() {
     exportSessionToCalendar(
@@ -63,8 +103,10 @@ export function DaySheet({
         end_time: endTime,
         location_name: locationName,
         location_notes: locationNotes.trim() || null,
+        dropoff_pickups: cleanDropoffPickups(dropoffPickups),
       },
-      teamName
+      teamName,
+      families
     );
   }
 
@@ -76,6 +118,7 @@ export function DaySheet({
         end_time: endTime,
         location_name: locationName,
         location_notes: locationNotes.trim() || null,
+        dropoff_pickups: cleanDropoffPickups(dropoffPickups),
         cancelled,
       });
     } finally {
@@ -230,19 +273,56 @@ export function DaySheet({
             </div>
           )}
 
-          <label className="block rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-800 dark:bg-violet-950/40">
+          <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-800 dark:bg-violet-950/40">
             <span className="text-sm font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
-            <p className="mt-0.5 text-xs text-violet-700/80 dark:text-violet-300/80">
-              e.g. extra kids on pickup only, or drop-off only.
-            </p>
-            <input
-              type="text"
-              value={locationNotes}
-              onChange={(e) => setLocationNotes(e.target.value)}
-              placeholder="Smith family +2 on pickup"
-              className="mt-2 w-full rounded-lg border border-violet-200 bg-white px-3 py-2 text-base dark:border-violet-700 dark:bg-slate-900"
-            />
-          </label>
+            {!cancelled && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-violet-800 dark:text-violet-300">
+                    Drop-off: pick up from home
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => fillPickupsBeforePractice(15)}
+                    className="shrink-0 text-xs font-medium text-sky-600 dark:text-sky-400"
+                  >
+                    15 min before practice
+                  </button>
+                </div>
+                <ul className="space-y-2">
+                  {sortedFamilies.map((family) => (
+                    <li key={family.id} className="flex items-center gap-2">
+                      <span
+                        className={`w-20 shrink-0 truncate text-sm font-medium ${getFamilyColor(familyColors, family.id)?.text ?? "text-slate-700 dark:text-slate-300"}`}
+                      >
+                        {family.name}
+                      </span>
+                      <TimeInput
+                        value={dropoffPickups[family.id] ?? ""}
+                        onChange={(time) => setFamilyPickup(family.id, time)}
+                        className="w-28 rounded-lg border border-violet-200 bg-white px-2 py-1.5 text-sm dark:border-violet-700 dark:bg-slate-900"
+                      />
+                      {family.home_label && (
+                        <span className="min-w-0 truncate text-xs text-violet-700/70 dark:text-violet-300/70">
+                          {family.home_label}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <label className={`block ${!cancelled ? "mt-3" : "mt-2"}`}>
+              <span className="text-xs font-medium text-violet-800 dark:text-violet-300">Other notes</span>
+              <input
+                type="text"
+                value={locationNotes}
+                onChange={(e) => setLocationNotes(e.target.value)}
+                placeholder="e.g. extra kids on pickup only"
+                className="mt-1 w-full rounded-lg border border-violet-200 bg-white px-3 py-2 text-base dark:border-violet-700 dark:bg-slate-900"
+              />
+            </label>
+          </div>
 
           {!cancelled && (
           <div className="block">

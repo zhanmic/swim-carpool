@@ -1,16 +1,18 @@
 import { formatDayLabel, formatTime12, parseDateOnly } from "./dates";
-import type { SessionWithAssignments, Team } from "./types";
-
-function roleLabel(role: "dropoff" | "pickup"): string {
-  return role === "dropoff" ? "Drop-off" : "Pick-up";
-}
+import { formatDropoffPickupsLine } from "./dropoffPickups";
+import type { Family, SessionWithAssignments, Team } from "./types";
 
 function familyForRole(session: SessionWithAssignments, role: "dropoff" | "pickup"): string {
   const a = session.assignments.find((x) => x.role === role);
   return a?.family_name ?? "OPEN";
 }
 
-export function formatWeekSummary(team: Team, sessions: SessionWithAssignments[], weekStart: string): string {
+export function formatWeekSummary(
+  team: Team,
+  sessions: SessionWithAssignments[],
+  families: Family[],
+  weekStart: string
+): string {
   const lines: string[] = [`🏊 ${team.name} — week of ${weekStart}`, ""];
 
   for (const session of sessions) {
@@ -27,6 +29,8 @@ export function formatWeekSummary(team: Team, sessions: SessionWithAssignments[]
     const pick = familyForRole(session, "pickup");
     lines.push(`${day}: ${time} @ ${session.location_name}`);
     lines.push(`  Drop-off: ${drop} | Pick-up: ${pick}`);
+    const pickupLine = formatDropoffPickupsLine(session.dropoff_pickups ?? {}, families);
+    if (pickupLine) lines.push(`  ${pickupLine}`);
     if (session.location_notes?.trim()) {
       lines.push(`  Note: ${session.location_notes.trim()}`);
     }

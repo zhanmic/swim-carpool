@@ -1,5 +1,9 @@
 import { formatTime12, snapTimeToStep } from "./dates";
-import type { Family } from "./types";
+import type { Assignment, Family } from "./types";
+
+export function dropoffDriverFamilyId(session: { assignments?: Assignment[] }): string | null {
+  return session.assignments?.find((a) => a.role === "dropoff")?.family_id ?? null;
+}
 
 export type DropoffPickups = Record<string, string>;
 
@@ -24,9 +28,13 @@ export function parseDropoffPickups(value: unknown): DropoffPickups {
   return {};
 }
 
-export function cleanDropoffPickups(pickups: DropoffPickups): DropoffPickups {
+export function cleanDropoffPickups(
+  pickups: DropoffPickups,
+  excludeFamilyId?: string | null
+): DropoffPickups {
   const cleaned: DropoffPickups = {};
   for (const [familyId, time] of Object.entries(pickups)) {
+    if (excludeFamilyId && familyId === excludeFamilyId) continue;
     const trimmed = time.trim();
     if (trimmed) cleaned[familyId] = snapTimeToStep(trimmed);
   }
@@ -42,21 +50,31 @@ export function subtractMinutes(time: string, minutes: number): string {
   return snapTimeToStep(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`);
 }
 
-export function defaultDropoffPickups(startTime: string, families: Family[]): DropoffPickups {
+export function defaultDropoffPickups(
+  startTime: string,
+  families: Family[],
+  dropoffFamilyId?: string | null
+): DropoffPickups {
   const pickupTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
-  return Object.fromEntries(families.map((family) => [family.id, pickupTime]));
+  return Object.fromEntries(
+    families
+      .filter((family) => family.id !== dropoffFamilyId)
+      .map((family) => [family.id, pickupTime])
+  );
 }
 
 export function resolveDropoffPickups(
   stored: DropoffPickups | null | undefined,
   startTime: string,
-  families: Family[]
+  families: Family[],
+  dropoffFamilyId?: string | null
 ): DropoffPickups {
-  const parsed = cleanDropoffPickups(parseDropoffPickups(stored));
+  const parsed = cleanDropoffPickups(parseDropoffPickups(stored), dropoffFamilyId);
   const defaultTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
   const resolved: DropoffPickups = {};
 
   for (const family of families) {
+    if (dropoffFamilyId && family.id === dropoffFamilyId) continue;
     const saved = parsed[family.id]?.trim();
     resolved[family.id] = saved ? snapTimeToStep(saved) : defaultTime;
   }
@@ -64,11 +82,16 @@ export function resolveDropoffPickups(
   return resolved;
 }
 
-export function formatDropoffPickupsLine(pickups: DropoffPickups, families: Family[]): string | null {
-  const cleaned = cleanDropoffPickups(pickups);
+export function formatDropoffPickupsLine(
+  pickups: DropoffPickups,
+  families: Family[],
+  dropoffFamilyId?: string | null
+): string | null {
+  const cleaned = cleanDropoffPickups(pickups, dropoffFamilyId);
   const parts = [...families]
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((family) => {
+      if (dropoffFamilyId && family.id === dropoffFamilyId) return [];
       const time = cleaned[family.id];
       return time ? [`${family.name} ${formatTime12(time)}`] : [];
     });
@@ -82,13 +105,16 @@ export function formatDriverNotesPreview(
     start_time: string;
     location_notes?: string | null;
     dropoff_pickups?: DropoffPickups | null;
+    assignments?: Assignment[];
   },
   families: Family[]
 ): string | null {
+  const dropoffFamilyId = dropoffDriverFamilyId(session);
   const parts: string[] = [];
   const pickupLine = formatDropoffPickupsLine(
-    resolveDropoffPickups(session.dropoff_pickups, session.start_time, families),
-    families
+    resolveDropoffPickups(session.dropoff_pickups, session.start_time, families, dropoffFamilyId),
+    families,
+    dropoffFamilyId
   );
   if (pickupLine) parts.push(pickupLine);
   if (session.location_notes?.trim()) parts.push(session.location_notes.trim());
@@ -100,6 +126,7 @@ export function hasDriverNotes(
     start_time: string;
     location_notes?: string | null;
     dropoff_pickups?: DropoffPickups | null;
+    assignments?: Assignment[];
   },
   families: Family[]
 ): boolean {

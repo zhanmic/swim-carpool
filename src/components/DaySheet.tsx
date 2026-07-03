@@ -11,7 +11,7 @@ import {
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { TimeInput } from "./TimeInput";
 
@@ -53,8 +53,26 @@ export function DaySheet({
   const [endTime, setEndTime] = useState(() => snapTimeToStep(session.end_time));
   const [locationName, setLocationName] = useState(session.location_name);
   const [locationNotes, setLocationNotes] = useState(session.location_notes ?? "");
+  const date = parseDateOnly(session.session_date);
+  const drop = session.assignments.find((a) => a.role === "dropoff");
+  const pick = session.assignments.find((a) => a.role === "pickup");
+  const dropoffFamilyId = drop?.family_id ?? null;
+  const sortedFamilies = useMemo(
+    () => [...families].sort((a, b) => a.name.localeCompare(b.name)),
+    [families]
+  );
+  const familiesNeedingPickup = useMemo(
+    () => sortedFamilies.filter((family) => family.id !== dropoffFamilyId),
+    [sortedFamilies, dropoffFamilyId]
+  );
+
   const [dropoffPickups, setDropoffPickups] = useState<DropoffPickups>(() =>
-    resolveDropoffPickups(session.dropoff_pickups, snapTimeToStep(session.start_time), families)
+    resolveDropoffPickups(
+      session.dropoff_pickups,
+      snapTimeToStep(session.start_time),
+      families,
+      drop?.family_id ?? null
+    )
   );
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
@@ -63,13 +81,29 @@ export function DaySheet({
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
 
-  const date = parseDateOnly(session.session_date);
-  const drop = session.assignments.find((a) => a.role === "dropoff");
-  const pick = session.assignments.find((a) => a.role === "pickup");
-  const sortedFamilies = useMemo(
-    () => [...families].sort((a, b) => a.name.localeCompare(b.name)),
-    [families]
-  );
+  useEffect(() => {
+    setDropoffPickups((current) => {
+      const defaultTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
+      const next = { ...current };
+      let changed = false;
+
+      if (dropoffFamilyId && next[dropoffFamilyId]) {
+        delete next[dropoffFamilyId];
+        changed = true;
+      }
+
+      for (const family of familiesNeedingPickup) {
+        if (!next[family.id]?.trim()) {
+          next[family.id] = defaultTime;
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+    // Only adjust pickups when the drop-off driver assignment changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropoffFamilyId]);
 
   function setFamilyPickup(familyId: string, time: string) {
     setDropoffPickups((current) => {
@@ -88,7 +122,7 @@ export function DaySheet({
       const oldDefault = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
       const newDefault = subtractMinutes(next, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
       const updated = { ...current };
-      for (const family of sortedFamilies) {
+      for (const family of familiesNeedingPickup) {
         const currentTime = updated[family.id]?.trim();
         if (!currentTime || currentTime === oldDefault) {
           updated[family.id] = newDefault;
@@ -103,7 +137,7 @@ export function DaySheet({
     const pickupTime = subtractMinutes(startTime, DEFAULT_HOME_PICKUP_MINUTES_BEFORE);
     setDropoffPickups((current) => {
       const next = { ...current };
-      for (const family of sortedFamilies) {
+      for (const family of familiesNeedingPickup) {
         if (!next[family.id]?.trim()) {
           next[family.id] = pickupTime;
         }
@@ -120,7 +154,7 @@ export function DaySheet({
         end_time: endTime,
         location_name: locationName,
         location_notes: locationNotes.trim() || null,
-        dropoff_pickups: cleanDropoffPickups(dropoffPickups),
+        dropoff_pickups: cleanDropoffPickups(dropoffPickups, dropoffFamilyId),
       },
       teamName,
       families
@@ -135,7 +169,7 @@ export function DaySheet({
         end_time: endTime,
         location_name: locationName,
         location_notes: locationNotes.trim() || null,
-        dropoff_pickups: cleanDropoffPickups(dropoffPickups),
+        dropoff_pickups: cleanDropoffPickups(dropoffPickups, dropoffFamilyId),
         cancelled,
       });
     } finally {
@@ -292,7 +326,7 @@ export function DaySheet({
 
           <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3 dark:border-violet-800 dark:bg-violet-950/40">
             <span className="text-sm font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
-            {!cancelled && (
+            {!cancelled && familiesNeedingPickup.length > 0 && (
               <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium text-violet-800 dark:text-violet-300">
@@ -306,8 +340,13 @@ export function DaySheet({
                     30 min before practice
                   </button>
                 </div>
+                {dropoffFamilyId && (
+                  <p className="text-xs text-violet-700/80 dark:text-violet-300/80">
+                    {drop?.family_name} is driving — no home pickup time needed.
+                  </p>
+                )}
                 <ul className="space-y-2">
-                  {sortedFamilies.map((family) => (
+                  {familiesNeedingPickup.map((family) => (
                     <li key={family.id} className="flex items-center gap-2">
                       <span
                         className={`w-20 shrink-0 truncate text-sm font-medium ${getFamilyColor(familyColors, family.id)?.text ?? "text-slate-700 dark:text-slate-300"}`}

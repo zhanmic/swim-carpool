@@ -230,14 +230,17 @@ export function WeekView({ slug }: WeekViewProps) {
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Week of {weekStart}
             </span>
-            <button
-              type="button"
-              onClick={goToCurrentWeek}
-              disabled={isCurrentWeek}
-              className="touch-target-sm text-sm font-semibold text-sky-600 disabled:opacity-35 dark:text-sky-400"
-            >
-              This week
-            </button>
+            {isCurrentWeek ? (
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Current week</span>
+            ) : (
+              <button
+                type="button"
+                onClick={goToCurrentWeek}
+                className="touch-target-sm text-sm font-semibold text-sky-600 dark:text-sky-400"
+              >
+                Go to current week
+              </button>
+            )}
           </div>
           <button
             type="button"

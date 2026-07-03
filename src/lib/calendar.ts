@@ -1,4 +1,4 @@
-import { formatDropoffPickupsLine } from "./dropoffPickups";
+import { formatDropoffPickupsLine, resolveDropoffPickups } from "./dropoffPickups";
 import { parseDateOnly } from "./dates";
 import type { Family, SessionWithAssignments } from "./types";
 
@@ -34,7 +34,10 @@ export function buildSessionCalendarEvent(
     assignmentLine(session, "dropoff", "Drop-off"),
     assignmentLine(session, "pickup", "Pick-up"),
   ];
-  const pickupLine = formatDropoffPickupsLine(session.dropoff_pickups ?? {}, families);
+  const pickupLine = formatDropoffPickupsLine(
+    resolveDropoffPickups(session.dropoff_pickups, session.start_time, families),
+    families
+  );
   if (pickupLine) descriptionParts.push(pickupLine);
   if (session.location_notes?.trim()) {
     descriptionParts.push(`Note: ${session.location_notes.trim()}`);

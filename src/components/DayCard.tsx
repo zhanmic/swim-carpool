@@ -1,7 +1,12 @@
 "use client";
 
 import { formatTimeRangeCompact, isToday, parseDateOnly } from "@/lib/dates";
-import { formatDriverNotesPreview, hasDriverNotes } from "@/lib/dropoffPickups";
+import {
+  hasHomePickupNotes,
+  hasOtherDriverNotes,
+  homePickupPreview,
+  otherNotesPreview,
+} from "@/lib/dropoffPickups";
 import { getFamilyColor, OPEN_SLOT_PILL, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SessionWithAssignments } from "@/lib/types";
 
@@ -31,8 +36,10 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
   const today = isToday(session.session_date);
   const drop = assignmentLabel(session, "dropoff");
   const pick = assignmentLabel(session, "pickup");
-  const notePreview = formatDriverNotesPreview(session, families);
-  const showNote = hasDriverNotes(session, families);
+  const showHomePickup = hasHomePickupNotes(session, families);
+  const showOtherNote = hasOtherDriverNotes(session);
+  const homePickupLine = homePickupPreview(session, families);
+  const otherNoteLine = otherNotesPreview(session);
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -84,19 +91,35 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                 {pick.text}
               </span>
             </span>
-            {showNote && (
+            {showHomePickup && (
+              <span
+                className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                title={homePickupLine ?? undefined}
+                aria-label={homePickupLine ?? "Home pickup times"}
+              >
+                Home
+              </span>
+            )}
+            {showOtherNote && (
               <span
                 className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300"
-                title={notePreview ?? undefined}
-                aria-label={`Note: ${notePreview}`}
+                title={otherNoteLine ?? undefined}
+                aria-label={otherNoteLine ? `Note: ${otherNoteLine}` : "Other note"}
               >
                 Note
               </span>
             )}
           </div>
 
-          {notePreview && (
-            <p className="mt-2 line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{notePreview}</p>
+          {(homePickupLine || otherNoteLine) && (
+            <div className="mt-2 space-y-0.5">
+              {homePickupLine && (
+                <p className="line-clamp-1 text-sm text-sky-800 dark:text-sky-300">{homePickupLine}</p>
+              )}
+              {otherNoteLine && (
+                <p className="line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{otherNoteLine}</p>
+              )}
+            </div>
           )}
         </>
       )}

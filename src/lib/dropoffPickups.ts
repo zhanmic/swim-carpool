@@ -89,6 +89,40 @@ export function formatDriverNotesPreview(
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+export function homePickupPreview(
+  session: {
+    dropoff_pickups?: DropoffPickups | null;
+    assignments?: Assignment[];
+  },
+  families: Family[]
+): string | null {
+  const dropoffFamilyId = dropoffDriverFamilyId(session);
+  return formatDropoffPickupsLine(
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
+    families,
+    dropoffFamilyId
+  );
+}
+
+export function otherNotesPreview(session: { location_notes?: string | null }): string | null {
+  const trimmed = session.location_notes?.trim();
+  return trimmed ? trimmed : null;
+}
+
+export function hasHomePickupNotes(
+  session: {
+    dropoff_pickups?: DropoffPickups | null;
+    assignments?: Assignment[];
+  },
+  families: Family[]
+): boolean {
+  return homePickupPreview(session, families) !== null;
+}
+
+export function hasOtherDriverNotes(session: { location_notes?: string | null }): boolean {
+  return otherNotesPreview(session) !== null;
+}
+
 export function hasDriverNotes(
   session: {
     start_time: string;
@@ -98,5 +132,5 @@ export function hasDriverNotes(
   },
   families: Family[]
 ): boolean {
-  return formatDriverNotesPreview(session, families) !== null;
+  return hasHomePickupNotes(session, families) || hasOtherDriverNotes(session);
 }

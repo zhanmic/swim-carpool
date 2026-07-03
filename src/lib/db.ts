@@ -344,6 +344,19 @@ export async function claimAssignment(sessionId: string, familyId: string, role:
   return { ok: true };
 }
 
+export async function releaseAssignment(sessionId: string, role: AssignmentRole): Promise<{ ok: boolean; error?: string }> {
+  const sql = getSql();
+  const result = await sql`
+    DELETE FROM assignments
+    WHERE session_id = ${sessionId} AND role = ${role}
+    RETURNING id
+  `;
+  if (result.length === 0) {
+    return { ok: false, error: "Slot is already open" };
+  }
+  return { ok: true };
+}
+
 export async function unclaimAssignment(sessionId: string, familyId: string, role: AssignmentRole): Promise<{ ok: boolean; error?: string }> {
   const sql = getSql();
   const result = await sql`

@@ -278,8 +278,25 @@ export function DaySheet({
                   Add to calendar
                 </button>
               )}
-              <button type="button" onClick={onClose} className="touch-target-sm text-xs font-medium text-sky-600 dark:text-sky-400">
-                Done
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="touch-target-sm rounded-full text-slate-500 active:bg-slate-100 dark:text-slate-400 dark:active:bg-slate-800"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="h-5 w-5"
+                  aria-hidden
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
           </div>

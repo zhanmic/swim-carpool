@@ -1,31 +1,45 @@
 "use client";
 
+import type { Family } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 interface RenameTeamSheetProps {
   teamName: string;
   scheduleUrl?: string | null;
+  families: Family[];
   slug: string;
   onClose: () => void;
   onUpdated: (team: { name: string; schedule_url: string | null }) => void;
+  onFamiliesUpdated: (families: Family[]) => void;
 }
 
 export function RenameTeamSheet({
   teamName,
   scheduleUrl,
+  families: initialFamilies,
   slug,
   onClose,
   onUpdated,
+  onFamiliesUpdated,
 }: RenameTeamSheetProps) {
   const router = useRouter();
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
+  const [families, setFamilies] = useState(initialFamilies);
+  const [newFamilyName, setNewFamilyName] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [familyBusyId, setFamilyBusyId] = useState<string | null>(null);
+  const [addFamilyBusy, setAddFamilyBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [familyError, setFamilyError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFamilies(initialFamilies);
+  }, [initialFamilies]);
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -53,6 +67,92 @@ export function RenameTeamSheet({
       onClose();
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleRenameFamily(familyId: string, nextName: string) {
+    const trimmed = nextName.trim();
+    const original = initialFamilies.find((family) => family.id === familyId);
+    if (!original || original.name === trimmed) return;
+    if (!trimmed) {
+      setFamilies(initialFamilies);
+      setFamilyError("Family name is required");
+      return;
+    }
+
+    setFamilyBusyId(familyId);
+    setFamilyError(null);
+    try {
+      const res = await fetch(`/api/teams/${slug}/families`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "rename", id: familyId, name: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFamilyError(data.error ?? "Could not rename family");
+        setFamilies(initialFamilies);
+        return;
+      }
+      setFamilies(data.families as Family[]);
+      onFamiliesUpdated(data.families as Family[]);
+    } finally {
+      setFamilyBusyId(null);
+    }
+  }
+
+  async function handleAddFamily(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = newFamilyName.trim();
+    if (!trimmed) return;
+
+    setAddFamilyBusy(true);
+    setFamilyError(null);
+    try {
+      const res = await fetch(`/api/teams/${slug}/families`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFamilyError(data.error ?? "Could not add family");
+        return;
+      }
+      setNewFamilyName("");
+      setFamilies(data.families as Family[]);
+      onFamiliesUpdated(data.families as Family[]);
+    } finally {
+      setAddFamilyBusy(false);
+    }
+  }
+
+  async function handleRemoveFamily(family: Family) {
+    if (
+      !confirm(
+        `Remove ${family.name}? Their driver slots and home pickup times will be cleared.`
+      )
+    ) {
+      return;
+    }
+
+    setFamilyBusyId(family.id);
+    setFamilyError(null);
+    try {
+      const res = await fetch(`/api/teams/${slug}/families`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id: family.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFamilyError(data.error ?? "Could not remove family");
+        return;
+      }
+      setFamilies(data.families as Family[]);
+      onFamiliesUpdated(data.families as Family[]);
+    } finally {
+      setFamilyBusyId(null);
     }
   }
 
@@ -144,6 +244,63 @@ export function RenameTeamSheet({
               {busy ? "Saving…" : "Save"}
             </button>
           </form>
+
+          <div className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Families</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Rename, add, or remove families on this team.
+              </p>
+            </div>
+
+            <ul className="space-y-2">
+              {families.map((family) => (
+                <li key={family.id} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={family.name}
+                    disabled={familyBusyId === family.id}
+                    onChange={(e) => {
+                      setFamilies((current) =>
+                        current.map((item) =>
+                          item.id === family.id ? { ...item, name: e.target.value } : item
+                        )
+                      );
+                    }}
+                    onBlur={(e) => void handleRenameFamily(family.id, e.target.value)}
+                    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
+                  />
+                  <button
+                    type="button"
+                    disabled={families.length <= 1 || familyBusyId === family.id}
+                    onClick={() => void handleRemoveFamily(family)}
+                    className="shrink-0 text-xs font-medium text-red-600 disabled:opacity-40 dark:text-red-400"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <form onSubmit={handleAddFamily} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newFamilyName}
+                onChange={(e) => setNewFamilyName(e.target.value)}
+                placeholder="New family name"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
+              />
+              <button
+                type="submit"
+                disabled={addFamilyBusy || !newFamilyName.trim()}
+                className="touch-target-compact shrink-0 rounded-lg bg-slate-800 px-3 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-700"
+              >
+                {addFamilyBusy ? "…" : "Add"}
+              </button>
+            </form>
+
+            {familyError && <p className="text-sm text-red-600">{familyError}</p>}
+          </div>
 
           <form onSubmit={handleDelete} className="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-700">
             <div>

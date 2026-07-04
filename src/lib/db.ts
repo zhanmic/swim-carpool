@@ -104,6 +104,76 @@ export async function getFamilies(teamId: string): Promise<Family[]> {
   return rows as Family[];
 }
 
+export async function addFamily(teamId: string, name: string): Promise<{ family: Family | null; error?: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) return { family: null, error: "Family name is required" };
+
+  const sql = getSql();
+  const existing = await sql`
+    SELECT id FROM families WHERE team_id = ${teamId} AND name = ${trimmed} LIMIT 1
+  `;
+  if (existing.length > 0) {
+    return { family: null, error: "A family with that name already exists" };
+  }
+
+  const rows = await sql`
+    INSERT INTO families (team_id, name)
+    VALUES (${teamId}, ${trimmed})
+    RETURNING id, team_id, name, home_label
+  `;
+  return { family: (rows[0] as Family | undefined) ?? null };
+}
+
+export async function updateFamily(
+  teamId: string,
+  familyId: string,
+  name: string
+): Promise<{ family: Family | null; error?: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) return { family: null, error: "Family name is required" };
+
+  const sql = getSql();
+  const duplicate = await sql`
+    SELECT id FROM families
+    WHERE team_id = ${teamId} AND name = ${trimmed} AND id != ${familyId}
+    LIMIT 1
+  `;
+  if (duplicate.length > 0) {
+    return { family: null, error: "A family with that name already exists" };
+  }
+
+  const rows = await sql`
+    UPDATE families
+    SET name = ${trimmed}
+    WHERE id = ${familyId} AND team_id = ${teamId}
+    RETURNING id, team_id, name, home_label
+  `;
+  if (!rows.length) {
+    return { family: null, error: "Family not found" };
+  }
+  return { family: rows[0] as Family };
+}
+
+export async function deleteFamily(
+  teamId: string,
+  familyId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const families = await getFamilies(teamId);
+  if (families.length <= 1) {
+    return { ok: false, error: "Cannot remove the last family" };
+  }
+
+  const sql = getSql();
+  const rows = await sql`
+    DELETE FROM families WHERE id = ${familyId} AND team_id = ${teamId} RETURNING id
+  `;
+  if (!rows.length) {
+    return { ok: false, error: "Family not found" };
+  }
+
+  return { ok: true };
+}
+
 export async function getSavedLocations(teamId: string): Promise<SavedLocation[]> {
   const sql = getSql();
   const rows = await sql`

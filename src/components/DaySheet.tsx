@@ -275,7 +275,7 @@ export function DaySheet({
                   onClick={handleAddToCalendar}
                   className="text-xs font-medium text-sky-600 dark:text-sky-400"
                 >
-                  Add calendar
+                  Add to calendar
                 </button>
               )}
               <button type="button" onClick={onClose} className="touch-target-sm text-xs font-medium text-sky-600 dark:text-sky-400">

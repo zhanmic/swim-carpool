@@ -59,8 +59,25 @@ export function TimeSheet({ slug, weekStart, sessions, onClose, onWeekApplied }:
       <div className="rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
           <h2 className="text-lg font-semibold dark:text-slate-100">Edit time</h2>
-          <button type="button" onClick={onClose} className="text-sky-600 font-medium dark:text-sky-400">
-            Done
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="touch-target-sm rounded-full text-slate-500 active:bg-slate-100 dark:text-slate-400 dark:active:bg-slate-800"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="h-5 w-5"
+              aria-hidden
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
         </div>
 

@@ -252,7 +252,9 @@ export function DaySheet({
             type="button"
             disabled={!activeFamilyId || busy}
             onClick={() => setConfirmRole(role)}
-            className={`touch-target-compact w-full rounded-xl px-3 text-sm font-semibold disabled:opacity-50 ${
+            className={`touch-target-compact w-full min-w-0 rounded-xl px-2 text-sm font-semibold disabled:opacity-50 ${
+              isMine ? "flex items-center gap-1.5 justify-start" : ""
+            } ${
               isMine
                 ? mineColor ?? claimedColor ?? OPEN_SLOT_BUTTON
                 : takenByOther
@@ -261,14 +263,16 @@ export function DaySheet({
             }`}
           >
             {isMine ? (
-              <span className="flex items-center justify-center gap-2">
+              <>
                 <DriverIcon className="h-4 w-4 shrink-0" />
-                <span>
-                  {label}: {activeFamilyName} (tap to release)
+                <span className="min-w-0 truncate">
+                  {role === "dropoff" ? "Drop off" : "Pick up"}: {activeFamilyName} (tap to release)
                 </span>
-              </span>
+              </>
             ) : takenByOther ? (
-              `${label}: ${currentName} (tap to release)`
+              <span className="block min-w-0 truncate">
+                {role === "dropoff" ? "Drop off" : "Pick up"}: {currentName} (tap to release)
+              </span>
             ) : (
               `I'll do ${label.toLowerCase()}`
             )}

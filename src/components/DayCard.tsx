@@ -91,13 +91,13 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
           <div className="mt-1.5 flex h-5 shrink-0 min-w-0 items-center gap-2">
             <div className="flex min-w-0 flex-1 items-center gap-x-3 text-sm">
               <span className="whitespace-nowrap">
-                <span className="text-slate-500 dark:text-slate-400">Drop </span>
+                <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
                 <span className={`rounded-full px-1.5 py-px text-xs font-medium ${slotClass(drop.open, drop.familyId, familyColors)}`}>
                   {drop.text}
                 </span>
               </span>
               <span className="whitespace-nowrap">
-                <span className="text-slate-500 dark:text-slate-400">Pick </span>
+                <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
                 <span className={`rounded-full px-1.5 py-px text-xs font-medium ${slotClass(pick.open, pick.familyId, familyColors)}`}>
                   {pick.text}
                 </span>

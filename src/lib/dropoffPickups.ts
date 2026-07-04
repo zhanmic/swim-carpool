@@ -1,4 +1,5 @@
 import { formatTime12, snapTimeToStep } from "./dates";
+import { skippingFamilyIds } from "./absences";
 import type { Assignment, Family } from "./types";
 
 export function dropoffDriverFamilyId(session: { assignments?: Assignment[] }): string | null {
@@ -30,11 +31,13 @@ export function parseDropoffPickups(value: unknown): DropoffPickups {
 
 export function cleanDropoffPickups(
   pickups: DropoffPickups,
-  excludeFamilyId?: string | null
+  excludeFamilyId?: string | null,
+  excludeFamilyIds?: Set<string>
 ): DropoffPickups {
   const cleaned: DropoffPickups = {};
   for (const [familyId, time] of Object.entries(pickups)) {
     if (excludeFamilyId && familyId === excludeFamilyId) continue;
+    if (excludeFamilyIds?.has(familyId)) continue;
     const trimmed = time.trim();
     if (trimmed) cleaned[familyId] = snapTimeToStep(trimmed);
   }
@@ -53,13 +56,15 @@ export function subtractMinutes(time: string, minutes: number): string {
 export function formatDropoffPickupsLine(
   pickups: DropoffPickups,
   families: Family[],
-  dropoffFamilyId?: string | null
+  dropoffFamilyId?: string | null,
+  skipFamilyIds?: Set<string>
 ): string | null {
-  const cleaned = cleanDropoffPickups(pickups, dropoffFamilyId);
+  const cleaned = cleanDropoffPickups(pickups, dropoffFamilyId, skipFamilyIds);
   const parts = [...families]
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((family) => {
       if (dropoffFamilyId && family.id === dropoffFamilyId) return [];
+      if (skipFamilyIds?.has(family.id)) return [];
       const time = cleaned[family.id];
       return time ? [`${family.name} ${formatTime12(time)}`] : [];
     });
@@ -73,15 +78,18 @@ export function homePickupPreviewCompact(
   session: {
     dropoff_pickups?: DropoffPickups | null;
     assignments?: Assignment[];
+    absences?: { family_id: string; family_name?: string }[];
   },
   families: Family[]
 ): string | null {
   const dropoffFamilyId = dropoffDriverFamilyId(session);
-  const cleaned = cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId);
+  const skipIds = skippingFamilyIds(session);
+  const cleaned = cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId, skipIds);
   const parts = [...families]
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((family) => {
       if (dropoffFamilyId && family.id === dropoffFamilyId) return [];
+      if (skipIds.has(family.id)) return [];
       const time = cleaned[family.id];
       return time ? [`${family.name} ${formatTime12(time)}`] : [];
     });
@@ -94,15 +102,18 @@ export function formatDriverNotesPreview(
     location_notes?: string | null;
     dropoff_pickups?: DropoffPickups | null;
     assignments?: Assignment[];
+    absences?: { family_id: string; family_name?: string }[];
   },
   families: Family[]
 ): string | null {
   const dropoffFamilyId = dropoffDriverFamilyId(session);
+  const skipIds = skippingFamilyIds(session);
   const parts: string[] = [];
   const pickupLine = formatDropoffPickupsLine(
-    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId, skipIds),
     families,
-    dropoffFamilyId
+    dropoffFamilyId,
+    skipIds
   );
   if (pickupLine) parts.push(pickupLine);
   if (session.location_notes?.trim()) parts.push(session.location_notes.trim());
@@ -113,14 +124,17 @@ export function homePickupPreview(
   session: {
     dropoff_pickups?: DropoffPickups | null;
     assignments?: Assignment[];
+    absences?: { family_id: string; family_name?: string }[];
   },
   families: Family[]
 ): string | null {
   const dropoffFamilyId = dropoffDriverFamilyId(session);
+  const skipIds = skippingFamilyIds(session);
   return formatDropoffPickupsLine(
-    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId, skipIds),
     families,
-    dropoffFamilyId
+    dropoffFamilyId,
+    skipIds
   );
 }
 
@@ -133,6 +147,7 @@ export function hasHomePickupNotes(
   session: {
     dropoff_pickups?: DropoffPickups | null;
     assignments?: Assignment[];
+    absences?: { family_id: string; family_name?: string }[];
   },
   families: Family[]
 ): boolean {
@@ -149,6 +164,7 @@ export function hasDriverNotes(
     location_notes?: string | null;
     dropoff_pickups?: DropoffPickups | null;
     assignments?: Assignment[];
+    absences?: { family_id: string; family_name?: string }[];
   },
   families: Family[]
 ): boolean {

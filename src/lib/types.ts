@@ -25,6 +25,11 @@ export interface RecurringTemplate {
   cancelled: boolean;
 }
 
+export interface SessionAbsence {
+  family_id: string;
+  family_name?: string;
+}
+
 export interface PracticeSession {
   id: string;
   team_id: string;
@@ -47,6 +52,7 @@ export interface Assignment {
 
 export interface SessionWithAssignments extends PracticeSession {
   assignments: Assignment[];
+  absences: SessionAbsence[];
 }
 
 export interface WeekData {

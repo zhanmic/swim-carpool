@@ -1,6 +1,7 @@
 "use client";
 
 import { exportSessionToCalendar } from "@/lib/calendar";
+import { isFamilySkipping, skippingFamilyIds, skippingFamilyNames } from "@/lib/absences";
 import {
   cleanDropoffPickups,
   DEFAULT_HOME_PICKUP_MINUTES_BEFORE,
@@ -55,6 +56,7 @@ interface DaySheetProps {
     cancelled: boolean;
   }) => Promise<void>;
   onClaim: (role: AssignmentRole, action: "claim" | "release") => Promise<void>;
+  onSkip: (action: "mark" | "clear") => Promise<void>;
 }
 
 export function DaySheet({
@@ -69,6 +71,7 @@ export function DaySheet({
   onManageLocations,
   onSaveSchedule,
   onClaim,
+  onSkip,
 }: DaySheetProps) {
   const [startTime, setStartTime] = useState(() => snapTimeToStep(session.start_time));
   const [endTime, setEndTime] = useState(() => snapTimeToStep(session.end_time));
@@ -82,18 +85,25 @@ export function DaySheet({
     () => [...families].sort((a, b) => a.name.localeCompare(b.name)),
     [families]
   );
+  const skipIds = useMemo(() => skippingFamilyIds(session), [session.absences]);
   const familiesNeedingPickup = useMemo(
-    () => sortedFamilies.filter((family) => family.id !== dropoffFamilyId),
-    [sortedFamilies, dropoffFamilyId]
+    () => sortedFamilies.filter((family) => family.id !== dropoffFamilyId && !skipIds.has(family.id)),
+    [sortedFamilies, dropoffFamilyId, skipIds]
   );
+  const activeFamilySkipping = activeFamilyId ? isFamilySkipping(session, activeFamilyId) : false;
+  const otherSkipping = useMemo(() => {
+    if (!activeFamilyId) return skippingFamilyNames(session);
+    return skippingFamilyNames(session).filter((name) => name !== activeFamilyName);
+  }, [session.absences, activeFamilyId, activeFamilyName]);
 
   const [dropoffPickups, setDropoffPickups] = useState<DropoffPickups>(() =>
-    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), drop?.family_id ?? null)
+    cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), drop?.family_id ?? null, skipIds)
   );
   const [cancelled, setCancelled] = useState(session.cancelled);
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
   const [busy, setBusy] = useState(false);
+  const [skipBusy, setSkipBusy] = useState(false);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
 
@@ -180,7 +190,7 @@ export function DaySheet({
   }
 
   async function handleClaim(role: AssignmentRole) {
-    if (!activeFamilyId) return;
+    if (!activeFamilyId || activeFamilySkipping) return;
     setBusy(true);
     try {
       const assignment = session.assignments.find((a) => a.role === role);
@@ -189,6 +199,16 @@ export function DaySheet({
       setConfirmRole(null);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSkipToggle() {
+    if (!activeFamilyId || skipBusy) return;
+    setSkipBusy(true);
+    try {
+      await onSkip(activeFamilySkipping ? "clear" : "mark");
+    } finally {
+      setSkipBusy(false);
     }
   }
 
@@ -335,6 +355,28 @@ export function DaySheet({
         </div>
 
         <div className="px-3 py-2 space-y-2 max-w-lg mx-auto">
+          {!cancelled && activeFamilyId && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-2.5 py-2 dark:border-amber-800 dark:bg-amber-950/40">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={activeFamilySkipping}
+                  disabled={skipBusy}
+                  onChange={() => void handleSkipToggle()}
+                  className="h-4 w-4 rounded"
+                />
+                <span className="text-sm font-medium text-amber-950 dark:text-amber-100">
+                  Skip{activeFamilyName ? ` — ${activeFamilyName}` : ""}
+                </span>
+              </label>
+              {otherSkipping.length > 0 && (
+                <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-200/80">
+                  Also skipping: {otherSkipping.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
           {!cancelled && (
             <div className="grid grid-cols-2 gap-2">
               <label className="block">
@@ -481,12 +523,18 @@ export function DaySheet({
             {saving ? "Saving…" : "Save schedule"}
           </button>
 
-          {!cancelled && (
+          {!cancelled && !activeFamilySkipping && (
             <div className="space-y-1.5 border-t border-slate-100 pt-1.5 dark:border-slate-800">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Driver spots</p>
               {renderClaimButton("dropoff", "Drop off (to pool)", drop?.family_name)}
               {renderClaimButton("pickup", "Pick up (from pool)", pick?.family_name)}
             </div>
+          )}
+
+          {!cancelled && activeFamilySkipping && (
+            <p className="border-t border-slate-100 pt-1.5 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              Driver spots hidden while you&apos;re skipping
+            </p>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatTimeRangeCompact, isToday, parseDateOnly } from "@/lib/dates";
+import { skippingFamilyNames } from "@/lib/absences";
 import {
   hasHomePickupNotes,
   hasOtherDriverNotes,
@@ -44,6 +45,10 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
   const homePickupLine = homePickupPreviewCompact(session, families);
   const otherNoteLine = otherNotesPreview(session);
   const hasNotes = showHomePickup || showOtherNote;
+  const skipping = skippingFamilyNames(session);
+  const showSkipBadge = skipping.length > 0;
+  const skipBadgeLabel =
+    skipping.length === 1 ? `Skip: ${skipping[0]}` : `${skipping.length} skip`;
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -103,7 +108,16 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                 </span>
               </span>
             </div>
-            <div className={`flex shrink-0 items-center gap-1 ${hasNotes ? "" : "invisible"}`} aria-hidden={!hasNotes}>
+            <div className={`flex shrink-0 items-center gap-1 ${hasNotes || showSkipBadge ? "" : "invisible"}`} aria-hidden={!hasNotes && !showSkipBadge}>
+              {showSkipBadge && (
+                <span
+                  className={`${noteBadgeClass} bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300`}
+                  title={`Skipping: ${skipping.join(", ")}`}
+                  aria-label={`Skipping: ${skipping.join(", ")}`}
+                >
+                  {skipBadgeLabel}
+                </span>
+              )}
               {showHomePickup && (
                 <span
                   className={`${noteBadgeClass} bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300`}
@@ -122,7 +136,7 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                   Note
                 </span>
               )}
-              {!showHomePickup && !showOtherNote && (
+              {!showHomePickup && !showOtherNote && !showSkipBadge && (
                 <span className={`${noteBadgeClass} opacity-0`}>Home</span>
               )}
             </div>

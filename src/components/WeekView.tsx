@@ -97,6 +97,26 @@ export function WeekView({ slug }: WeekViewProps) {
     await mutate();
   }
 
+  async function handleSkip(action: "mark" | "clear") {
+    if (!openSession || !activeFamilyId) return;
+    const res = await fetch("/api/absences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: openSession.id,
+        familyId: activeFamilyId,
+        action,
+        slug,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Could not update skip status");
+      return;
+    }
+    await mutate();
+  }
+
   async function handleSaveSchedule(values: {
     start_time: string;
     end_time: string;
@@ -356,6 +376,7 @@ export function WeekView({ slug }: WeekViewProps) {
           onManageLocations={() => setShowLocations(true)}
           onSaveSchedule={handleSaveSchedule}
           onClaim={handleClaim}
+          onSkip={handleSkip}
         />
       )}
 

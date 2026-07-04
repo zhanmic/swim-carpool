@@ -291,7 +291,7 @@ export function WeekView({ slug }: WeekViewProps) {
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {data.sessions.map((session: SessionWithAssignments) => (
             <DayCard
               key={session.id}

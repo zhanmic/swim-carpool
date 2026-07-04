@@ -255,43 +255,40 @@ export function WeekView({ slug }: WeekViewProps) {
           </button>
         </div>
 
-        <div className="mb-2 flex shrink-0 gap-2">
+        <div className="mb-2 flex shrink-0 gap-1.5">
           <button
             type="button"
             onClick={() => setShowLocations(true)}
-            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
           >
-            Edit locations
+            Locations
           </button>
           <button
             type="button"
             onClick={() => setShowTime(true)}
-            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
           >
-            Edit time
+            Time
           </button>
-        </div>
-
-        <div className="mb-2 flex shrink-0 gap-2">
           <button
             type="button"
             disabled={slotsBusy}
             onClick={() => setShowCopyConfirm(true)}
-            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
           >
-            Copy last week&apos;s schedule
+            Copy week
           </button>
           <button
             type="button"
             disabled={slotsBusy}
             onClick={handleClearSlots}
-            className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-sm font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
           >
-            Clear slots
+            Clear
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
           {data.sessions.map((session: SessionWithAssignments) => (
             <DayCard
               key={session.id}

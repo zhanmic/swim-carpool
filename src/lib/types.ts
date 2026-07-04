@@ -4,6 +4,7 @@ export interface Team {
   id: string;
   name: string;
   secret_slug: string;
+  schedule_url: string | null;
   created_at: string;
 }
 

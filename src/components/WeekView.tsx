@@ -209,6 +209,7 @@ export function WeekView({ slug }: WeekViewProps) {
     <div className="flex h-[100dvh] flex-col bg-slate-50 dark:bg-slate-900">
       <Header
         teamName={data.team.name}
+        scheduleUrl={data.team.schedule_url}
         familyName={activeFamily?.name ?? null}
         familyId={activeFamilyId}
         familyColors={familyColors}
@@ -388,10 +389,11 @@ export function WeekView({ slug }: WeekViewProps) {
       {showRename && (
         <RenameTeamSheet
           teamName={data.team.name}
+          scheduleUrl={data.team.schedule_url}
           slug={slug}
           onClose={() => setShowRename(false)}
-          onRenamed={(name) => {
-            void mutate({ ...data, team: { ...data.team, name } }, { revalidate: false });
+          onUpdated={(team) => {
+            void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: false });
           }}
         />
       )}

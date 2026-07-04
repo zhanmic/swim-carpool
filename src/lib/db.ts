@@ -48,29 +48,33 @@ function normalizeTime(t: string): string {
 
 export async function getTeamBySlug(slug: string): Promise<Team | null> {
   const sql = getSql();
-  const rows = await sql`SELECT id, name, secret_slug, created_at::text AS created_at FROM teams WHERE secret_slug = ${slug} LIMIT 1`;
+  const rows = await sql`SELECT id, name, secret_slug, schedule_url, created_at::text AS created_at FROM teams WHERE secret_slug = ${slug} LIMIT 1`;
   return (rows[0] as Team | undefined) ?? null;
 }
 
 export async function listTeams(): Promise<Team[]> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug
+    SELECT id, name, secret_slug, schedule_url
     FROM teams
     ORDER BY name
   `;
   return rows as Team[];
 }
 
-export async function updateTeamName(slug: string, name: string): Promise<Team | null> {
-  const trimmed = name.trim();
+export async function updateTeam(
+  slug: string,
+  data: { name: string; schedule_url?: string | null }
+): Promise<Team | null> {
+  const trimmed = data.name.trim();
   if (!trimmed) return null;
+  const scheduleUrl = data.schedule_url?.trim() || null;
   const sql = getSql();
   const rows = await sql`
     UPDATE teams
-    SET name = ${trimmed}
+    SET name = ${trimmed}, schedule_url = ${scheduleUrl}
     WHERE secret_slug = ${slug}
-    RETURNING id, name, secret_slug
+    RETURNING id, name, secret_slug, schedule_url, created_at::text AS created_at
   `;
   return (rows[0] as Team | undefined) ?? null;
 }
@@ -543,7 +547,7 @@ export async function createTeam(
   const teamRows = await sql`
     INSERT INTO teams (name, secret_slug)
     VALUES (${name}, ${slug})
-    RETURNING id, name, secret_slug, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, created_at::text AS created_at
   `;
   const team = teamRows[0] as Team;
 

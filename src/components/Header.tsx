@@ -6,6 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   teamName: string;
+  scheduleUrl?: string | null;
   familyName: string | null;
   familyId?: string | null;
   familyColors?: Map<string, FamilyColorClasses>;
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 export function Header({
   teamName,
+  scheduleUrl,
   familyName,
   familyId,
   familyColors,
@@ -46,6 +48,16 @@ export function Header({
           </Link>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {scheduleUrl && (
+            <a
+              href={scheduleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="whitespace-nowrap text-xs font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
+            >
+              Team Schedule
+            </a>
+          )}
           <ThemeToggle />
           <button
             type="button"

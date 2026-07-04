@@ -5,21 +5,29 @@ import { FormEvent, useState } from "react";
 
 interface RenameTeamSheetProps {
   teamName: string;
+  scheduleUrl?: string | null;
   slug: string;
   onClose: () => void;
-  onRenamed: (name: string) => void;
+  onUpdated: (team: { name: string; schedule_url: string | null }) => void;
 }
 
-export function RenameTeamSheet({ teamName, slug, onClose, onRenamed }: RenameTeamSheetProps) {
+export function RenameTeamSheet({
+  teamName,
+  scheduleUrl,
+  slug,
+  onClose,
+  onUpdated,
+}: RenameTeamSheetProps) {
   const router = useRouter();
   const [name, setName] = useState(teamName);
+  const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
   const [adminPassword, setAdminPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  async function handleRename(e: FormEvent) {
+  async function handleSave(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true);
@@ -28,14 +36,20 @@ export function RenameTeamSheet({ teamName, slug, onClose, onRenamed }: RenameTe
       const res = await fetch(`/api/teams/${slug}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          schedule_url: scheduleLink.trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Could not rename team");
+        setError(data.error ?? "Could not save team");
         return;
       }
-      onRenamed(data.team.name);
+      onUpdated({
+        name: data.team.name,
+        schedule_url: data.team.schedule_url ?? null,
+      });
       onClose();
     } finally {
       setBusy(false);
@@ -69,14 +83,31 @@ export function RenameTeamSheet({ teamName, slug, onClose, onRenamed }: RenameTe
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
       <div className="max-h-[90vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
         <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold dark:text-slate-100">Rename or remove team</h2>
-          <button type="button" onClick={onClose} className="text-sky-600 font-medium dark:text-sky-400">
-            Done
+          <h2 className="text-lg font-semibold dark:text-slate-100">Team settings</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="touch-target-sm rounded-full text-slate-500 active:bg-slate-100 dark:text-slate-400 dark:active:bg-slate-800"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="h-5 w-5"
+              aria-hidden
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
         </div>
 
         <div className="max-w-lg mx-auto p-4 space-y-6">
-          <form onSubmit={handleRename} className="space-y-4">
+          <form onSubmit={handleSave} className="space-y-4">
             <label className="block">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team name</span>
               <input
@@ -89,6 +120,20 @@ export function RenameTeamSheet({ teamName, slug, onClose, onRenamed }: RenameTe
               />
             </label>
 
+            <label className="block">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team schedule link</span>
+              <input
+                type="url"
+                value={scheduleLink}
+                onChange={(e) => setScheduleLink(e.target.value)}
+                placeholder="https://…"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Optional link to your team&apos;s schedule website. Shows as Team Schedule in the week view.
+              </p>
+            </label>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
@@ -96,7 +141,7 @@ export function RenameTeamSheet({ teamName, slug, onClose, onRenamed }: RenameTe
               disabled={busy || !name.trim()}
               className="w-full rounded-lg bg-sky-500 py-2.5 font-medium text-white disabled:opacity-50"
             >
-              {busy ? "Saving…" : "Save name"}
+              {busy ? "Saving…" : "Save"}
             </button>
           </form>
 

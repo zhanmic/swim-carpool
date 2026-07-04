@@ -1,4 +1,4 @@
-import { deleteTeamBySlug, updateTeamName } from "@/lib/db";
+import { deleteTeamBySlug, updateTeam } from "@/lib/db";
 import { verifyAdminPassword } from "@/lib/admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,12 +9,15 @@ export async function PATCH(
   const { slug } = await params;
 
   try {
-    const body = (await request.json()) as { name?: string };
+    const body = (await request.json()) as { name?: string; schedule_url?: string | null };
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
 
-    const team = await updateTeamName(slug, body.name);
+    const team = await updateTeam(slug, {
+      name: body.name,
+      schedule_url: body.schedule_url ?? null,
+    });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }

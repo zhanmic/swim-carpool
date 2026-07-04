@@ -52,7 +52,7 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
     <button
       type="button"
       onClick={onOpen}
-      className={`flex shrink-0 flex-col rounded-2xl border px-3 py-2.5 text-left transition-colors active:scale-[0.99] ${
+      className={`flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl border px-3 py-2 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800/60"
           : today
@@ -61,15 +61,19 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
       }`}
     >
       {session.cancelled ? (
-        <div className="flex items-center gap-2 text-base">
-          <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
-            {weekday} {dateLabel}
-          </span>
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cancelled</span>
-        </div>
+        <>
+          <div className="flex shrink-0 items-center gap-2 text-sm">
+            <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
+              {weekday} {dateLabel}
+            </span>
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cancelled</span>
+          </div>
+          <div className="mt-1.5 h-5 shrink-0" aria-hidden />
+          <p className="mt-1 h-4 shrink-0" aria-hidden />
+        </>
       ) : (
         <>
-          <div className="flex min-w-0 items-center gap-1.5 text-sm leading-snug">
+          <div className="flex min-w-0 shrink-0 items-center gap-1.5 text-sm leading-snug">
             <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
               {weekday}
             </span>
@@ -82,8 +86,8 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
             </span>
           </div>
 
-          <div className="mt-1.5 flex min-w-0 items-center gap-2">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
+          <div className="mt-1.5 flex h-5 shrink-0 min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-x-3 text-sm">
               <span className="whitespace-nowrap">
                 <span className="text-slate-500 dark:text-slate-400">Drop </span>
                 <span className={`rounded-full px-1.5 py-px text-xs font-medium ${slotClass(drop.open, drop.familyId, familyColors)}`}>
@@ -97,43 +101,46 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                 </span>
               </span>
             </div>
-            {hasNotes && (
-              <div className="flex shrink-0 items-center gap-1">
-                {showHomePickup && (
-                  <span
-                    className={`${noteBadgeClass} bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300`}
-                    title={homePickupLine ? `Home pickup: ${homePickupLine}` : undefined}
-                    aria-label={homePickupLine ? `Home pickup: ${homePickupLine}` : "Home pickup"}
-                  >
-                    Home
-                  </span>
-                )}
-                {showOtherNote && (
-                  <span
-                    className={`${noteBadgeClass} bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300`}
-                    title={otherNoteLine ?? undefined}
-                    aria-label={otherNoteLine ? `Note: ${otherNoteLine}` : "Note"}
-                  >
-                    Note
-                  </span>
-                )}
-              </div>
-            )}
+            <div className={`flex shrink-0 items-center gap-1 ${hasNotes ? "" : "invisible"}`} aria-hidden={!hasNotes}>
+              {showHomePickup && (
+                <span
+                  className={`${noteBadgeClass} bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300`}
+                  title={homePickupLine ? `Home pickup: ${homePickupLine}` : undefined}
+                  aria-label={homePickupLine ? `Home pickup: ${homePickupLine}` : "Home pickup"}
+                >
+                  Home
+                </span>
+              )}
+              {showOtherNote && (
+                <span
+                  className={`${noteBadgeClass} bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300`}
+                  title={otherNoteLine ?? undefined}
+                  aria-label={otherNoteLine ? `Note: ${otherNoteLine}` : "Note"}
+                >
+                  Note
+                </span>
+              )}
+              {!showHomePickup && !showOtherNote && (
+                <span className={`${noteBadgeClass} opacity-0`}>Home</span>
+              )}
+            </div>
           </div>
 
-          {hasNotes && (homePickupLine || otherNoteLine) && (
-            <p className="mt-1 line-clamp-1 text-xs leading-snug">
-              {homePickupLine && (
-                <span className="text-sky-800 dark:text-sky-300">{homePickupLine}</span>
-              )}
-              {homePickupLine && otherNoteLine && (
-                <span className="text-slate-300 dark:text-slate-600"> · </span>
-              )}
-              {otherNoteLine && (
-                <span className="text-violet-800 dark:text-violet-300">{otherNoteLine}</span>
-              )}
-            </p>
-          )}
+          <p
+            className={`mt-1 h-4 shrink-0 line-clamp-1 text-xs leading-4 ${hasNotes ? "" : "invisible"}`}
+            aria-hidden={!hasNotes}
+          >
+            {homePickupLine && (
+              <span className="text-sky-800 dark:text-sky-300">{homePickupLine}</span>
+            )}
+            {homePickupLine && otherNoteLine && (
+              <span className="text-slate-300 dark:text-slate-600"> · </span>
+            )}
+            {otherNoteLine && (
+              <span className="text-violet-800 dark:text-violet-300">{otherNoteLine}</span>
+            )}
+            {!hasNotes && "\u00a0"}
+          </p>
         </>
       )}
     </button>

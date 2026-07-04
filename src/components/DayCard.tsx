@@ -4,7 +4,7 @@ import { formatTimeRangeCompact, isToday, parseDateOnly } from "@/lib/dates";
 import {
   hasHomePickupNotes,
   hasOtherDriverNotes,
-  homePickupPreview,
+  homePickupPreviewCompact,
   otherNotesPreview,
 } from "@/lib/dropoffPickups";
 import { getFamilyColor, OPEN_SLOT_PILL, type FamilyColorClasses } from "@/lib/familyColors";
@@ -31,6 +31,9 @@ function slotClass(open: boolean, familyId: string | undefined, familyColors: Ma
   return getFamilyColor(familyColors, familyId)?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
 }
 
+const noteBadgeClass =
+  "shrink-0 rounded-full px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide";
+
 export function DayCard({ session, families, familyColors, onOpen }: DayCardProps) {
   const date = parseDateOnly(session.session_date);
   const today = isToday(session.session_date);
@@ -38,8 +41,9 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
   const pick = assignmentLabel(session, "pickup");
   const showHomePickup = hasHomePickupNotes(session, families);
   const showOtherNote = hasOtherDriverNotes(session);
-  const homePickupLine = homePickupPreview(session, families);
+  const homePickupLine = homePickupPreviewCompact(session, families);
   const otherNoteLine = otherNotesPreview(session);
+  const hasNotes = showHomePickup || showOtherNote;
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -48,7 +52,7 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
     <button
       type="button"
       onClick={onOpen}
-      className={`flex min-h-0 flex-1 flex-col justify-center rounded-2xl border px-4 py-4 text-left transition-colors active:scale-[0.99] ${
+      className={`flex shrink-0 flex-col rounded-2xl border px-3 py-2.5 text-left transition-colors active:scale-[0.99] ${
         session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800/60"
           : today
@@ -65,7 +69,7 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
         </div>
       ) : (
         <>
-          <div className="flex min-w-0 items-center gap-2 text-base leading-snug">
+          <div className="flex min-w-0 items-center gap-1.5 text-sm leading-snug">
             <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
               {weekday}
             </span>
@@ -73,53 +77,62 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
             <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
             <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{session.location_name}</span>
             <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
-            <span className="shrink-0 text-sm text-slate-600 dark:text-slate-400">
+            <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">
               {formatTimeRangeCompact(session.start_time, session.end_time)}
             </span>
           </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base">
-            <span>
-              <span className="text-slate-500 dark:text-slate-400">Drop Off </span>
-              <span className={`rounded-full px-2 py-0.5 text-sm font-medium ${slotClass(drop.open, drop.familyId, familyColors)}`}>
-                {drop.text}
+          <div className="mt-1.5 flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
+              <span className="whitespace-nowrap">
+                <span className="text-slate-500 dark:text-slate-400">Drop </span>
+                <span className={`rounded-full px-1.5 py-px text-xs font-medium ${slotClass(drop.open, drop.familyId, familyColors)}`}>
+                  {drop.text}
+                </span>
               </span>
-            </span>
-            <span>
-              <span className="text-slate-500 dark:text-slate-400">Pick Up </span>
-              <span className={`rounded-full px-2 py-0.5 text-sm font-medium ${slotClass(pick.open, pick.familyId, familyColors)}`}>
-                {pick.text}
+              <span className="whitespace-nowrap">
+                <span className="text-slate-500 dark:text-slate-400">Pick </span>
+                <span className={`rounded-full px-1.5 py-px text-xs font-medium ${slotClass(pick.open, pick.familyId, familyColors)}`}>
+                  {pick.text}
+                </span>
               </span>
-            </span>
-            {showHomePickup && (
-              <span
-                className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-800 dark:bg-sky-950 dark:text-sky-300"
-                title={homePickupLine ?? undefined}
-                aria-label={homePickupLine ?? "Home pickup times"}
-              >
-                Home
-              </span>
-            )}
-            {showOtherNote && (
-              <span
-                className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300"
-                title={otherNoteLine ?? undefined}
-                aria-label={otherNoteLine ? `Note: ${otherNoteLine}` : "Other note"}
-              >
-                Note
-              </span>
+            </div>
+            {hasNotes && (
+              <div className="flex shrink-0 items-center gap-1">
+                {showHomePickup && (
+                  <span
+                    className={`${noteBadgeClass} bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300`}
+                    title={homePickupLine ? `Home pickup: ${homePickupLine}` : undefined}
+                    aria-label={homePickupLine ? `Home pickup: ${homePickupLine}` : "Home pickup"}
+                  >
+                    Home
+                  </span>
+                )}
+                {showOtherNote && (
+                  <span
+                    className={`${noteBadgeClass} bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300`}
+                    title={otherNoteLine ?? undefined}
+                    aria-label={otherNoteLine ? `Note: ${otherNoteLine}` : "Note"}
+                  >
+                    Note
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
-          {(homePickupLine || otherNoteLine) && (
-            <div className="mt-2 space-y-0.5">
+          {hasNotes && (homePickupLine || otherNoteLine) && (
+            <p className="mt-1 line-clamp-1 text-xs leading-snug">
               {homePickupLine && (
-                <p className="line-clamp-1 text-sm text-sky-800 dark:text-sky-300">{homePickupLine}</p>
+                <span className="text-sky-800 dark:text-sky-300">{homePickupLine}</span>
+              )}
+              {homePickupLine && otherNoteLine && (
+                <span className="text-slate-300 dark:text-slate-600"> · </span>
               )}
               {otherNoteLine && (
-                <p className="line-clamp-2 text-sm text-violet-800 dark:text-violet-300">{otherNoteLine}</p>
+                <span className="text-violet-800 dark:text-violet-300">{otherNoteLine}</span>
               )}
-            </div>
+            </p>
           )}
         </>
       )}

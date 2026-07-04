@@ -68,6 +68,26 @@ export function formatDropoffPickupsLine(
   return `Home pickup: ${parts.join(", ")}`;
 }
 
+/** Compact pickup list for day cards (no "Home pickup:" prefix). */
+export function homePickupPreviewCompact(
+  session: {
+    dropoff_pickups?: DropoffPickups | null;
+    assignments?: Assignment[];
+  },
+  families: Family[]
+): string | null {
+  const dropoffFamilyId = dropoffDriverFamilyId(session);
+  const cleaned = cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId);
+  const parts = [...families]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((family) => {
+      if (dropoffFamilyId && family.id === dropoffFamilyId) return [];
+      const time = cleaned[family.id];
+      return time ? [`${family.name} ${formatTime12(time)}`] : [];
+    });
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
 export function formatDriverNotesPreview(
   session: {
     start_time: string;

@@ -2,7 +2,7 @@
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
 import { buildFamilyColorMap } from "@/lib/familyColors";
-import { getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
+import { clearActiveFamilyId, getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
 import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
 import { useEffect, useMemo, useState } from "react";
@@ -390,10 +390,19 @@ export function WeekView({ slug }: WeekViewProps) {
         <RenameTeamSheet
           teamName={data.team.name}
           scheduleUrl={data.team.schedule_url}
+          families={data.families}
           slug={slug}
           onClose={() => setShowRename(false)}
           onUpdated={(team) => {
             void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: false });
+          }}
+          onFamiliesUpdated={(families) => {
+            void mutate({ ...data, families }, { revalidate: true });
+            if (activeFamilyId && !families.some((family) => family.id === activeFamilyId)) {
+              clearActiveFamilyId(slug);
+              setActiveFamilyIdState(null);
+              setShowPicker(true);
+            }
           }}
         />
       )}

@@ -10,12 +10,14 @@ interface FamilyPickerProps {
   title?: string;
 }
 
-export function FamilyPicker({ families, familyColors, onSelect, title = "Which family" }: FamilyPickerProps) {
+export function FamilyPicker({ families, familyColors, onSelect, title = "Your family" }: FamilyPickerProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4 safe-bottom">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
         <h2 className="text-xl font-semibold text-slate-900 mb-1 dark:text-slate-100">{title}</h2>
-        <p className="text-sm text-slate-500 mb-4 dark:text-slate-400">Pick your family. Saved on this phone only.</p>
+        <p className="text-sm text-slate-500 mb-4 dark:text-slate-400">
+          Who&apos;s using this phone? Used for skip, driver spots, and more. Saved on this device only.
+        </p>
         <ul className="flex flex-col gap-2">
           {families.map((family) => {
             const color = getFamilyColor(familyColors ?? new Map(), family.id);

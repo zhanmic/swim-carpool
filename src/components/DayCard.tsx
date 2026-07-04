@@ -73,15 +73,17 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
         </>
       ) : (
         <>
-          <div className="flex min-w-0 shrink-0 items-center gap-1.5 text-sm leading-snug">
-            <span className={`shrink-0 font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
-              {weekday}
+          <div className="grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-x-2 text-sm leading-snug">
+            <span className="whitespace-nowrap text-left">
+              <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
+                {weekday}
+              </span>
+              <span className="text-slate-500 dark:text-slate-400"> {dateLabel}</span>
             </span>
-            <span className="shrink-0 text-slate-500 dark:text-slate-400">{dateLabel}</span>
-            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
-            <span className="min-w-0 truncate font-medium text-slate-800 dark:text-slate-200">{session.location_name}</span>
-            <span className="shrink-0 text-slate-300 dark:text-slate-600">·</span>
-            <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">
+            <span className="min-w-0 truncate text-center font-medium text-slate-800 dark:text-slate-200">
+              {session.location_name}
+            </span>
+            <span className="whitespace-nowrap text-right text-xs text-slate-600 dark:text-slate-400">
               {formatTimeRangeCompact(session.start_time, session.end_time)}
             </span>
           </div>

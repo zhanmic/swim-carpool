@@ -15,6 +15,29 @@ import { useEffect, useMemo, useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { TimeInput } from "./TimeInput";
 
+function DriverIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 5v2.5" />
+      <path d="M12 16.5V19" />
+      <path d="M5 12h2.5" />
+      <path d="M16.5 12H19" />
+    </svg>
+  );
+}
+
 interface DaySheetProps {
   session: SessionWithAssignments;
   teamName: string;
@@ -239,11 +262,18 @@ export function DaySheet({
                   : OPEN_SLOT_BUTTON
             }`}
           >
-            {isMine
-              ? `✓ ${label}: ${activeFamilyName} (tap to release)`
-              : takenByOther
-                ? `${label}: ${currentName} (tap to release)`
-                : `I'll do ${label.toLowerCase()}`}
+            {isMine ? (
+              <span className="flex items-center justify-center gap-2">
+                <DriverIcon className="h-4 w-4 shrink-0" />
+                <span>
+                  {label}: {activeFamilyName} (tap to release)
+                </span>
+              </span>
+            ) : takenByOther ? (
+              `${label}: ${currentName} (tap to release)`
+            ) : (
+              `I'll do ${label.toLowerCase()}`
+            )}
           </button>
         )}
       </div>

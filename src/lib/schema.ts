@@ -53,6 +53,15 @@ CREATE INDEX IF NOT EXISTS idx_sessions_team_date ON practice_sessions(team_id, 
 CREATE INDEX IF NOT EXISTS idx_templates_team ON recurring_templates(team_id);
 CREATE INDEX IF NOT EXISTS idx_assignments_session ON assignments(session_id);
 
+CREATE TABLE IF NOT EXISTS session_absences (
+  session_id UUID NOT NULL REFERENCES practice_sessions(id) ON DELETE CASCADE,
+  family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (session_id, family_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_absences_session ON session_absences(session_id);
+
 CREATE TABLE IF NOT EXISTS saved_locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,

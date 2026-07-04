@@ -7,6 +7,7 @@ import type {
   AssignmentRole,
   Family,
   PracticeSession,
+  SessionAbsence,
   SessionUpdate,
   SessionWithAssignments,
   Team,
@@ -347,7 +348,22 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
           )
         ) FILTER (WHERE a.id IS NOT NULL),
         '[]'::json
-      ) AS assignments
+      ) AS assignments,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'family_id', sa.family_id,
+              'family_name', af.name
+            )
+            ORDER BY af.name
+          )
+          FROM session_absences sa
+          JOIN families af ON af.id = sa.family_id
+          WHERE sa.session_id = ps.id
+        ),
+        '[]'::json
+      ) AS absences
     FROM practice_sessions ps
     LEFT JOIN assignments a ON a.session_id = ps.id
     LEFT JOIN families f ON f.id = a.family_id
@@ -358,12 +374,13 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
     ORDER BY ps.session_date
   `;
 
-  return (rows as Array<SessionWithAssignments & { assignments: Assignment[] | string; dropoff_pickups?: unknown }>).map((row) => ({
+  return (rows as Array<SessionWithAssignments & { assignments: Assignment[] | string; absences: SessionAbsence[] | string; dropoff_pickups?: unknown }>).map((row) => ({
     ...row,
     start_time: row.start_time.slice(0, 5),
     end_time: row.end_time.slice(0, 5),
     dropoff_pickups: parseDropoffPickups(row.dropoff_pickups),
     assignments: typeof row.assignments === "string" ? JSON.parse(row.assignments) : row.assignments ?? [],
+    absences: typeof row.absences === "string" ? JSON.parse(row.absences) : row.absences ?? [],
   }));
 }
 
@@ -446,6 +463,47 @@ export async function unclaimAssignment(sessionId: string, familyId: string, rol
   if (result.length === 0) {
     return { ok: false, error: "Assignment not found or not yours" };
   }
+  return { ok: true };
+}
+
+export async function markAbsence(sessionId: string, familyId: string): Promise<{ ok: boolean; error?: string }> {
+  const sql = getSql();
+
+  await sql`
+    INSERT INTO session_absences (session_id, family_id)
+    VALUES (${sessionId}, ${familyId})
+    ON CONFLICT DO NOTHING
+  `;
+
+  await sql`
+    DELETE FROM assignments
+    WHERE session_id = ${sessionId} AND family_id = ${familyId}
+  `;
+
+  const sessionRows = await sql`
+    SELECT dropoff_pickups FROM practice_sessions WHERE id = ${sessionId} LIMIT 1
+  `;
+  if (sessionRows.length > 0) {
+    const pickups = parseDropoffPickups((sessionRows[0] as { dropoff_pickups: unknown }).dropoff_pickups);
+    if (pickups[familyId]) {
+      delete pickups[familyId];
+      await sql`
+        UPDATE practice_sessions
+        SET dropoff_pickups = ${JSON.stringify(pickups)}::jsonb
+        WHERE id = ${sessionId}
+      `;
+    }
+  }
+
+  return { ok: true };
+}
+
+export async function clearAbsence(sessionId: string, familyId: string): Promise<{ ok: boolean; error?: string }> {
+  const sql = getSql();
+  await sql`
+    DELETE FROM session_absences
+    WHERE session_id = ${sessionId} AND family_id = ${familyId}
+  `;
   return { ok: true };
 }
 

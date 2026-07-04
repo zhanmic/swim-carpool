@@ -1,4 +1,4 @@
-import { getWeekData } from "@/lib/db";
+import { ensureSchema, getWeekData } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -13,6 +13,7 @@ export async function GET(
   }
 
   try {
+    await ensureSchema();
     const data = await getWeekData(slug, start);
     if (!data) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });

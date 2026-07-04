@@ -1,4 +1,5 @@
 import { formatDayLabel, formatTime12, parseDateOnly } from "./dates";
+import { skippingFamilyIds, skippingFamilyNames } from "./absences";
 import { dropoffDriverFamilyId, cleanDropoffPickups, formatDropoffPickupsLine, parseDropoffPickups } from "./dropoffPickups";
 import type { Family, SessionWithAssignments, Team } from "./types";
 
@@ -30,14 +31,20 @@ export function formatWeekSummary(
     lines.push(`${day}: ${time} @ ${session.location_name}`);
     lines.push(`  Drop-off: ${drop} | Pick-up: ${pick}`);
     const dropoffFamilyId = dropoffDriverFamilyId(session);
+    const skipIds = skippingFamilyIds(session);
     const pickupLine = formatDropoffPickupsLine(
-      cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId),
+      cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), dropoffFamilyId, skipIds),
       families,
-      dropoffFamilyId
+      dropoffFamilyId,
+      skipIds
     );
     if (pickupLine) lines.push(`  ${pickupLine}`);
     if (session.location_notes?.trim()) {
       lines.push(`  Note: ${session.location_notes.trim()}`);
+    }
+    const skipping = skippingFamilyNames(session);
+    if (skipping.length > 0) {
+      lines.push(`  Skip: ${skipping.join(", ")}`);
     }
     lines.push("");
   }

@@ -231,7 +231,6 @@ export function RenameTeamSheet({
               <input
                 type="text"
                 required
-                autoFocus
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"

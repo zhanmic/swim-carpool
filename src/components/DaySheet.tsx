@@ -240,7 +240,7 @@ export function DaySheet({
             }`}
           >
             {isMine
-              ? `✓ ${label} — ${activeFamilyName} (tap to release)`
+              ? `✓ ${label}: ${activeFamilyName} (tap to release)`
               : takenByOther
                 ? `${label}: ${currentName} (tap to release)`
                 : `I'll do ${label.toLowerCase()}`}

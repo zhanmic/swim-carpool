@@ -452,8 +452,8 @@ export function DaySheet({
           {!cancelled && (
             <div className="space-y-1.5 border-t border-slate-100 pt-1.5 dark:border-slate-800">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Driver spots</p>
-              {renderClaimButton("dropoff", "Drop-off", drop?.family_name)}
-              {renderClaimButton("pickup", "Pick-up", pick?.family_name)}
+              {renderClaimButton("dropoff", "Drop off (to pool)", drop?.family_name)}
+              {renderClaimButton("pickup", "Pick up (from pool)", pick?.family_name)}
             </div>
           )}
         </div>

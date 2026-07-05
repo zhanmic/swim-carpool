@@ -12,13 +12,16 @@ export function formatDateOnly(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-/** Monday of the week containing `date` (local time). */
-export function getMonday(date: Date): Date {
+/** Sunday of the week containing `date` (local time). */
+export function getWeekStart(date: Date): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
+  d.setDate(d.getDate() - d.getDay());
   return d;
+}
+
+/** @deprecated Use getWeekStart */
+export function getMonday(date: Date): Date {
+  return getWeekStart(date);
 }
 
 export function addDays(date: Date, days: number): Date {
@@ -27,7 +30,7 @@ export function addDays(date: Date, days: number): Date {
   return d;
 }
 
-/** Default week view: Monday–Saturday (no Sunday). Teams can change this in settings. */
+/** Default week view: Monday–Saturday (Sunday hidden). Teams can change this in settings. */
 export const PRACTICE_DAYS_PER_WEEK = 6;
 
 /** @deprecated Use getVisibleWeekDates from visibleDays.ts */
@@ -90,11 +93,11 @@ export function isToday(dateStr: string): boolean {
 }
 
 export function defaultWeekStartStr(): string {
-  return formatDateOnly(getMonday(new Date()));
+  return formatDateOnly(getWeekStart(new Date()));
 }
 
-/** Monday of the week containing `date` (local time). */
+/** Sunday of the week containing `date` (local time). */
 export function weekStartForDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return formatDateOnly(getMonday(d));
+  return formatDateOnly(getWeekStart(d));
 }

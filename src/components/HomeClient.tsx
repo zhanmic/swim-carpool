@@ -26,7 +26,7 @@ function toListedTeam(team: KnownTeam): ListedTeam {
     name: team.name,
     secret_slug: team.slug,
     schedule_url: null,
-    visible_days: [0, 1, 2, 3, 4, 5],
+    visible_days: [1, 2, 3, 4, 5, 6],
     created_at: team.lastAccessedAt,
   };
 }

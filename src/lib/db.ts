@@ -1,11 +1,12 @@
 import { neon } from "@neondatabase/serverless";
-import { addDays, formatDateOnly, getMonday, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
+import { addDays, formatDateOnly, getWeekStart, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
 import { parseDropoffPickups } from "./dropoffPickups";
 import { getSchemaStatements } from "./schema";
 import {
   DEFAULT_VISIBLE_DAYS,
   getWeekEndForVisibleDays,
   getVisibleWeekDates,
+  migrateVisibleDaysFromMondayStart,
   normalizeVisibleDays,
   parseVisibleDays,
   visibleSessionDates,
@@ -38,6 +39,38 @@ export async function ensureSchema(): Promise<void> {
   for (const statement of statements) {
     await sql.query(statement);
   }
+
+  await migrateVisibleDaysToSundayWeekStart();
+}
+
+async function migrateVisibleDaysToSundayWeekStart(): Promise<void> {
+  const sql = getSql();
+  await sql.query(`
+    CREATE TABLE IF NOT EXISTS app_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+
+  const done = await sql`SELECT value FROM app_meta WHERE key = 'visible_days_sunday_week' LIMIT 1`;
+  if (done.length > 0) return;
+
+  const teams = await sql`SELECT id, visible_days FROM teams`;
+  for (const row of teams as { id: string; visible_days: unknown }[]) {
+    const days = parseVisibleDays(row.visible_days);
+    const migrated = migrateVisibleDaysFromMondayStart(days);
+    await sql`
+      UPDATE teams
+      SET visible_days = ${JSON.stringify(migrated)}::jsonb
+      WHERE id = ${row.id}
+    `;
+  }
+
+  await sql`
+    INSERT INTO app_meta (key, value)
+    VALUES ('visible_days_sunday_week', '1')
+    ON CONFLICT (key) DO NOTHING
+  `;
 }
 
 function slugify(name: string): string {
@@ -689,7 +722,7 @@ export async function copyScheduleFromPreviousWeek(
     SELECT created_at::text AS created_at FROM teams WHERE id = ${teamId} LIMIT 1
   `;
   const earliestWeekStart = weekStartForDate((teamRows[0] as { created_at: string }).created_at);
-  const normalizedWeekStart = formatDateOnly(getMonday(parseDateOnly(weekStartStr)));
+  const normalizedWeekStart = formatDateOnly(getWeekStart(parseDateOnly(weekStartStr)));
   const prevStart = formatDateOnly(addDays(parseDateOnly(normalizedWeekStart), -7));
 
   await ensureWeekSessions(teamId, normalizedWeekStart, earliestWeekStart, visibleDays);

@@ -1,13 +1,18 @@
 import { addDays, formatDateOnly, parseDateOnly } from "./dates";
 
-/** Monday = 0 … Sunday = 6 */
-export const DEFAULT_VISIBLE_DAYS: readonly number[] = [0, 1, 2, 3, 4, 5];
+/** Offsets from Sunday week start: Sunday = 0 … Saturday = 6 */
+export const DEFAULT_VISIBLE_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6];
 
-export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export function dateToDayOfWeek(date: Date): number {
   const jsDay = date.getDay();
   return jsDay === 0 ? 6 : jsDay - 1;
+}
+
+/** Convert stored offsets from old Monday-start weeks to Sunday-start offsets. */
+export function migrateVisibleDaysFromMondayStart(days: number[]): number[] {
+  return [...new Set(days.map((day) => (day === 6 ? 0 : day + 1)))].sort((a, b) => a - b);
 }
 
 export function parseVisibleDays(value: unknown): number[] {

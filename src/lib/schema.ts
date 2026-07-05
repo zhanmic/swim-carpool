@@ -78,6 +78,8 @@ ALTER TABLE saved_locations ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE practice_sessions ADD COLUMN IF NOT EXISTS dropoff_pickups JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS schedule_url TEXT;
+
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS visible_days JSONB NOT NULL DEFAULT '[0,1,2,3,4,5]'::jsonb;
 `;
 
 export function getSchemaStatements(): string[] {

@@ -9,7 +9,11 @@ export async function PATCH(
   const { slug } = await params;
 
   try {
-    const body = (await request.json()) as { name?: string; schedule_url?: string | null };
+    const body = (await request.json()) as {
+      name?: string;
+      schedule_url?: string | null;
+      visible_days?: number[];
+    };
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
@@ -17,6 +21,7 @@ export async function PATCH(
     const team = await updateTeam(slug, {
       name: body.name,
       schedule_url: body.schedule_url ?? null,
+      visible_days: body.visible_days,
     });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });

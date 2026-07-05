@@ -24,8 +24,8 @@ export async function POST(
       return NextResponse.json({ error: "locationName is required" }, { status: 400 });
     }
 
-    await ensureWeekSessions(team.id, weekStart);
-    const updated = await applyLocationToWeek(team.id, weekStart, locationName);
+    await ensureWeekSessions(team.id, weekStart, undefined, team.visible_days);
+    const updated = await applyLocationToWeek(team.id, weekStart, locationName, team.visible_days);
 
     return NextResponse.json({ updated, locationName: locationName.trim() });
   } catch (err) {

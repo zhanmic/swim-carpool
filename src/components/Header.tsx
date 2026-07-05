@@ -58,7 +58,7 @@ export function Header({
               rel="noopener noreferrer"
               className="whitespace-nowrap text-xs font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
             >
-              Team Schedule
+              Schedule
             </a>
           )}
           <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />

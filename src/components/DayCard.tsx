@@ -44,11 +44,15 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
   const showOtherNote = hasOtherDriverNotes(session);
   const homePickupLine = homePickupPreviewCompact(session, families);
   const otherNoteLine = otherNotesPreview(session);
-  const hasNotes = showHomePickup || showOtherNote;
   const skipping = skippingFamilyNames(session);
-  const showSkipBadge = skipping.length > 0;
-  const skipBadgeLabel =
-    skipping.length === 1 ? `Skip: ${skipping[0]}` : `${skipping.length} skip`;
+  const skipLine =
+    skipping.length > 0
+      ? skipping.length === 1
+        ? `Skip: ${skipping[0]}`
+        : `Skip: ${skipping.join(", ")}`
+      : null;
+  const hasNotes = showHomePickup || showOtherNote;
+  const hasDetailRow = Boolean(skipLine || homePickupLine || otherNoteLine);
 
   const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
   const dateLabel = date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
@@ -108,16 +112,7 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                 </span>
               </span>
             </div>
-            <div className={`flex shrink-0 items-center gap-1 ${hasNotes || showSkipBadge ? "" : "invisible"}`} aria-hidden={!hasNotes && !showSkipBadge}>
-              {showSkipBadge && (
-                <span
-                  className={`${noteBadgeClass} bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300`}
-                  title={`Skipping: ${skipping.join(", ")}`}
-                  aria-label={`Skipping: ${skipping.join(", ")}`}
-                >
-                  {skipBadgeLabel}
-                </span>
-              )}
+            <div className={`flex shrink-0 items-center gap-1 ${hasNotes ? "" : "invisible"}`} aria-hidden={!hasNotes}>
               {showHomePickup && (
                 <span
                   className={`${noteBadgeClass} bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300`}
@@ -136,26 +131,35 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
                   Note
                 </span>
               )}
-              {!showHomePickup && !showOtherNote && !showSkipBadge && (
+              {!showHomePickup && !showOtherNote && (
                 <span className={`${noteBadgeClass} opacity-0`}>Home</span>
               )}
             </div>
           </div>
 
           <p
-            className={`mt-1 h-4 shrink-0 line-clamp-1 text-xs leading-4 ${hasNotes ? "" : "invisible"}`}
-            aria-hidden={!hasNotes}
+            className={`mt-1 h-4 shrink-0 min-w-0 truncate text-xs leading-4 ${hasDetailRow ? "" : "invisible"}`}
+            aria-hidden={!hasDetailRow}
+            title={
+              [skipLine, homePickupLine, otherNoteLine].filter(Boolean).join(" · ") || undefined
+            }
           >
+            {skipLine && (
+              <span className="text-amber-900 dark:text-amber-300">{skipLine}</span>
+            )}
+            {skipLine && homePickupLine && (
+              <span className="text-slate-300 dark:text-slate-600"> · </span>
+            )}
             {homePickupLine && (
               <span className="text-sky-800 dark:text-sky-300">{homePickupLine}</span>
             )}
-            {homePickupLine && otherNoteLine && (
+            {(skipLine || homePickupLine) && otherNoteLine && (
               <span className="text-slate-300 dark:text-slate-600"> · </span>
             )}
             {otherNoteLine && (
               <span className="text-violet-800 dark:text-violet-300">{otherNoteLine}</span>
             )}
-            {!hasNotes && "\u00a0"}
+            {!hasDetailRow && "\u00a0"}
           </p>
         </>
       )}

@@ -165,7 +165,12 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
                 >
                   Open ›
                 </Link>
-                <ShareTeamButton slug={team.secret_slug} teamName={team.name} />
+                <ShareTeamButton
+                  slug={team.secret_slug}
+                  teamName={team.name}
+                  variant="icon"
+                  className="border-l border-slate-200 px-3 dark:border-slate-700"
+                />
                 {adminMode && (
                   <button
                     type="button"

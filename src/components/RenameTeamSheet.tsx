@@ -277,7 +277,7 @@ export function RenameTeamSheet({
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Optional. Shows as Team Schedule in the week view.
+                Optional. Shows as Schedule in the week view.
               </p>
             </label>
 

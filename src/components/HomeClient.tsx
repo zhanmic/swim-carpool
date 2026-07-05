@@ -10,6 +10,7 @@ import {
   type KnownTeam,
 } from "@/lib/storage";
 import type { Team } from "@/lib/types";
+import { ShareTeamButton } from "@/components/ShareTeamButton";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
@@ -154,11 +155,17 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
               >
                 <Link
                   href={`/c/${team.secret_slug}`}
-                  className="flex min-w-0 flex-1 items-center justify-between px-4 py-3 active:bg-slate-50 dark:active:bg-slate-700"
+                  className="flex min-w-0 flex-1 items-center truncate px-4 py-3 font-semibold text-slate-900 active:bg-slate-50 dark:text-slate-100 dark:active:bg-slate-700"
                 >
-                  <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{team.name}</span>
-                  <span className="shrink-0 text-sm font-medium text-sky-600 dark:text-sky-400">Open ›</span>
+                  {team.name}
                 </Link>
+                <Link
+                  href={`/c/${team.secret_slug}`}
+                  className="shrink-0 border-l border-slate-200 px-3 py-3 text-sm font-medium text-sky-600 active:bg-slate-50 dark:border-slate-700 dark:text-sky-400 dark:active:bg-slate-700"
+                >
+                  Open ›
+                </Link>
+                <ShareTeamButton slug={team.secret_slug} teamName={team.name} />
                 {adminMode && (
                   <button
                     type="button"

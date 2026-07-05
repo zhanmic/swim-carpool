@@ -2,10 +2,12 @@
 
 import { getFamilyColor, type FamilyColorClasses } from "@/lib/familyColors";
 import Link from "next/link";
+import { ShareTeamButton } from "./ShareTeamButton";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   teamName: string;
+  teamSlug: string;
   scheduleUrl?: string | null;
   familyName: string | null;
   familyId?: string | null;
@@ -16,6 +18,7 @@ interface HeaderProps {
 
 export function Header({
   teamName,
+  teamSlug,
   scheduleUrl,
   familyName,
   familyId,
@@ -58,6 +61,7 @@ export function Header({
               Team Schedule
             </a>
           )}
+          <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
           <ThemeToggle />
           <button
             type="button"

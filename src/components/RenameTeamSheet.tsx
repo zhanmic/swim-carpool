@@ -7,6 +7,8 @@ import {
   visibleDaysEqual,
   WEEKDAY_LABELS,
 } from "@/lib/visibleDays";
+import { getTeamUrl } from "@/lib/shareTeam";
+import { ShareTeamButton } from "@/components/ShareTeamButton";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -44,6 +46,11 @@ export function RenameTeamSheet({
   const [addFamilyBusy, setAddFamilyBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [familyError, setFamilyError] = useState<string | null>(null);
+  const [teamUrl, setTeamUrl] = useState("");
+
+  useEffect(() => {
+    setTeamUrl(getTeamUrl(slug));
+  }, [slug]);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -273,6 +280,23 @@ export function RenameTeamSheet({
                 Optional. Shows as Team Schedule in the week view.
               </p>
             </label>
+
+            <div className="block">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Team link</span>
+              <div className="mt-1 flex items-stretch gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={teamUrl}
+                  className="min-w-0 flex-1 truncate rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  onFocus={(e) => e.target.select()}
+                />
+                <ShareTeamButton slug={slug} teamName={name.trim() || teamName} />
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Share this link with your carpool group.
+              </p>
+            </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
           </section>

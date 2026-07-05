@@ -235,6 +235,7 @@ export function WeekView({ slug }: WeekViewProps) {
     <div className="flex h-[100dvh] flex-col bg-slate-50 dark:bg-slate-900">
       <Header
         teamName={data.team.name}
+        teamSlug={slug}
         scheduleUrl={data.team.schedule_url}
         familyName={activeFamily?.name ?? null}
         familyId={activeFamilyId}

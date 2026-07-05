@@ -27,12 +27,12 @@ export async function POST(
     }
 
     if (action === "clear") {
-      const cleared = await clearWeekAssignments(team.id, weekStart);
+      const cleared = await clearWeekAssignments(team.id, weekStart, team.visible_days);
       return NextResponse.json({ cleared });
     }
 
     if (action === "copy_previous") {
-      const result = await copyScheduleFromPreviousWeek(team.id, weekStart);
+      const result = await copyScheduleFromPreviousWeek(team.id, weekStart, team.visible_days);
       return NextResponse.json(result);
     }
 

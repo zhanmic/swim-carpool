@@ -27,13 +27,15 @@ export function addDays(date: Date, days: number): Date {
   return d;
 }
 
-/** Practice runs Monday–Saturday (no Sunday). */
+/** Default week view: Monday–Saturday (no Sunday). Teams can change this in settings. */
 export const PRACTICE_DAYS_PER_WEEK = 6;
 
+/** @deprecated Use getVisibleWeekDates from visibleDays.ts */
 export function getWeekDates(weekStart: Date): Date[] {
   return Array.from({ length: PRACTICE_DAYS_PER_WEEK }, (_, i) => addDays(weekStart, i));
 }
 
+/** @deprecated Use getWeekEndForVisibleDays from visibleDays.ts */
 export function getWeekEnd(weekStart: Date): Date {
   return addDays(weekStart, PRACTICE_DAYS_PER_WEEK - 1);
 }

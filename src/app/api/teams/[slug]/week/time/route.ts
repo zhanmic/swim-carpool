@@ -28,8 +28,8 @@ export async function POST(
       return NextResponse.json({ error: "start_time and end_time are required" }, { status: 400 });
     }
 
-    await ensureWeekSessions(team.id, weekStart);
-    const updated = await applyTimeToWeek(team.id, weekStart, start_time, end_time);
+    await ensureWeekSessions(team.id, weekStart, undefined, team.visible_days);
+    const updated = await applyTimeToWeek(team.id, weekStart, start_time, end_time, team.visible_days);
 
     return NextResponse.json({ updated, start_time, end_time });
   } catch (err) {

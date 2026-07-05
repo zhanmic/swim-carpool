@@ -1,22 +1,30 @@
 "use client";
 
 import type { Family } from "@/lib/types";
+import {
+  DEFAULT_VISIBLE_DAYS,
+  normalizeVisibleDays,
+  visibleDaysEqual,
+  WEEKDAY_LABELS,
+} from "@/lib/visibleDays";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 interface RenameTeamSheetProps {
   teamName: string;
   scheduleUrl?: string | null;
+  visibleDays?: number[];
   families: Family[];
   slug: string;
   onClose: () => void;
-  onUpdated: (team: { name: string; schedule_url: string | null }) => void;
+  onUpdated: (team: { name: string; schedule_url: string | null; visible_days: number[] }) => void;
   onFamiliesUpdated: (families: Family[]) => void;
 }
 
 export function RenameTeamSheet({
   teamName,
   scheduleUrl,
+  visibleDays: initialVisibleDays = [...DEFAULT_VISIBLE_DAYS],
   families: initialFamilies,
   slug,
   onClose,
@@ -26,6 +34,7 @@ export function RenameTeamSheet({
   const router = useRouter();
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
+  const [visibleDays, setVisibleDays] = useState<number[]>(initialVisibleDays);
   const [families, setFamilies] = useState(initialFamilies);
   const [newFamilyName, setNewFamilyName] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -44,11 +53,23 @@ export function RenameTeamSheet({
   useEffect(() => {
     setName(teamName);
     setScheduleLink(scheduleUrl ?? "");
-  }, [teamName, scheduleUrl]);
+    setVisibleDays(initialVisibleDays);
+  }, [teamName, scheduleUrl, initialVisibleDays]);
 
   const teamDirty =
     name.trim() !== teamName.trim() ||
-    (scheduleLink.trim() || null) !== (scheduleUrl?.trim() || null);
+    (scheduleLink.trim() || null) !== (scheduleUrl?.trim() || null) ||
+    !visibleDaysEqual(visibleDays, initialVisibleDays);
+
+  function toggleVisibleDay(day: number) {
+    setVisibleDays((current) => {
+      if (current.includes(day)) {
+        const next = current.filter((d) => d !== day);
+        return next.length > 0 ? next : current;
+      }
+      return normalizeVisibleDays([...current, day]);
+    });
+  }
 
   async function handleSave() {
     if (!name.trim() || !teamDirty) return;
@@ -61,6 +82,7 @@ export function RenameTeamSheet({
         body: JSON.stringify({
           name: name.trim(),
           schedule_url: scheduleLink.trim() || null,
+          visible_days: visibleDays,
         }),
       });
       const data = await res.json();
@@ -71,6 +93,7 @@ export function RenameTeamSheet({
       onUpdated({
         name: data.team.name,
         schedule_url: data.team.schedule_url ?? null,
+        visible_days: data.team.visible_days ?? visibleDays,
       });
     } finally {
       setBusy(false);
@@ -252,6 +275,32 @@ export function RenameTeamSheet({
             </label>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
+          </section>
+
+          <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Week days shown</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Choose which days appear in the week view. Sunday is off by default.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAY_LABELS.map((label, day) => {
+                const on = visibleDays.includes(day);
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => toggleVisibleDay(day)}
+                    className={`touch-target-compact min-w-[2.75rem] rounded-full px-2.5 text-xs font-semibold transition-colors ${
+                      on
+                        ? "bg-sky-500 text-white"
+                        : "border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700">

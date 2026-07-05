@@ -5,6 +5,7 @@ export interface Team {
   name: string;
   secret_slug: string;
   schedule_url: string | null;
+  visible_days: number[];
   created_at: string;
 }
 

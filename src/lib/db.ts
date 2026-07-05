@@ -1,7 +1,15 @@
 import { neon } from "@neondatabase/serverless";
-import { addDays, formatDateOnly, getMonday, getWeekDates, getWeekEnd, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
+import { addDays, formatDateOnly, getMonday, parseDateOnly, snapTimeToStep, weekStartForDate } from "./dates";
 import { parseDropoffPickups } from "./dropoffPickups";
 import { getSchemaStatements } from "./schema";
+import {
+  DEFAULT_VISIBLE_DAYS,
+  getWeekEndForVisibleDays,
+  getVisibleWeekDates,
+  normalizeVisibleDays,
+  parseVisibleDays,
+  visibleSessionDates,
+} from "./visibleDays";
 import type {
   Assignment,
   AssignmentRole,
@@ -47,37 +55,59 @@ function normalizeTime(t: string): string {
   return `${snapped}:00`;
 }
 
+function mapTeamRow(row: Team & { visible_days?: unknown }): Team {
+  return {
+    ...row,
+    visible_days: parseVisibleDays(row.visible_days),
+  };
+}
+
 export async function getTeamBySlug(slug: string): Promise<Team | null> {
   const sql = getSql();
-  const rows = await sql`SELECT id, name, secret_slug, schedule_url, created_at::text AS created_at FROM teams WHERE secret_slug = ${slug} LIMIT 1`;
-  return (rows[0] as Team | undefined) ?? null;
+  const rows = await sql`
+    SELECT id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
+    FROM teams WHERE secret_slug = ${slug} LIMIT 1
+  `;
+  const row = rows[0] as (Team & { visible_days?: unknown }) | undefined;
+  return row ? mapTeamRow(row) : null;
 }
 
 export async function listTeams(): Promise<Team[]> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug, schedule_url
+    SELECT id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
     FROM teams
     ORDER BY name
   `;
-  return rows as Team[];
+  return (rows as Array<Team & { visible_days?: unknown }>).map(mapTeamRow);
 }
 
 export async function updateTeam(
   slug: string,
-  data: { name: string; schedule_url?: string | null }
+  data: { name: string; schedule_url?: string | null; visible_days?: number[] }
 ): Promise<Team | null> {
   const trimmed = data.name.trim();
   if (!trimmed) return null;
   const scheduleUrl = data.schedule_url?.trim() || null;
+  const visibleDaysJson =
+    data.visible_days !== undefined ? JSON.stringify(normalizeVisibleDays(data.visible_days)) : null;
   const sql = getSql();
   const rows = await sql`
     UPDATE teams
-    SET name = ${trimmed}, schedule_url = ${scheduleUrl}
+    SET
+      name = ${trimmed},
+      schedule_url = ${scheduleUrl},
+      visible_days = COALESCE(${visibleDaysJson}::jsonb, visible_days)
     WHERE secret_slug = ${slug}
-    RETURNING id, name, secret_slug, schedule_url, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
   `;
-  return (rows[0] as Team | undefined) ?? null;
+  const row = rows[0] as (Team & { visible_days?: unknown }) | undefined;
+  if (!row) return null;
+  const team = mapTeamRow(row);
+  if (data.visible_days !== undefined) {
+    await ensureRecurringTemplatesForDays(team.id, team.visible_days);
+  }
+  return team;
 }
 
 export async function deleteTeamBySlug(slug: string): Promise<boolean> {
@@ -278,17 +308,44 @@ type TemplateRow = {
   cancelled: boolean;
 };
 
+export async function ensureRecurringTemplatesForDays(teamId: string, visibleDays: number[]): Promise<void> {
+  const sql = getSql();
+  const sourceRows = await sql`
+    SELECT start_time::text, end_time::text, location_name, cancelled
+    FROM recurring_templates
+    WHERE team_id = ${teamId}
+    ORDER BY day_of_week
+    LIMIT 1
+  `;
+  const source = sourceRows[0] as
+    | { start_time: string; end_time: string; location_name: string; cancelled: boolean }
+    | undefined;
+  const startTime = normalizeTime(source?.start_time?.slice(0, 5) ?? "05:45");
+  const endTime = normalizeTime(source?.end_time?.slice(0, 5) ?? "08:15");
+  const locationName = source?.location_name ?? "Main Pool";
+  const cancelled = source?.cancelled ?? false;
+
+  for (const day of visibleDays) {
+    await sql`
+      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled)
+      VALUES (${teamId}, ${day}, ${startTime}, ${endTime}, ${locationName}, ${cancelled})
+      ON CONFLICT (team_id, day_of_week) DO NOTHING
+    `;
+  }
+}
+
 export async function ensureWeekSessions(
   teamId: string,
   weekStartDate: string,
-  earliestWeekStart?: string
+  earliestWeekStart?: string,
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
 ): Promise<void> {
   if (earliestWeekStart && weekStartDate < earliestWeekStart) {
     return;
   }
   const sql = getSql();
   const weekStart = parseDateOnly(weekStartDate);
-  const dates = getWeekDates(weekStart);
+  const dates = getVisibleWeekDates(weekStart, visibleDays);
 
   const templates = (await sql`
     SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled
@@ -392,11 +449,14 @@ export async function getWeekData(slug: string, weekStartStr: string): Promise<W
   const effectiveWeekStart =
     weekStartStr < earliestWeekStart ? earliestWeekStart : weekStartStr;
 
-  await ensureWeekSessions(team.id, effectiveWeekStart, earliestWeekStart);
+  const visibleDays = parseVisibleDays(team.visible_days);
+
+  await ensureWeekSessions(team.id, effectiveWeekStart, earliestWeekStart, visibleDays);
   await ensureSavedLocations(team.id);
 
   const weekStart = parseDateOnly(effectiveWeekStart);
-  const weekEnd = formatDateOnly(getWeekEnd(weekStart));
+  const weekEnd = formatDateOnly(getWeekEndForVisibleDays(weekStart, visibleDays));
+  const visibleDates = new Set(visibleSessionDates(effectiveWeekStart, visibleDays));
 
   const [families, sessions, locations] = await Promise.all([
     getFamilies(team.id),
@@ -407,7 +467,7 @@ export async function getWeekData(slug: string, weekStartStr: string): Promise<W
   return {
     team,
     families,
-    sessions,
+    sessions: sessions.filter((session) => visibleDates.has(session.session_date)),
     locations,
     weekStart: effectiveWeekStart,
     earliestWeekStart,
@@ -546,19 +606,21 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
 export async function applyLocationToWeek(
   teamId: string,
   weekStartStr: string,
-  locationName: string
+  locationName: string,
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
 ): Promise<number> {
   const trimmed = locationName.trim();
   if (!trimmed) return 0;
 
+  const dates = visibleSessionDates(weekStartStr, visibleDays);
+  if (dates.length === 0) return 0;
+
   const sql = getSql();
-  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
   const rows = await sql`
     UPDATE practice_sessions
     SET location_name = ${trimmed}
     WHERE team_id = ${teamId}
-      AND session_date >= ${weekStartStr}
-      AND session_date <= ${weekEnd}
+      AND session_date = ANY(${dates})
     RETURNING id
   `;
   return rows.length;
@@ -568,10 +630,13 @@ export async function applyTimeToWeek(
   teamId: string,
   weekStartStr: string,
   startTime: string,
-  endTime: string
+  endTime: string,
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
 ): Promise<number> {
+  const dates = visibleSessionDates(weekStartStr, visibleDays);
+  if (dates.length === 0) return 0;
+
   const sql = getSql();
-  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
   const start = normalizeTime(startTime);
   const end = normalizeTime(endTime);
 
@@ -579,12 +644,11 @@ export async function applyTimeToWeek(
     UPDATE practice_sessions
     SET start_time = ${start}, end_time = ${end}
     WHERE team_id = ${teamId}
-      AND session_date >= ${weekStartStr}
-      AND session_date <= ${weekEnd}
+      AND session_date = ANY(${dates})
     RETURNING id
   `;
 
-  for (let day = 0; day < 6; day++) {
+  for (const day of visibleDays) {
     await sql`
       UPDATE recurring_templates
       SET start_time = ${start}, end_time = ${end}
@@ -595,16 +659,21 @@ export async function applyTimeToWeek(
   return rows.length;
 }
 
-export async function clearWeekAssignments(teamId: string, weekStartStr: string): Promise<number> {
+export async function clearWeekAssignments(
+  teamId: string,
+  weekStartStr: string,
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
+): Promise<number> {
+  const dates = visibleSessionDates(weekStartStr, visibleDays);
+  if (dates.length === 0) return 0;
+
   const sql = getSql();
-  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(weekStartStr)));
   const rows = await sql`
     DELETE FROM assignments a
     USING practice_sessions ps
     WHERE a.session_id = ps.id
       AND ps.team_id = ${teamId}
-      AND ps.session_date >= ${weekStartStr}
-      AND ps.session_date <= ${weekEnd}
+      AND ps.session_date = ANY(${dates})
     RETURNING a.id
   `;
   return rows.length;
@@ -612,7 +681,8 @@ export async function clearWeekAssignments(teamId: string, weekStartStr: string)
 
 export async function copyScheduleFromPreviousWeek(
   teamId: string,
-  weekStartStr: string
+  weekStartStr: string,
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
 ): Promise<{ copied: number; cleared: number }> {
   const sql = getSql();
   const teamRows = await sql`
@@ -622,18 +692,20 @@ export async function copyScheduleFromPreviousWeek(
   const normalizedWeekStart = formatDateOnly(getMonday(parseDateOnly(weekStartStr)));
   const prevStart = formatDateOnly(addDays(parseDateOnly(normalizedWeekStart), -7));
 
-  await ensureWeekSessions(teamId, normalizedWeekStart, earliestWeekStart);
+  await ensureWeekSessions(teamId, normalizedWeekStart, earliestWeekStart, visibleDays);
 
-  const cleared = await clearWeekAssignments(teamId, normalizedWeekStart);
+  const cleared = await clearWeekAssignments(teamId, normalizedWeekStart, visibleDays);
 
   if (prevStart < earliestWeekStart) {
     return { copied: 0, cleared };
   }
 
-  await ensureWeekSessions(teamId, prevStart, earliestWeekStart);
+  await ensureWeekSessions(teamId, prevStart, earliestWeekStart, visibleDays);
 
-  const weekEnd = formatDateOnly(getWeekEnd(parseDateOnly(normalizedWeekStart)));
-  const prevEnd = formatDateOnly(getWeekEnd(parseDateOnly(prevStart)));
+  const dates = visibleSessionDates(normalizedWeekStart, visibleDays);
+  if (dates.length === 0) {
+    return { copied: 0, cleared };
+  }
 
   const rows = await sql`
     UPDATE practice_sessions AS curr
@@ -645,10 +717,7 @@ export async function copyScheduleFromPreviousWeek(
     FROM practice_sessions AS prev
     WHERE curr.team_id = ${teamId}
       AND prev.team_id = ${teamId}
-      AND curr.session_date >= ${normalizedWeekStart}
-      AND curr.session_date <= ${weekEnd}
-      AND prev.session_date >= ${prevStart}
-      AND prev.session_date <= ${prevEnd}
+      AND curr.session_date = ANY(${dates})
       AND prev.session_date = curr.session_date - 7
     RETURNING curr.id
   `;
@@ -675,9 +744,9 @@ export async function createTeam(
   const teamRows = await sql`
     INSERT INTO teams (name, secret_slug)
     VALUES (${name}, ${slug})
-    RETURNING id, name, secret_slug, schedule_url, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
   `;
-  const team = teamRows[0] as Team;
+  const team = mapTeamRow(teamRows[0] as Team & { visible_days?: unknown });
 
   const families: Family[] = [];
   for (const familyName of familyNames) {

@@ -411,11 +411,12 @@ export function WeekView({ slug }: WeekViewProps) {
         <RenameTeamSheet
           teamName={data.team.name}
           scheduleUrl={data.team.schedule_url}
+          visibleDays={data.team.visible_days}
           families={data.families}
           slug={slug}
           onClose={() => setShowRename(false)}
           onUpdated={(team) => {
-            void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: false });
+            void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: true });
           }}
           onFamiliesUpdated={(families) => {
             void mutate({ ...data, families }, { revalidate: true });

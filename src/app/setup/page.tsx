@@ -2,6 +2,7 @@
 
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { TimeInput } from "@/components/TimeInput";
+import { recordKnownTeam } from "@/lib/storage";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -53,6 +54,7 @@ export default function SetupPage() {
         return;
       }
 
+      recordKnownTeam(data.team.secret_slug, data.team.name);
       router.push(`/c/${data.team.secret_slug}`);
     } catch {
       setError("Network error — try again");

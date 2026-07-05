@@ -2,7 +2,7 @@
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
 import { buildFamilyColorMap } from "@/lib/familyColors";
-import { clearActiveFamilyId, getActiveFamilyId, setActiveFamilyId } from "@/lib/storage";
+import { clearActiveFamilyId, getActiveFamilyId, recordKnownTeam, setActiveFamilyId } from "@/lib/storage";
 import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
 import { useEffect, useMemo, useState } from "react";
@@ -57,6 +57,12 @@ export function WeekView({ slug }: WeekViewProps) {
       setShowPicker(true);
     }
   }, [slug, data?.families.length]);
+
+  useEffect(() => {
+    if (data?.team) {
+      recordKnownTeam(slug, data.team.name);
+    }
+  }, [data?.team, slug]);
 
   const activeFamily = useMemo(
     () => data?.families.find((f) => f.id === activeFamilyId) ?? null,

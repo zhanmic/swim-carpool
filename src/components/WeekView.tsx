@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, defaultWeekStartStr, formatDateOnly, getMonday, parseDateOnly } from "@/lib/dates";
+import { addDays, defaultWeekStartStr, formatDateOnly, getWeekStart, parseDateOnly } from "@/lib/dates";
 import { buildFamilyColorMap } from "@/lib/familyColors";
 import { clearActiveFamilyId, getActiveFamilyId, recordKnownTeam, setActiveFamilyId } from "@/lib/storage";
 import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
@@ -161,7 +161,7 @@ export function WeekView({ slug }: WeekViewProps) {
   function shiftWeek(delta: number) {
     if (!weekStart) return;
     const d = addDays(parseDateOnly(weekStart), delta * 7);
-    let next = formatDateOnly(getMonday(d));
+    let next = formatDateOnly(getWeekStart(d));
     const earliest = data?.earliestWeekStart;
     if (delta < 0 && earliest && next < earliest) {
       next = earliest;
@@ -171,7 +171,7 @@ export function WeekView({ slug }: WeekViewProps) {
 
   const currentWeekStart = defaultWeekStartStr();
   const isCurrentWeek =
-    !!weekStart && formatDateOnly(getMonday(parseDateOnly(weekStart))) === currentWeekStart;
+    !!weekStart && formatDateOnly(getWeekStart(parseDateOnly(weekStart))) === currentWeekStart;
   const earliestWeekStart = data?.earliestWeekStart;
   const isEarliestWeek = !!earliestWeekStart && !!weekStart && weekStart === earliestWeekStart;
 

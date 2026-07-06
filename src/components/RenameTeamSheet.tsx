@@ -283,7 +283,7 @@ export function RenameTeamSheet({
 
             <div className="block">
               <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Team link</span>
-              <div className="mt-1 flex items-stretch gap-2">
+              <div className="mt-1 flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
@@ -291,7 +291,12 @@ export function RenameTeamSheet({
                   className="min-w-0 flex-1 truncate rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   onFocus={(e) => e.target.select()}
                 />
-                <ShareTeamButton slug={slug} teamName={name.trim() || teamName} />
+                <ShareTeamButton
+                  slug={slug}
+                  teamName={name.trim() || teamName}
+                  variant="icon"
+                  className="shrink-0"
+                />
               </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Share this link with your carpool group.

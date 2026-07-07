@@ -54,9 +54,59 @@ interface DaySheetProps {
     location_notes: string | null;
     dropoff_pickups: DropoffPickups;
     cancelled: boolean;
-  }) => Promise<void>;
+  }) => Promise<boolean>;
   onClaim: (role: AssignmentRole, action: "claim" | "release") => Promise<void>;
   onSkip: (action: "mark" | "clear") => Promise<void>;
+}
+
+type ScheduleSnapshot = {
+  start_time: string;
+  end_time: string;
+  location_name: string;
+  location_notes: string | null;
+  dropoff_pickups: DropoffPickups;
+  cancelled: boolean;
+};
+
+function buildScheduleSnapshot(
+  session: SessionWithAssignments,
+  skipIds: Set<string>
+): ScheduleSnapshot {
+  const drop = session.assignments.find((a) => a.role === "dropoff");
+  return {
+    start_time: snapTimeToStep(session.start_time),
+    end_time: snapTimeToStep(session.end_time),
+    location_name: session.location_name,
+    location_notes: session.location_notes?.trim() || null,
+    dropoff_pickups: cleanDropoffPickups(
+      parseDropoffPickups(session.dropoff_pickups),
+      drop?.family_id ?? null,
+      skipIds
+    ),
+    cancelled: session.cancelled,
+  };
+}
+
+function schedulesEqual(a: ScheduleSnapshot, b: ScheduleSnapshot): boolean {
+  if (
+    a.start_time !== b.start_time ||
+    a.end_time !== b.end_time ||
+    a.location_name !== b.location_name ||
+    a.cancelled !== b.cancelled
+  ) {
+    return false;
+  }
+  if ((a.location_notes ?? "") !== (b.location_notes ?? "")) {
+    return false;
+  }
+  const keysA = Object.keys(a.dropoff_pickups).sort();
+  const keysB = Object.keys(b.dropoff_pickups).sort();
+  if (keysA.length !== keysB.length) return false;
+  for (let i = 0; i < keysA.length; i++) {
+    if (keysA[i] !== keysB[i]) return false;
+    if (a.dropoff_pickups[keysA[i]!] !== b.dropoff_pickups[keysB[i]!]) return false;
+  }
+  return true;
 }
 
 export function DaySheet({
@@ -100,12 +150,28 @@ export function DaySheet({
     cleanDropoffPickups(parseDropoffPickups(session.dropoff_pickups), drop?.family_id ?? null, skipIds)
   );
   const [cancelled, setCancelled] = useState(session.cancelled);
+  const [savedSnapshot, setSavedSnapshot] = useState<ScheduleSnapshot>(() =>
+    buildScheduleSnapshot(session, skipIds)
+  );
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
   const [busy, setBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
+
+  useEffect(() => {
+    const snapshot = buildScheduleSnapshot(session, skipIds);
+    setStartTime(snapshot.start_time);
+    setEndTime(snapshot.end_time);
+    setLocationName(snapshot.location_name);
+    setLocationNotes(snapshot.location_notes ?? "");
+    setDropoffPickups(snapshot.dropoff_pickups);
+    setCancelled(snapshot.cancelled);
+    setSavedSnapshot(snapshot);
+    // Only reset when opening a different day — not on background SWR refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- session fields read when session.id changes
+  }, [session.id]);
 
   useEffect(() => {
     if (!dropoffFamilyId) return;
@@ -116,6 +182,23 @@ export function DaySheet({
       return next;
     });
   }, [dropoffFamilyId]);
+
+  const currentSchedule = useMemo<ScheduleSnapshot>(
+    () => ({
+      start_time: startTime,
+      end_time: endTime,
+      location_name: locationName,
+      location_notes: locationNotes.trim() || null,
+      dropoff_pickups: cleanDropoffPickups(dropoffPickups, dropoffFamilyId),
+      cancelled,
+    }),
+    [startTime, endTime, locationName, locationNotes, dropoffPickups, dropoffFamilyId, cancelled]
+  );
+
+  const scheduleDirty = useMemo(
+    () => !schedulesEqual(currentSchedule, savedSnapshot),
+    [currentSchedule, savedSnapshot]
+  );
 
   function setFamilyPickup(familyId: string, time: string) {
     setDropoffPickups((current) => {
@@ -174,16 +257,13 @@ export function DaySheet({
   }
 
   async function handleSave() {
+    if (!scheduleDirty || saving) return;
     setSaving(true);
     try {
-      await onSaveSchedule({
-        start_time: startTime,
-        end_time: endTime,
-        location_name: locationName,
-        location_notes: locationNotes.trim() || null,
-        dropoff_pickups: cleanDropoffPickups(dropoffPickups, dropoffFamilyId),
-        cancelled,
-      });
+      const saved = await onSaveSchedule(currentSchedule);
+      if (saved) {
+        setSavedSnapshot(currentSchedule);
+      }
     } finally {
       setSaving(false);
     }
@@ -517,8 +597,8 @@ export function DaySheet({
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving}
-            className="touch-target-compact w-full rounded-xl bg-slate-800 text-sm font-semibold text-white disabled:opacity-50 dark:bg-slate-700"
+            disabled={saving || !scheduleDirty}
+            className="touch-target-compact w-full rounded-xl bg-slate-800 text-sm font-semibold text-white disabled:bg-slate-300 disabled:text-slate-500 dark:bg-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
           >
             {saving ? "Saving…" : "Save schedule"}
           </button>

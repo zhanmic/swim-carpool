@@ -68,6 +68,13 @@ export function RenameTeamSheet({
     (scheduleLink.trim() || null) !== (scheduleUrl?.trim() || null) ||
     !visibleDaysEqual(visibleDays, initialVisibleDays);
 
+  const familiesDirty = families.some((family) => {
+    const original = initialFamilies.find((item) => item.id === family.id);
+    return !!original && original.name !== family.name.trim();
+  });
+
+  const isDirty = teamDirty || familiesDirty;
+
   function toggleVisibleDay(day: number) {
     setVisibleDays((current) => {
       if (current.includes(day)) {
@@ -79,62 +86,64 @@ export function RenameTeamSheet({
   }
 
   async function handleSave() {
-    if (!name.trim() || !teamDirty) return;
+    if (!name.trim() || !isDirty) return;
     setBusy(true);
     setError(null);
-    try {
-      const res = await fetch(`/api/teams/${slug}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          schedule_url: scheduleLink.trim() || null,
-          visible_days: visibleDays,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Could not save team");
-        return;
-      }
-      onUpdated({
-        name: data.team.name,
-        schedule_url: data.team.schedule_url ?? null,
-        visible_days: data.team.visible_days ?? visibleDays,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleRenameFamily(familyId: string, nextName: string) {
-    const trimmed = nextName.trim();
-    const original = initialFamilies.find((family) => family.id === familyId);
-    if (!original || original.name === trimmed) return;
-    if (!trimmed) {
-      setFamilies(initialFamilies);
-      setFamilyError("Family name is required");
-      return;
-    }
-
-    setFamilyBusyId(familyId);
     setFamilyError(null);
     try {
-      const res = await fetch(`/api/teams/${slug}/families`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "rename", id: familyId, name: trimmed }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setFamilyError(data.error ?? "Could not rename family");
-        setFamilies(initialFamilies);
-        return;
+      if (teamDirty) {
+        const res = await fetch(`/api/teams/${slug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            schedule_url: scheduleLink.trim() || null,
+            visible_days: visibleDays,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "Could not save team");
+          return;
+        }
+        onUpdated({
+          name: data.team.name,
+          schedule_url: data.team.schedule_url ?? null,
+          visible_days: data.team.visible_days ?? visibleDays,
+        });
       }
-      setFamilies(data.families as Family[]);
-      onFamiliesUpdated(data.families as Family[]);
+
+      let latestFamilies = families;
+      for (const family of families) {
+        const original = initialFamilies.find((item) => item.id === family.id);
+        const trimmed = family.name.trim();
+        if (!original || original.name === trimmed) continue;
+        if (!trimmed) {
+          setFamilyError("Family name is required");
+          setFamilies(initialFamilies);
+          return;
+        }
+
+        const res = await fetch(`/api/teams/${slug}/families`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "rename", id: family.id, name: trimmed }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setFamilyError(data.error ?? "Could not rename family");
+          setFamilies(initialFamilies);
+          return;
+        }
+        latestFamilies = data.families as Family[];
+      }
+
+      if (familiesDirty) {
+        setFamilies(latestFamilies);
+        onFamiliesUpdated(latestFamilies);
+      }
     } finally {
-      setFamilyBusyId(null);
+      setBusy(false);
     }
   }
 
@@ -225,7 +234,7 @@ export function RenameTeamSheet({
             <button
               type="button"
               onClick={() => void handleSave()}
-              disabled={busy || !name.trim() || !teamDirty}
+              disabled={busy || !name.trim() || !isDirty}
               className="touch-target-sm rounded-lg px-3 text-sm font-semibold text-sky-600 disabled:opacity-35 dark:text-sky-400"
             >
               {busy ? "Saving…" : "Save"}
@@ -335,7 +344,7 @@ export function RenameTeamSheet({
           <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Families</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Changes save when you rename (tap away), add, or remove.
+              Family renames save with Save. Add and remove save immediately.
             </p>
             <ul className="space-y-2">
               {families.map((family) => (
@@ -351,7 +360,6 @@ export function RenameTeamSheet({
                         )
                       );
                     }}
-                    onBlur={(e) => void handleRenameFamily(family.id, e.target.value)}
                     className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                   />
                   <button

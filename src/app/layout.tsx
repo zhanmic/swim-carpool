@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { buildThemeInitScript } from "@/lib/theme";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
   ],
 };
 
-const themeScript = `(function(){try{var k="swim-carpool:theme",t=localStorage.getItem(k);var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+const themeScript = buildThemeInitScript();
 
 export default function RootLayout({
   children,

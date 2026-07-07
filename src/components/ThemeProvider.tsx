@@ -1,7 +1,15 @@
 "use client";
 
-import { applyTheme, getPreferredTheme, setStoredTheme, type Theme } from "@/lib/theme";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  applyTheme,
+  getPreferredTheme,
+  getStoredTheme,
+  getThemeByLocalTime,
+  msUntilNextThemeBoundary,
+  setStoredTheme,
+  type Theme,
+} from "@/lib/theme";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -13,27 +21,58 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
+  const boundaryTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const initial = getPreferredTheme();
-    setThemeState(initial);
-    applyTheme(initial);
+    function clearBoundaryTimeout() {
+      if (boundaryTimeoutRef.current !== null) {
+        window.clearTimeout(boundaryTimeoutRef.current);
+        boundaryTimeoutRef.current = null;
+      }
+    }
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    function onChange() {
-      if (localStorage.getItem("swim-carpool:theme")) return;
-      const next = media.matches ? "dark" : "light";
+    function syncAutoTheme() {
+      if (getStoredTheme()) return;
+      const next = getThemeByLocalTime();
       setThemeState(next);
       applyTheme(next);
     }
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+
+    function scheduleBoundarySync() {
+      clearBoundaryTimeout();
+      if (getStoredTheme()) return;
+      boundaryTimeoutRef.current = window.setTimeout(() => {
+        syncAutoTheme();
+        scheduleBoundarySync();
+      }, msUntilNextThemeBoundary());
+    }
+
+    const initial = getPreferredTheme();
+    setThemeState(initial);
+    applyTheme(initial);
+    scheduleBoundarySync();
+
+    function onVisibility() {
+      if (document.visibilityState !== "visible") return;
+      syncAutoTheme();
+      scheduleBoundarySync();
+    }
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearBoundaryTimeout();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   function setTheme(next: Theme) {
     setThemeState(next);
     applyTheme(next);
     setStoredTheme(next);
+    if (boundaryTimeoutRef.current !== null) {
+      window.clearTimeout(boundaryTimeoutRef.current);
+      boundaryTimeoutRef.current = null;
+    }
   }
 
   function toggleTheme() {

@@ -130,8 +130,8 @@ export function WeekView({ slug }: WeekViewProps) {
     location_notes: string | null;
     dropoff_pickups: Record<string, string>;
     cancelled: boolean;
-  }) {
-    if (!openSession) return;
+  }): Promise<boolean> {
+    if (!openSession) return false;
     const res = await fetch(`/api/sessions/${openSession.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -139,7 +139,7 @@ export function WeekView({ slug }: WeekViewProps) {
     });
     if (!res.ok) {
       alert("Could not save schedule");
-      return;
+      return false;
     }
     const updated = (await res.json()) as SessionWithAssignments;
     await mutate(
@@ -152,6 +152,7 @@ export function WeekView({ slug }: WeekViewProps) {
       },
       { revalidate: true }
     );
+    return true;
   }
 
   function updateLocations(locations: SavedLocation[]) {

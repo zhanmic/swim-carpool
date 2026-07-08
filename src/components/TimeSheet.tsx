@@ -86,23 +86,23 @@ export function TimeSheet({ slug, weekStart, sessions, onClose, onWeekApplied }:
             Set practice time for all days this week. Tap a single day on the schedule to change that day only.
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 overflow-hidden">
+            <label className="block min-w-0 overflow-hidden">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Start</span>
               <TimeInput
                 required
                 value={startTime}
                 onChange={setStartTime}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+                className="mt-1 rounded-lg border border-slate-300 px-1 py-2 text-sm dark:border-slate-600"
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0 overflow-hidden">
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">End</span>
               <TimeInput
                 required
                 value={endTime}
                 onChange={setEndTime}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+                className="mt-1 rounded-lg border border-slate-300 px-1 py-2 text-sm dark:border-slate-600"
               />
             </label>
           </div>

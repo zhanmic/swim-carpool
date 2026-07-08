@@ -27,6 +27,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
+  overflow-x: hidden;
 }
 
 body {
@@ -37,6 +38,7 @@ body {
   line-height: 1.5;
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
+  overflow-x: hidden;
 }
 
 .safe-top {
@@ -83,6 +85,30 @@ select {
 }
 
 input[type="time"] {
+  display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="time"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+input[type="time"]::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+  margin: 0;
+  padding: 0;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input[type="time"] {
+    font-size: 14px;
+  }
 }

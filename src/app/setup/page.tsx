@@ -135,23 +135,23 @@ export default function SetupPage() {
             </p>
           </label>
 
-          <div className="flex flex-wrap gap-3">
-            <label className="block shrink-0">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Start time</span>
               <TimeInput
                 required
                 value={startTime}
                 onChange={setStartTime}
-                className="mt-0.5 block w-[6.75rem] rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                className="mt-0.5 w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
               />
             </label>
-            <label className="block shrink-0">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">End time</span>
               <TimeInput
                 required
                 value={endTime}
                 onChange={setEndTime}
-                className="mt-0.5 block w-[6.75rem] rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                className="mt-0.5 w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
               />
             </label>
           </div>

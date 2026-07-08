@@ -8,7 +8,7 @@ interface TimeInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "ty
   onChange: (value: string) => void;
 }
 
-const baseClassName = "block w-full min-w-0 max-w-full box-border";
+const baseClassName = "time-input block min-w-0 box-border";
 
 export function TimeInput({ value, onChange, className = "", ...props }: TimeInputProps) {
   return (

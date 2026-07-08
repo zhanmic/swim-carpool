@@ -94,7 +94,7 @@ export default function SetupPage() {
         <h1 className="text-2xl font-bold text-slate-900 mb-2 dark:text-slate-100">Set up your team</h1>
         <p className="text-slate-600 mb-6 dark:text-slate-400">One-time setup. Share the link with your carpool group.</p>
 
-        <form onSubmit={handleSubmit} className="max-w-full space-y-4 overflow-hidden">
+        <form onSubmit={handleSubmit} className="max-w-full space-y-4">
           <label className="block">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team name</span>
             <input
@@ -155,23 +155,23 @@ export default function SetupPage() {
             </p>
           </label>
 
-          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 overflow-hidden">
-            <label className="block min-w-0 overflow-hidden">
+          <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Start time</span>
               <TimeInput
                 required
                 value={startTime}
                 onChange={setStartTime}
-                className="mt-0.5 rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                className="mt-0.5 w-full rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
               />
             </label>
-            <label className="block min-w-0 overflow-hidden">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-slate-700 dark:text-slate-300">End time</span>
               <TimeInput
                 required
                 value={endTime}
                 onChange={setEndTime}
-                className="mt-0.5 rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                className="mt-0.5 w-full rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
               />
             </label>
           </div>

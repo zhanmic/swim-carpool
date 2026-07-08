@@ -84,11 +84,10 @@ select {
   @apply bg-white dark:bg-slate-800 dark:text-slate-100;
 }
 
-input[type="time"] {
+input[type="time"],
+input.time-input {
   display: block;
-  width: 100%;
   min-width: 0;
-  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -97,18 +96,27 @@ input[type="time"]::-webkit-date-and-time-value {
   text-align: left;
 }
 
-input[type="time"]::-webkit-datetime-edit {
+input[type="time"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+  min-width: 0;
+  padding: 0;
+}
+
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
   min-width: 0;
   padding: 0;
 }
 
 input[type="time"]::-webkit-calendar-picker-indicator {
-  margin: 0;
-  padding: 0;
+  display: none;
+  -webkit-appearance: none;
 }
 
 @supports (-webkit-touch-callout: none) {
-  input[type="time"] {
+  input[type="time"],
+  input.time-input {
     font-size: 14px;
   }
 }

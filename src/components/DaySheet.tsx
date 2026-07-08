@@ -434,7 +434,7 @@ export function DaySheet({
           </div>
         </div>
 
-        <div className="px-3 py-2 space-y-2 max-w-lg mx-auto">
+        <div className="min-w-0 space-y-2 px-3 py-2 max-w-lg mx-auto">
           {!cancelled && activeFamilyId && (
             <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-2.5 py-2 dark:border-amber-800 dark:bg-amber-950/40">
               <label className="flex items-center gap-2">
@@ -458,27 +458,27 @@ export function DaySheet({
           )}
 
           {!cancelled && (
-            <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 overflow-hidden">
-              <label className="block min-w-0 overflow-hidden">
+            <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+              <label className="block min-w-0">
                 <span className="text-xs text-slate-600 dark:text-slate-400">Start</span>
                 <TimeInput
                   value={startTime}
                   onChange={handleStartTimeChange}
-                  className="mt-0.5 rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
                 />
               </label>
-              <label className="block min-w-0 overflow-hidden">
+              <label className="block min-w-0">
                 <span className="text-xs text-slate-600 dark:text-slate-400">End</span>
                 <TimeInput
                   value={endTime}
                   onChange={setEndTime}
-                  className="mt-0.5 rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 px-1 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
                 />
               </label>
             </div>
           )}
 
-          <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-2 dark:border-violet-800 dark:bg-violet-950/40">
+          <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-2 min-w-0 dark:border-violet-800 dark:bg-violet-950/40">
             <span className="text-xs font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
             {!cancelled && familiesNeedingPickup.length > 0 && (
               <div className="mt-1.5 space-y-1">
@@ -499,22 +499,27 @@ export function DaySheet({
                 )}
                 <ul className="space-y-1">
                   {familiesNeedingPickup.map((family) => (
-                    <li key={family.id} className="flex items-center gap-1.5">
+                    <li
+                      key={family.id}
+                      className="grid grid-cols-[3.5rem_5rem_minmax(0,1fr)] items-center gap-x-1.5"
+                    >
                       <span
                         title={family.home_label ?? undefined}
-                        className={`w-14 shrink-0 truncate text-xs font-medium ${getFamilyColor(familyColors, family.id)?.text ?? "text-slate-700 dark:text-slate-300"}`}
+                        className={`truncate text-xs font-medium ${getFamilyColor(familyColors, family.id)?.text ?? "text-slate-700 dark:text-slate-300"}`}
                       >
                         {family.name}
                       </span>
                       <TimeInput
                         value={dropoffPickups[family.id] ?? ""}
                         onChange={(time) => setFamilyPickup(family.id, time)}
-                        className="w-[5.5rem] shrink-0 rounded-md border border-violet-200 bg-white px-1.5 py-1 text-sm dark:border-violet-700 dark:bg-slate-900"
+                        className="w-full max-w-[5rem] rounded-md border border-violet-200 bg-white px-1 py-1 text-sm dark:border-violet-700 dark:bg-slate-900"
                       />
-                      {family.home_label && (
+                      {family.home_label ? (
                         <span className="min-w-0 truncate text-[11px] text-violet-700/70 dark:text-violet-300/70">
                           {family.home_label}
                         </span>
+                      ) : (
+                        <span aria-hidden />
                       )}
                     </li>
                   ))}

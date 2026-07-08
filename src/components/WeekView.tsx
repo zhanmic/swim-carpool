@@ -420,6 +420,7 @@ export function WeekView({ slug }: WeekViewProps) {
           teamName={data.team.name}
           scheduleUrl={data.team.schedule_url}
           visibleDays={data.team.visible_days}
+          hasDeletePassword={data.team.has_delete_password}
           families={data.families}
           slug={slug}
           onClose={() => setShowRename(false)}

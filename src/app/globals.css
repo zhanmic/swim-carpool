@@ -81,3 +81,8 @@ textarea,
 select {
   @apply bg-white dark:bg-slate-800 dark:text-slate-100;
 }
+
+input[type="time"] {
+  min-width: 0;
+  max-width: 100%;
+}

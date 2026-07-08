@@ -102,7 +102,7 @@ export default function SetupPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Sharks Swim Team"
+              placeholder="e.g. Delma Dolphin, Waves team"
               className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base dark:border-slate-600"
             />
           </label>

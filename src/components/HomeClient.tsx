@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  clearActiveFamilyId,
   clearAdminSession,
   getAdminSessionPassword,
   getKnownTeams,
@@ -10,6 +11,7 @@ import {
   type KnownTeam,
 } from "@/lib/storage";
 import type { Team } from "@/lib/types";
+import { defaultWeekStartStr } from "@/lib/dates";
 import { ShareTeamButton } from "@/components/ShareTeamButton";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
@@ -60,6 +62,25 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
 
   useEffect(() => {
     refreshRecent();
+    const start = defaultWeekStartStr();
+    void (async () => {
+      const teams = getKnownTeams();
+      if (teams.length === 0) return;
+      const results = await Promise.all(
+        teams.map(async (team) => ({
+          slug: team.slug,
+          exists: (await fetch(`/api/teams/${team.slug}/week?start=${start}`)).ok,
+        }))
+      );
+      let changed = false;
+      for (const { slug, exists } of results) {
+        if (exists) continue;
+        removeKnownTeam(slug);
+        clearActiveFamilyId(slug);
+        changed = true;
+      }
+      if (changed) refreshRecent();
+    })();
     if (adminEnabled && isAdminUnlocked()) {
       const password = getAdminSessionPassword();
       if (password) {
@@ -128,6 +149,7 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
         return;
       }
       removeKnownTeam(deleteTarget.secret_slug);
+      clearActiveFamilyId(deleteTarget.secret_slug);
       refreshRecent();
       setAllTeams((current) => current?.filter((team) => team.secret_slug !== deleteTarget.secret_slug) ?? null);
       setDeleteTarget(null);

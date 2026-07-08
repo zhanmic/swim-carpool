@@ -8,6 +8,7 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/visibleDays";
 import { getTeamUrl } from "@/lib/shareTeam";
+import { clearActiveFamilyId, removeKnownTeam } from "@/lib/storage";
 import { ShareTeamButton } from "@/components/ShareTeamButton";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -242,6 +243,8 @@ export function RenameTeamSheet({
         setDeleteError(data.error ?? "Could not delete team");
         return;
       }
+      removeKnownTeam(slug);
+      clearActiveFamilyId(slug);
       router.push("/");
       router.refresh();
     } finally {

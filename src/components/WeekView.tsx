@@ -2,9 +2,16 @@
 
 import { addDays, defaultWeekStartStr, formatDateOnly, getWeekStart, parseDateOnly } from "@/lib/dates";
 import { buildFamilyColorMap } from "@/lib/familyColors";
-import { clearActiveFamilyId, getActiveFamilyId, recordKnownTeam, setActiveFamilyId } from "@/lib/storage";
+import {
+  clearActiveFamilyId,
+  getActiveFamilyId,
+  recordKnownTeam,
+  removeKnownTeam,
+  setActiveFamilyId,
+} from "@/lib/storage";
 import type { AssignmentRole, SavedLocation, SessionWithAssignments, WeekData } from "@/lib/types";
 import useSWR from "swr";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DayCard } from "./DayCard";
 import { DaySheet } from "./DaySheet";
@@ -14,10 +21,20 @@ import { LocationsSheet } from "./LocationsSheet";
 import { RenameTeamSheet } from "./RenameTeamSheet";
 import { TimeSheet } from "./TimeSheet";
 
-const fetcher = (url: string) => fetch(url).then((r) => {
-  if (!r.ok) throw new Error("Failed to fetch");
-  return r.json() as Promise<WeekData>;
-});
+class WeekFetchError extends Error {
+  status: number;
+
+  constructor(status: number) {
+    super("Failed to fetch week");
+    this.status = status;
+  }
+}
+
+const fetcher = (url: string) =>
+  fetch(url).then(async (r) => {
+    if (!r.ok) throw new WeekFetchError(r.status);
+    return r.json() as Promise<WeekData>;
+  });
 
 interface WeekViewProps {
   slug: string;
@@ -63,6 +80,12 @@ export function WeekView({ slug }: WeekViewProps) {
       recordKnownTeam(slug, data.team.name);
     }
   }, [data?.team, slug]);
+
+  useEffect(() => {
+    if (!(error instanceof WeekFetchError) || error.status !== 404) return;
+    removeKnownTeam(slug);
+    clearActiveFamilyId(slug);
+  }, [error, slug]);
 
   const activeFamily = useMemo(
     () => data?.families.find((f) => f.id === activeFamilyId) ?? null,
@@ -218,6 +241,17 @@ export function WeekView({ slug }: WeekViewProps) {
     } finally {
       setSlotsBusy(false);
     }
+  }
+
+  if (error instanceof WeekFetchError && error.status === 404) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 p-6 text-center">
+        <p className="text-slate-700 dark:text-slate-300">This team has been deleted.</p>
+        <Link href="/" className="text-sm font-medium text-sky-600 dark:text-sky-400">
+          Back to home
+        </Link>
+      </div>
+    );
   }
 
   if (error) {

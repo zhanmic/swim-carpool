@@ -68,7 +68,27 @@ export default function SetupPage() {
   return (
     <div className="min-h-full bg-slate-50 safe-top safe-bottom dark:bg-slate-900">
       <div className="relative mx-auto max-w-md px-4 py-8">
-        <div className="absolute right-0 top-8">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            aria-label="Close"
+            className="touch-target-sm rounded-full text-slate-500 active:bg-slate-100 dark:text-slate-400 dark:active:bg-slate-800"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="h-5 w-5"
+              aria-hidden
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
           <ThemeToggle />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2 dark:text-slate-100">Set up your team</h1>

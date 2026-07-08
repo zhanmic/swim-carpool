@@ -16,10 +16,16 @@ interface RenameTeamSheetProps {
   teamName: string;
   scheduleUrl?: string | null;
   visibleDays?: number[];
+  hasDeletePassword?: boolean;
   families: Family[];
   slug: string;
   onClose: () => void;
-  onUpdated: (team: { name: string; schedule_url: string | null; visible_days: number[] }) => void;
+  onUpdated: (team: {
+    name: string;
+    schedule_url: string | null;
+    visible_days: number[];
+    has_delete_password: boolean;
+  }) => void;
   onFamiliesUpdated: (families: Family[]) => void;
 }
 
@@ -27,6 +33,7 @@ export function RenameTeamSheet({
   teamName,
   scheduleUrl,
   visibleDays: initialVisibleDays = [...DEFAULT_VISIBLE_DAYS],
+  hasDeletePassword: initialHasDeletePassword = false,
   families: initialFamilies,
   slug,
   onClose,
@@ -37,9 +44,11 @@ export function RenameTeamSheet({
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
   const [visibleDays, setVisibleDays] = useState<number[]>(initialVisibleDays);
+  const [hasDeletePassword, setHasDeletePassword] = useState(initialHasDeletePassword);
+  const [newDeletePassword, setNewDeletePassword] = useState("");
   const [families, setFamilies] = useState(initialFamilies);
   const [newFamilyName, setNewFamilyName] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [familyBusyId, setFamilyBusyId] = useState<string | null>(null);
@@ -61,12 +70,14 @@ export function RenameTeamSheet({
     setName(teamName);
     setScheduleLink(scheduleUrl ?? "");
     setVisibleDays(initialVisibleDays);
-  }, [teamName, scheduleUrl, initialVisibleDays]);
+    setHasDeletePassword(initialHasDeletePassword);
+  }, [teamName, scheduleUrl, initialVisibleDays, initialHasDeletePassword]);
 
   const teamDirty =
     name.trim() !== teamName.trim() ||
     (scheduleLink.trim() || null) !== (scheduleUrl?.trim() || null) ||
-    !visibleDaysEqual(visibleDays, initialVisibleDays);
+    !visibleDaysEqual(visibleDays, initialVisibleDays) ||
+    newDeletePassword.trim().length > 0;
 
   const familiesDirty = families.some((family) => {
     const original = initialFamilies.find((item) => item.id === family.id);
@@ -92,24 +103,38 @@ export function RenameTeamSheet({
     setFamilyError(null);
     try {
       if (teamDirty) {
+        const payload: {
+          name: string;
+          schedule_url: string | null;
+          visible_days: number[];
+          delete_password?: string;
+        } = {
+          name: name.trim(),
+          schedule_url: scheduleLink.trim() || null,
+          visible_days: visibleDays,
+        };
+        if (newDeletePassword.trim()) {
+          payload.delete_password = newDeletePassword.trim();
+        }
         const res = await fetch(`/api/teams/${slug}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: name.trim(),
-            schedule_url: scheduleLink.trim() || null,
-            visible_days: visibleDays,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (!res.ok) {
           setError(data.error ?? "Could not save team");
           return;
         }
+        if (newDeletePassword.trim()) {
+          setNewDeletePassword("");
+        }
+        setHasDeletePassword(data.team.has_delete_password ?? hasDeletePassword);
         onUpdated({
           name: data.team.name,
           schedule_url: data.team.schedule_url ?? null,
           visible_days: data.team.visible_days ?? visibleDays,
+          has_delete_password: data.team.has_delete_password ?? hasDeletePassword,
         });
       }
 
@@ -210,7 +235,7 @@ export function RenameTeamSheet({
       const res = await fetch(`/api/teams/${slug}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminPassword }),
+        body: JSON.stringify({ password: deletePassword }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -312,6 +337,23 @@ export function RenameTeamSheet({
               </p>
             </div>
 
+            <label className="block">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Deletion password</span>
+              <input
+                type="password"
+                value={newDeletePassword}
+                onChange={(e) => setNewDeletePassword(e.target.value)}
+                placeholder={hasDeletePassword ? "Enter new password to change" : "Optional — set a deletion password"}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+                autoComplete="new-password"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {hasDeletePassword
+                  ? "A deletion password is set. It is never shown — enter a new one here to change it."
+                  : "Optional. Used to delete this team (admin password also works)."}
+              </p>
+            </label>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
           </section>
 
@@ -404,12 +446,12 @@ export function RenameTeamSheet({
             </div>
 
             <label className="block">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Admin password</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team or admin password</span>
               <input
                 type="password"
                 required
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
                 autoComplete="current-password"
               />
@@ -419,7 +461,7 @@ export function RenameTeamSheet({
 
             <button
               type="submit"
-              disabled={deleteBusy || !adminPassword}
+              disabled={deleteBusy || !deletePassword}
               className="w-full rounded-lg bg-red-600 py-2.5 font-medium text-white disabled:opacity-50"
             >
               {deleteBusy ? "Deleting…" : "Delete team"}

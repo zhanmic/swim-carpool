@@ -80,6 +80,8 @@ ALTER TABLE practice_sessions ADD COLUMN IF NOT EXISTS dropoff_pickups JSONB NOT
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS schedule_url TEXT;
 
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS visible_days JSONB NOT NULL DEFAULT '[1,2,3,4,5,6]'::jsonb;
+
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS delete_password_hash TEXT;
 `;
 
 export function getSchemaStatements(): string[] {

@@ -27,6 +27,7 @@ function toListedTeam(team: KnownTeam): ListedTeam {
     secret_slug: team.slug,
     schedule_url: null,
     visible_days: [1, 2, 3, 4, 5, 6],
+    has_delete_password: false,
     created_at: team.lastAccessedAt,
   };
 }
@@ -119,7 +120,7 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
       const res = await fetch(`/api/teams/${deleteTarget.secret_slug}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminPassword: deletePassword }),
+        body: JSON.stringify({ password: deletePassword }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -290,7 +291,7 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
             </div>
             <form onSubmit={handleDelete} className="mx-auto max-w-md space-y-4 p-4">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Admin password</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team or admin password</span>
                 <input
                   type="password"
                   required

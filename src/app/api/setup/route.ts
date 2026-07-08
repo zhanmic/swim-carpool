@@ -6,13 +6,14 @@ export async function POST(request: NextRequest) {
     await ensureSchema();
 
     const body = await request.json();
-    const { name, families, location_name, location_address, start_time, end_time } = body as {
+    const { name, families, location_name, location_address, start_time, end_time, delete_password } = body as {
       name?: string;
       families?: string[];
       location_name?: string;
       location_address?: string;
       start_time?: string;
       end_time?: string;
+      delete_password?: string;
     };
 
     if (!name?.trim()) {
@@ -37,6 +38,8 @@ export async function POST(request: NextRequest) {
       location_address: location_address?.trim() || null,
       start_time: start_time.trim(),
       end_time: end_time.trim(),
+    }, {
+      delete_password: delete_password?.trim() || null,
     });
     return NextResponse.json(result, { status: 201 });
   } catch (err) {

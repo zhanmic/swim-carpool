@@ -1,5 +1,5 @@
-import { deleteTeamBySlug, updateTeam } from "@/lib/db";
 import { verifyAdminPassword } from "@/lib/admin";
+import { deleteTeamBySlug, updateTeam, verifyTeamDeletePassword } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -13,6 +13,7 @@ export async function PATCH(
       name?: string;
       schedule_url?: string | null;
       visible_days?: number[];
+      delete_password?: string;
     };
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
@@ -22,6 +23,7 @@ export async function PATCH(
       name: body.name,
       schedule_url: body.schedule_url ?? null,
       visible_days: body.visible_days,
+      ...(body.delete_password !== undefined ? { delete_password: body.delete_password } : {}),
     });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
@@ -41,12 +43,16 @@ export async function DELETE(
   const { slug } = await params;
 
   try {
-    const body = (await request.json()) as { adminPassword?: string };
-    if (!process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ error: "Admin delete is not configured" }, { status: 503 });
+    const body = (await request.json()) as { password?: string; adminPassword?: string };
+    const password = body.password ?? body.adminPassword;
+    if (!password) {
+      return NextResponse.json({ error: "Password is required" }, { status: 400 });
     }
-    if (!body.adminPassword || !verifyAdminPassword(body.adminPassword)) {
-      return NextResponse.json({ error: "Incorrect admin password" }, { status: 403 });
+
+    const adminOk = verifyAdminPassword(password);
+    const teamOk = !adminOk && (await verifyTeamDeletePassword(slug, password));
+    if (!adminOk && !teamOk) {
+      return NextResponse.json({ error: "Incorrect password" }, { status: 403 });
     }
 
     const deleted = await deleteTeamBySlug(slug);

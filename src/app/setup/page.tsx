@@ -15,6 +15,7 @@ export default function SetupPage() {
   const [locationAddress, setLocationAddress] = useState<string | null>(null);
   const [startTime, setStartTime] = useState("05:45");
   const [endTime, setEndTime] = useState("08:15");
+  const [deletePassword, setDeletePassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +46,7 @@ export default function SetupPage() {
           location_address: locationAddress,
           start_time: startTime,
           end_time: endTime,
+          delete_password: deletePassword.trim() || undefined,
         }),
       });
 
@@ -117,6 +119,21 @@ export default function SetupPage() {
               <p className="mt-1 text-xs text-slate-500 line-clamp-2">{locationAddress}</p>
             )}
           </div>
+
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Deletion password (optional)</span>
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Used only to delete this team later"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-base dark:border-slate-600"
+              autoComplete="new-password"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Not shown again after creation. You can change it later in team settings.
+            </p>
+          </label>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">

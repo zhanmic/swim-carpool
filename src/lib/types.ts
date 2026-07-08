@@ -6,6 +6,7 @@ export interface Team {
   secret_slug: string;
   schedule_url: string | null;
   visible_days: number[];
+  has_delete_password: boolean;
   created_at: string;
 }
 

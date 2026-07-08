@@ -3,6 +3,11 @@ import { addDays, formatDateOnly, getWeekStart, parseDateOnly, snapTimeToStep, w
 import { parseDropoffPickups } from "./dropoffPickups";
 import { getSchemaStatements } from "./schema";
 import {
+  DEFAULT_EXISTING_TEAM_DELETE_PASSWORD,
+  hashTeamPassword,
+  verifyTeamPassword,
+} from "./teamPassword";
+import {
   DEFAULT_VISIBLE_DAYS,
   getWeekEndForVisibleDays,
   getVisibleWeekDates,
@@ -41,6 +46,7 @@ export async function ensureSchema(): Promise<void> {
   }
 
   await migrateVisibleDaysToSundayWeekStart();
+  await migrateTeamDeletePasswords();
 }
 
 async function migrateVisibleDaysToSundayWeekStart(): Promise<void> {
@@ -73,6 +79,25 @@ async function migrateVisibleDaysToSundayWeekStart(): Promise<void> {
   `;
 }
 
+async function migrateTeamDeletePasswords(): Promise<void> {
+  const sql = getSql();
+  const done = await sql`SELECT value FROM app_meta WHERE key = 'team_delete_password_backfill' LIMIT 1`;
+  if (done.length > 0) return;
+
+  const hash = hashTeamPassword(DEFAULT_EXISTING_TEAM_DELETE_PASSWORD);
+  await sql`
+    UPDATE teams
+    SET delete_password_hash = ${hash}
+    WHERE delete_password_hash IS NULL
+  `;
+
+  await sql`
+    INSERT INTO app_meta (key, value)
+    VALUES ('team_delete_password_backfill', '1')
+    ON CONFLICT (key) DO NOTHING
+  `;
+}
+
 function slugify(name: string): string {
   const base = name
     .toLowerCase()
@@ -88,59 +113,86 @@ function normalizeTime(t: string): string {
   return `${snapped}:00`;
 }
 
-function mapTeamRow(row: Team & { visible_days?: unknown }): Team {
+function mapTeamRow(row: Team & { visible_days?: unknown; delete_password_hash?: string | null }): Team {
+  const { delete_password_hash, ...rest } = row;
   return {
-    ...row,
+    ...rest,
     visible_days: parseVisibleDays(row.visible_days),
+    has_delete_password: !!delete_password_hash,
   };
 }
 
 export async function getTeamBySlug(slug: string): Promise<Team | null> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
+    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, created_at::text AS created_at
     FROM teams WHERE secret_slug = ${slug} LIMIT 1
   `;
-  const row = rows[0] as (Team & { visible_days?: unknown }) | undefined;
+  const row = rows[0] as (Team & { visible_days?: unknown; delete_password_hash?: string | null }) | undefined;
   return row ? mapTeamRow(row) : null;
 }
 
 export async function listTeams(): Promise<Team[]> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
+    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, created_at::text AS created_at
     FROM teams
     ORDER BY name
   `;
-  return (rows as Array<Team & { visible_days?: unknown }>).map(mapTeamRow);
+  return (rows as Array<Team & { visible_days?: unknown; delete_password_hash?: string | null }>).map(mapTeamRow);
 }
 
 export async function updateTeam(
   slug: string,
-  data: { name: string; schedule_url?: string | null; visible_days?: number[] }
+  data: {
+    name: string;
+    schedule_url?: string | null;
+    visible_days?: number[];
+    delete_password?: string;
+  }
 ): Promise<Team | null> {
   const trimmed = data.name.trim();
   if (!trimmed) return null;
   const scheduleUrl = data.schedule_url?.trim() || null;
   const visibleDaysJson =
     data.visible_days !== undefined ? JSON.stringify(normalizeVisibleDays(data.visible_days)) : null;
+  const passwordHash =
+    data.delete_password !== undefined
+      ? data.delete_password.trim()
+        ? hashTeamPassword(data.delete_password.trim())
+        : null
+      : undefined;
   const sql = getSql();
   const rows = await sql`
     UPDATE teams
     SET
       name = ${trimmed},
       schedule_url = ${scheduleUrl},
-      visible_days = COALESCE(${visibleDaysJson}::jsonb, visible_days)
+      visible_days = COALESCE(${visibleDaysJson}::jsonb, visible_days),
+      delete_password_hash = CASE
+        WHEN ${data.delete_password !== undefined} THEN ${passwordHash ?? null}
+        ELSE delete_password_hash
+      END
     WHERE secret_slug = ${slug}
-    RETURNING id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, created_at::text AS created_at
   `;
-  const row = rows[0] as (Team & { visible_days?: unknown }) | undefined;
+  const row = rows[0] as (Team & { visible_days?: unknown; delete_password_hash?: string | null }) | undefined;
   if (!row) return null;
   const team = mapTeamRow(row);
   if (data.visible_days !== undefined) {
     await ensureRecurringTemplatesForDays(team.id, team.visible_days);
   }
   return team;
+}
+
+export async function verifyTeamDeletePassword(slug: string, password: string): Promise<boolean> {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT delete_password_hash FROM teams WHERE secret_slug = ${slug} LIMIT 1
+  `;
+  const row = rows[0] as { delete_password_hash: string | null } | undefined;
+  if (!row) return false;
+  return verifyTeamPassword(password, row.delete_password_hash);
 }
 
 export async function deleteTeamBySlug(slug: string): Promise<boolean> {
@@ -766,20 +818,24 @@ export async function createTeam(
     location_address?: string | null;
     start_time: string;
     end_time: string;
-  }
+  },
+  options?: { delete_password?: string | null }
 ): Promise<{ team: Team; families: Family[] }> {
   const sql = getSql();
   const slug = slugify(name);
   const locationName = schedule.location_name.trim();
   const startTime = normalizeTime(schedule.start_time);
   const endTime = normalizeTime(schedule.end_time);
+  const passwordHash = options?.delete_password?.trim()
+    ? hashTeamPassword(options.delete_password.trim())
+    : null;
 
   const teamRows = await sql`
-    INSERT INTO teams (name, secret_slug)
-    VALUES (${name}, ${slug})
-    RETURNING id, name, secret_slug, schedule_url, visible_days, created_at::text AS created_at
+    INSERT INTO teams (name, secret_slug, delete_password_hash)
+    VALUES (${name}, ${slug}, ${passwordHash})
+    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, created_at::text AS created_at
   `;
-  const team = mapTeamRow(teamRows[0] as Team & { visible_days?: unknown });
+  const team = mapTeamRow(teamRows[0] as Team & { visible_days?: unknown; delete_password_hash?: string | null });
 
   const families: Family[] = [];
   for (const familyName of familyNames) {

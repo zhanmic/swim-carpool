@@ -8,7 +8,9 @@ interface TimeInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "ty
   onChange: (value: string) => void;
 }
 
-export function TimeInput({ value, onChange, ...props }: TimeInputProps) {
+const baseClassName = "block w-full min-w-0 max-w-full box-border";
+
+export function TimeInput({ value, onChange, className = "", ...props }: TimeInputProps) {
   return (
     <input
       type="time"
@@ -18,6 +20,7 @@ export function TimeInput({ value, onChange, ...props }: TimeInputProps) {
         const next = e.target.value;
         onChange(next ? snapTimeToStep(next) : "");
       }}
+      className={className ? `${baseClassName} ${className}` : baseClassName}
       {...props}
     />
   );

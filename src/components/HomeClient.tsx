@@ -30,6 +30,7 @@ function toListedTeam(team: KnownTeam): ListedTeam {
     schedule_url: null,
     visible_days: [1, 2, 3, 4, 5, 6],
     has_delete_password: false,
+    has_api_key: false,
     created_at: team.lastAccessedAt,
   };
 }

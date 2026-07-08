@@ -6,7 +6,25 @@ import {
   getTeamBySlug,
   updateFamily,
 } from "@/lib/db";
+import { assertTeamScheduleAccess, isTeamAccessError } from "@/lib/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+  try {
+    await ensureSchema();
+    const access = await assertTeamScheduleAccess(request, slug);
+    if (isTeamAccessError(access)) return access;
+    const families = await getFamilies(access.team.id);
+    return NextResponse.json({ families });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to load families" }, { status: 500 });
+  }
+}
 
 export async function POST(
   request: NextRequest,

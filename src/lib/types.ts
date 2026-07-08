@@ -7,6 +7,7 @@ export interface Team {
   schedule_url: string | null;
   visible_days: number[];
   has_delete_password: boolean;
+  has_api_key: boolean;
   created_at: string;
 }
 

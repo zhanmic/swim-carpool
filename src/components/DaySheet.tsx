@@ -458,21 +458,21 @@ export function DaySheet({
           )}
 
           {!cancelled && (
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
+            <div className="grid w-full grid-cols-2 gap-2">
+              <label className="block min-w-0">
                 <span className="text-xs text-slate-600 dark:text-slate-400">Start</span>
                 <TimeInput
                   value={startTime}
                   onChange={handleStartTimeChange}
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600"
+                  className="mt-0.5 w-full min-w-0 max-w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
                 />
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="text-xs text-slate-600 dark:text-slate-400">End</span>
                 <TimeInput
                   value={endTime}
                   onChange={setEndTime}
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600"
+                  className="mt-0.5 w-full min-w-0 max-w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900"
                 />
               </label>
             </div>

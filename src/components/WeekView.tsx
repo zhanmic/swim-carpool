@@ -204,7 +204,7 @@ export function WeekView({ slug }: WeekViewProps) {
   }
 
   async function handleClearSlots() {
-    if (!confirm("Clear all drop-off and pick-up slots for this week?")) return;
+    if (!confirm("Clear all drop-off and pick-up slots, notes, and home pickup times for this week?")) return;
     setSlotsBusy(true);
     try {
       const res = await fetch(`/api/teams/${slug}/week/assignments`, {

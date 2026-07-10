@@ -835,7 +835,8 @@ export async function applyTimeToWeek(
 export async function clearWeekAssignments(
   teamId: string,
   weekStartStr: string,
-  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS]
+  visibleDays: number[] = [...DEFAULT_VISIBLE_DAYS],
+  options?: { notesAndPickups?: boolean }
 ): Promise<number> {
   const dates = visibleSessionDates(weekStartStr, visibleDays);
   if (dates.length === 0) return 0;
@@ -849,6 +850,16 @@ export async function clearWeekAssignments(
       AND ps.session_date = ANY(${dates})
     RETURNING a.id
   `;
+
+  if (options?.notesAndPickups) {
+    await sql`
+      UPDATE practice_sessions
+      SET location_notes = NULL, dropoff_pickups = '{}'::jsonb
+      WHERE team_id = ${teamId}
+        AND session_date = ANY(${dates})
+    `;
+  }
+
   return rows.length;
 }
 

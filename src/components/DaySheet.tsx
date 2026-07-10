@@ -485,7 +485,12 @@ export function DaySheet({
 
           <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-2 min-w-0 dark:border-violet-800 dark:bg-violet-950/40">
             <div className="flex items-start justify-between gap-2">
-              <span className="text-xs font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
+                {!cancelled && familiesNeedingPickup.length > 0 && (
+                  <p className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Home pickups</p>
+                )}
+              </div>
               {!cancelled && (
                 <div className="flex shrink-0 flex-col items-end gap-0.5">
                   {familiesNeedingPickup.length > 0 && (
@@ -508,8 +513,7 @@ export function DaySheet({
               )}
             </div>
             {!cancelled && familiesNeedingPickup.length > 0 && (
-              <div className="mt-1.5 space-y-1">
-                <p className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Home pickups</p>
+              <div className="mt-0.5 space-y-1">
                 {dropoffFamilyId && (
                   <p className="text-[11px] leading-tight text-violet-700/80 dark:text-violet-300/80">
                     {drop?.family_name} driving — same house

@@ -241,6 +241,11 @@ export function DaySheet({
     });
   }
 
+  function clearNotes() {
+    setDropoffPickups({});
+    setLocationNotes("");
+  }
+
   function handleAddToCalendar() {
     exportSessionToCalendar(
       {
@@ -484,13 +489,22 @@ export function DaySheet({
               <div className="mt-1.5 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Home pickups</p>
-                  <button
-                    type="button"
-                    onClick={fillPickupsBeforePractice}
-                    className="shrink-0 text-[11px] font-medium text-sky-600 dark:text-sky-400"
-                  >
-                    30 min default
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={fillPickupsBeforePractice}
+                      className="text-[11px] font-medium text-sky-600 dark:text-sky-400"
+                    >
+                      30 min default
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearNotes}
+                      className="text-[11px] font-medium text-sky-600 dark:text-sky-400"
+                    >
+                      Clear notes
+                    </button>
+                  </div>
                 </div>
                 {dropoffFamilyId && (
                   <p className="text-[11px] leading-tight text-violet-700/80 dark:text-violet-300/80">
@@ -527,7 +541,18 @@ export function DaySheet({
               </div>
             )}
             <label className={`block ${!cancelled && familiesNeedingPickup.length > 0 ? "mt-1.5" : "mt-1"}`}>
-              <span className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Other notes</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Other notes</span>
+                {!cancelled && familiesNeedingPickup.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={clearNotes}
+                    className="shrink-0 text-[11px] font-medium text-sky-600 dark:text-sky-400"
+                  >
+                    Clear notes
+                  </button>
+                )}
+              </div>
               <input
                 type="text"
                 value={locationNotes}

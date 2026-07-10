@@ -484,12 +484,11 @@ export function DaySheet({
           )}
 
           <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-2 min-w-0 dark:border-violet-800 dark:bg-violet-950/40">
-            <span className="text-xs font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
-            {!cancelled && familiesNeedingPickup.length > 0 && (
-              <div className="mt-1.5 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Home pickups</p>
-                  <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-xs font-semibold text-violet-900 dark:text-violet-200">Notes for drivers</span>
+              {!cancelled && (
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
+                  {familiesNeedingPickup.length > 0 && (
                     <button
                       type="button"
                       onClick={fillPickupsBeforePractice}
@@ -497,15 +496,20 @@ export function DaySheet({
                     >
                       30 min default
                     </button>
-                    <button
-                      type="button"
-                      onClick={clearNotes}
-                      className="text-[11px] font-medium text-sky-600 dark:text-sky-400"
-                    >
-                      Clear notes
-                    </button>
-                  </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearNotes}
+                    className="text-[11px] font-medium text-sky-600 dark:text-sky-400"
+                  >
+                    Clear notes
+                  </button>
                 </div>
+              )}
+            </div>
+            {!cancelled && familiesNeedingPickup.length > 0 && (
+              <div className="mt-1.5 space-y-1">
+                <p className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Home pickups</p>
                 {dropoffFamilyId && (
                   <p className="text-[11px] leading-tight text-violet-700/80 dark:text-violet-300/80">
                     {drop?.family_name} driving — same house
@@ -541,18 +545,7 @@ export function DaySheet({
               </div>
             )}
             <label className={`block ${!cancelled && familiesNeedingPickup.length > 0 ? "mt-1.5" : "mt-1"}`}>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Other notes</span>
-                {!cancelled && familiesNeedingPickup.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={clearNotes}
-                    className="shrink-0 text-[11px] font-medium text-sky-600 dark:text-sky-400"
-                  >
-                    Clear notes
-                  </button>
-                )}
-              </div>
+              <span className="text-[11px] font-medium text-violet-800 dark:text-violet-300">Other notes</span>
               <input
                 type="text"
                 value={locationNotes}

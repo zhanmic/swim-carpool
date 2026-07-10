@@ -27,7 +27,9 @@ export async function POST(
     }
 
     if (action === "clear") {
-      const cleared = await clearWeekAssignments(team.id, weekStart, team.visible_days);
+      const cleared = await clearWeekAssignments(team.id, weekStart, team.visible_days, {
+        notesAndPickups: true,
+      });
       return NextResponse.json({ cleared });
     }
 

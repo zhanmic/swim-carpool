@@ -54,7 +54,8 @@ export const OPENAPI_SPEC = {
     "/api/teams/{slug}/week/assignments": {
       post: {
         summary: "Clear driver slots or copy previous week",
-        description: "action: clear | copy_previous",
+        description:
+          "action: clear (drop-off/pick-up slots, notes, and home pickup times) | copy_previous",
       },
     },
     "/api/teams/{slug}/week/batch": {

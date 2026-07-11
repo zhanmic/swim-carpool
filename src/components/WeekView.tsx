@@ -320,7 +320,7 @@ export function WeekView({ slug }: WeekViewProps) {
               title="Schedule agent"
               className="touch-target-sm flex items-center justify-center rounded-full text-violet-600 active:bg-violet-100 dark:text-violet-400 dark:active:bg-violet-950/60"
             >
-              <AgentIcon className="h-5 w-5" />
+              <AgentIcon className="h-6 w-6" />
             </button>
             <button
               type="button"

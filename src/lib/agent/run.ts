@@ -52,6 +52,7 @@ async function generateWithModels(
     config: {
       systemInstruction: string;
       tools: [{ functionDeclarations: typeof AGENT_TOOL_DECLARATIONS }];
+      thinkingConfig: { thinkingBudget: number };
     };
     pinnedModel?: string | null;
   }
@@ -164,6 +165,7 @@ export async function runAgentTurn(options: {
       config: {
         systemInstruction: systemPrompt,
         tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
+        thinkingConfig: { thinkingBudget: 0 },
       },
       pinnedModel: activeModel,
     });

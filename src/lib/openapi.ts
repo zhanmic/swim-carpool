@@ -69,7 +69,7 @@ export const OPENAPI_SPEC = {
       post: {
         summary: "Natural-language schedule agent (Gemini)",
         description:
-          "Body: message + week_start, or confirm { token, approved }. Uses GEMINI_API_KEY on the server.",
+          "Body: message + week_start, or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, clear/copy week. Uses GEMINI_API_KEY.",
       },
     },
     "/api/teams/{slug}/locations": {

@@ -98,21 +98,49 @@ export async function runAgentTurn(options: {
       };
     }
 
-    const destructive = calls.filter((call) => DESTRUCTIVE_AGENT_TOOLS.has(call.name));
-    if (destructive.length > 0) {
-      const { summary, destructive: isDestructive } = summarizePlan(calls);
+    const safeCalls = calls.filter((call) => !DESTRUCTIVE_AGENT_TOOLS.has(call.name));
+    const destructiveCalls = calls.filter((call) => DESTRUCTIVE_AGENT_TOOLS.has(call.name));
+
+    if (safeCalls.length > 0) {
+      const modelParts: Part[] = safeCalls.map((call) => ({
+        functionCall: {
+          name: call.name,
+          args: call.args,
+        },
+      }));
+      history.push({ role: "model", parts: modelParts });
+
+      const functionResponses: Part[] = [];
+      for (const call of safeCalls) {
+        const result = await executeAgentTool(context, call);
+        actionsTaken.push({ tool: call.name, summary: result.message });
+        if (result.ok) weekMutated = true;
+        functionResponses.push(
+          createPartFromFunctionResponse(call.name, call.name, {
+            ok: result.ok,
+            message: result.message,
+          })
+        );
+      }
+      history.push({ role: "user", parts: functionResponses });
+    }
+
+    if (destructiveCalls.length > 0) {
+      const { summary, destructive: isDestructive } = summarizePlan(destructiveCalls);
       const token = signAgentPlan({
         slug: context.slug,
         week_start: context.weekStart,
         active_family_id: context.activeFamilyId,
-        tools: calls,
+        tools: destructiveCalls,
       });
       return {
         reply:
           text ||
-          (isDestructive
-            ? "This will change the week schedule. Please confirm before I run it."
-            : "Please confirm these changes."),
+          (safeCalls.length > 0
+            ? "I applied the other changes. Please confirm the week action below."
+            : isDestructive
+              ? "This will change the week schedule. Please confirm before I run it."
+              : "Please confirm these changes."),
         proposed_plan: {
           summary,
           destructive: isDestructive,
@@ -123,28 +151,7 @@ export async function runAgentTurn(options: {
       };
     }
 
-    const modelParts: Part[] = calls.map((call) => ({
-      functionCall: {
-        name: call.name,
-        args: call.args,
-      },
-    }));
-    history.push({ role: "model", parts: modelParts });
-
-    const functionResponses: Part[] = [];
-    for (const call of calls) {
-      const result = await executeAgentTool(context, call);
-      actionsTaken.push({ tool: call.name, summary: result.message });
-      if (result.ok) weekMutated = true;
-      functionResponses.push(
-        createPartFromFunctionResponse(call.name, call.name, {
-          ok: result.ok,
-          message: result.message,
-        })
-      );
-    }
-
-    history.push({ role: "user", parts: functionResponses });
+    continue;
   }
 
   return {

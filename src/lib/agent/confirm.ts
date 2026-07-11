@@ -43,10 +43,19 @@ export function verifyAgentPlan(token: string, slug: string): SignedPlanPayload 
 }
 
 export function summarizePlan(tools: AgentToolCall[]): { summary: string; destructive: boolean } {
-  const labels = tools.map((tool) => tool.name.replaceAll("_", " "));
+  const labels = tools.map((tool) => {
+    switch (tool.name) {
+      case "clear_week":
+        return "clear this week's slots, notes, and home pickups";
+      case "copy_previous_week":
+        return "copy last week's times and locations (clears current slots)";
+      default:
+        return tool.name.replaceAll("_", " ");
+    }
+  });
   const destructive = tools.some((tool) => DESTRUCTIVE_AGENT_TOOLS.has(tool.name));
   return {
-    summary: `Run: ${labels.join(", ")}`,
+    summary: labels.join("; then "),
     destructive,
   };
 }

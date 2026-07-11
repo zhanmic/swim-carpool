@@ -11,13 +11,24 @@ import type {
 } from "./types";
 
 const MAX_TOOL_ROUNDS = 6;
-const MODEL_FALLBACKS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"] as const;
+const MODEL_FALLBACKS = [
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+] as const;
 const RETIRED_MODELS = new Set([
   "gemini-2.0-flash",
+  "gemini-2.0-flash-001",
   "gemini-2.0-flash-lite",
+  "gemini-2.0-flash-lite-001",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
+  "gemini-1.5-flash-001",
+  "gemini-1.5-flash-002",
   "gemini-1.5-pro",
+  "gemini-1.5-pro-001",
+  "gemini-1.5-pro-002",
 ]);
 
 function getGeminiClient(): GoogleGenAI | null {
@@ -47,11 +58,12 @@ function formatGeminiError(err: unknown, triedModels?: string[]): string {
   }
   if (isModelUnavailableError(err)) {
     const tried = triedModels?.length ? ` Tried: ${triedModels.join(", ")}.` : "";
+    const detail = message.length > 0 ? ` (${message.slice(0, 120)})` : "";
     const envHint =
       process.env.GEMINI_MODEL?.trim() && RETIRED_MODELS.has(process.env.GEMINI_MODEL.trim())
-        ? " Remove GEMINI_MODEL=gemini-2.0-flash from Vercel (retired June 2026)."
-        : " Set GEMINI_MODEL to gemini-2.5-flash in Vercel, or remove it to use the default.";
-    return `Gemini model not available.${tried}${envHint}`;
+        ? " Remove the retired GEMINI_MODEL value from Vercel."
+        : " Ensure GEMINI_API_KEY is from Google AI Studio and has model access.";
+    return `Gemini model not available.${tried}${detail}${envHint}`;
   }
   if (/quota|rate limit|429/i.test(message)) {
     return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
@@ -74,7 +86,7 @@ async function generateWithModels(
   if (models.length === 0) {
     return {
       error:
-        "No Gemini models configured. Remove retired GEMINI_MODEL from Vercel or set GEMINI_MODEL=gemini-2.5-flash.",
+        "No Gemini models configured. Remove retired GEMINI_MODEL from Vercel or set GEMINI_MODEL=gemini-3.5-flash.",
     };
   }
 

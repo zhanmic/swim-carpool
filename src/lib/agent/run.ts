@@ -52,7 +52,6 @@ async function generateWithModels(
     config: {
       systemInstruction: string;
       tools: [{ functionDeclarations: typeof AGENT_TOOL_DECLARATIONS }];
-      thinkingConfig: { thinkingBudget: number };
     };
     pinnedModel?: string | null;
   }
@@ -78,6 +77,11 @@ async function generateWithModels(
   }
 
   return { error: formatGeminiError(lastError) };
+}
+
+function isThoughtSignatureError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /thought_signature|thought signature/i.test(message);
 }
 
 function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown>; id?: string }> }): AgentToolCall[] {
@@ -165,7 +169,6 @@ export async function runAgentTurn(options: {
       config: {
         systemInstruction: systemPrompt,
         tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
-        thinkingConfig: { thinkingBudget: 0 },
       },
       pinnedModel: activeModel,
     });

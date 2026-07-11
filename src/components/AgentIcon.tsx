@@ -2,7 +2,7 @@ interface AgentIconProps {
   className?: string;
 }
 
-/** Large sparkle left, two smaller sparkles on the right. */
+/** Large symmetric sparkle left, two smaller sparkles on the right. */
 export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
   return (
     <svg
@@ -12,9 +12,10 @@ export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
       className={className}
       aria-hidden
     >
-      <path d="M6.8 2.2 8.35 7.8 13.9 9.35 8.35 10.9 6.8 21.8 5.25 10.9 0.7 9.35 5.25 7.8 6.8 2.2Z" />
-      <path d="M17.2 3 17.55 4.35 18.9 4.7 17.55 5.05 17.2 6.4 16.85 5.05 15.5 4.7 16.85 4.35 17.2 3Z" />
-      <path d="M18 15.1 18.3 16.15 19.35 16.45 18.3 16.75 18 17.8 17.7 16.75 16.65 16.45 17.7 16.15 18 15.1Z" />
+      {/* center (6.5, 12); top/bottom ±9.5, left/right ±6, inner points mirrored */}
+      <path d="M6.5 2.5 8.8 8.4 12.5 12 8.8 15.6 6.5 21.5 4.2 15.6 0.5 12 4.2 8.4 6.5 2.5Z" />
+      <path d="M17.2 3.6 17.45 4.55 18.4 4.8 17.45 5.05 17.2 5.9 16.95 5.05 16 4.8 16.95 4.55 17.2 3.6Z" />
+      <path d="M18 15.3 18.22 16.1 19 16.32 18.22 16.54 18 17.3 17.78 16.54 17 16.32 17.78 16.1 18 15.3Z" />
     </svg>
   );
 }

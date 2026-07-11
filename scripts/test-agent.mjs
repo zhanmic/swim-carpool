@@ -12,10 +12,15 @@ const BASE = process.env.BASE ?? "https://swim-carpool.vercel.app";
 const SLUG = process.env.SLUG ?? "test-0u17th";
 const WEEK_START = process.env.WEEK_START ?? "2026-07-05";
 const SESSION_DATE = process.env.SESSION_DATE ?? "2026-07-10";
+const AGENT_DELAY_MS = Number(process.env.AGENT_DELAY_MS ?? 8000);
 
 let pass = 0;
 let fail = 0;
 let skip = 0;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function check(name, ok, detail = "") {
   if (ok) {
@@ -40,6 +45,19 @@ async function json(method, path, body) {
   });
   const data = await res.json().catch(() => ({}));
   return { res, data };
+}
+
+async function agentPost(body, label) {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const result = await json("POST", `/api/teams/${SLUG}/agent`, body);
+    const rateLimited =
+      result.res.status === 502 &&
+      String(result.data.error ?? "").toLowerCase().includes("rate limit");
+    if (!rateLimited || attempt === 4) return result;
+    console.log(`  … rate limited on ${label}, waiting ${AGENT_DELAY_MS * attempt}ms`);
+    await sleep(AGENT_DELAY_MS * attempt);
+  }
+  throw new Error("agentPost retry exhausted");
 }
 
 async function getSession() {
@@ -173,10 +191,10 @@ async function testPhase2ScheduleApi() {
 async function testAgentEndpoint() {
   console.log("\n=== Agent endpoint (Gemini) ===");
 
-  const probe = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Who is driving Friday?",
-    week_start: WEEK_START,
-  });
+  const probe = await agentPost(
+    { message: "Who is drop-off driver on Friday July 10 2026?", week_start: WEEK_START },
+    "probe"
+  );
 
   if (probe.res.status === 404) {
     skipCheck("agent route", "not deployed on this BASE yet");
@@ -195,41 +213,46 @@ async function testAgentEndpoint() {
 
   check("agent probe read-only", probe.res.ok, probe.data.reply?.slice(0, 80));
 
-  const phase1 = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Emily is drop-off driver on Friday July 10 2026",
-    week_start: WEEK_START,
-  });
+  await sleep(AGENT_DELAY_MS);
+  const phase1 = await agentPost(
+    { message: "Emily is drop-off driver on Friday July 10 2026", week_start: WEEK_START },
+    "claim dropoff"
+  );
   check("phase1 claim via agent", phase1.res.ok && phase1.data.week_mutated, phase1.data.reply);
 
   let session = (await getSession()).session;
   const emilyDrop = session?.assignments?.find((a) => a.role === "dropoff" && a.family_name === "Emily");
   check("phase1 Emily dropoff applied", !!emilyDrop);
 
-  const phase2a = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Set Emma home pickup to 7:00 on Friday July 10 2026",
-    week_start: WEEK_START,
-  });
+  await sleep(AGENT_DELAY_MS);
+  const phase2a = await agentPost(
+    { message: "Set Emma home pickup to 7:00 on Friday July 10 2026", week_start: WEEK_START },
+    "home pickup"
+  );
   check("phase2 home pickup via agent", phase2a.res.ok && phase2a.data.week_mutated, phase2a.data.reply);
 
-  const phase2b = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Cancel practice on Friday July 10 2026",
-    week_start: WEEK_START,
-  });
+  await sleep(AGENT_DELAY_MS);
+  const phase2b = await agentPost(
+    { message: "Cancel practice on Friday July 10 2026", week_start: WEEK_START },
+    "cancel"
+  );
   check("phase2 cancel via agent", phase2b.res.ok && phase2b.data.week_mutated, phase2b.data.reply);
 
   session = (await getSession()).session;
   check("phase2 session cancelled", session?.cancelled === true);
 
-  const phase2c = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Restore practice on Friday July 10 2026",
-    week_start: WEEK_START,
-  });
+  await sleep(AGENT_DELAY_MS);
+  const phase2c = await agentPost(
+    { message: "Restore practice on Friday July 10 2026", week_start: WEEK_START },
+    "uncancel"
+  );
   check("phase2 uncancel via agent", phase2c.res.ok, phase2c.data.reply);
 
-  const destructive = await json("POST", `/api/teams/${SLUG}/agent`, {
-    message: "Clear the whole week",
-    week_start: WEEK_START,
-  });
+  await sleep(AGENT_DELAY_MS);
+  const destructive = await agentPost(
+    { message: "Clear the whole week", week_start: WEEK_START },
+    "clear week"
+  );
   check(
     "destructive asks confirm",
     destructive.res.ok && !!destructive.data.proposed_plan?.token,

@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DayCard } from "./DayCard";
 import { DaySheet } from "./DaySheet";
+import { AgentSheet } from "./AgentSheet";
 import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
 import { LocationsSheet } from "./LocationsSheet";
@@ -49,6 +50,7 @@ export function WeekView({ slug }: WeekViewProps) {
   const [showTime, setShowTime] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
@@ -321,6 +323,13 @@ export function WeekView({ slug }: WeekViewProps) {
         <div className="mb-2 flex shrink-0 gap-1.5">
           <button
             type="button"
+            onClick={() => setShowAgent(true)}
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-violet-200 bg-violet-50 px-1.5 text-xs font-medium text-violet-800 active:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-200 dark:active:bg-violet-950"
+          >
+            Agent
+          </button>
+          <button
+            type="button"
             onClick={() => setShowLocations(true)}
             className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
           >
@@ -444,6 +453,18 @@ export function WeekView({ slug }: WeekViewProps) {
           sessions={data.sessions}
           onClose={() => setShowTime(false)}
           onWeekApplied={() => {
+            void mutate();
+          }}
+        />
+      )}
+
+      {showAgent && (
+        <AgentSheet
+          slug={slug}
+          weekStart={weekStart}
+          activeFamilyId={activeFamilyId}
+          onClose={() => setShowAgent(false)}
+          onScheduleChanged={() => {
             void mutate();
           }}
         />

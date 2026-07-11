@@ -65,6 +65,13 @@ export const OPENAPI_SPEC = {
           "operations: set_time, set_location, clear_assignments, copy_previous_week, set_cancelled, set_notes, set_pickups_default",
       },
     },
+    "/api/teams/{slug}/agent": {
+      post: {
+        summary: "Natural-language schedule agent (Gemini)",
+        description:
+          "Body: message + week_start, or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, clear/copy week. Uses GEMINI_API_KEY.",
+      },
+    },
     "/api/teams/{slug}/locations": {
       get: { summary: "List saved practice locations" },
       post: { summary: "Add, update, or delete saved locations" },

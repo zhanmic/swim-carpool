@@ -11,7 +11,8 @@ import type {
 } from "./types";
 
 const MAX_TOOL_ROUNDS = 6;
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
+const MODEL_FALLBACKS = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"] as const;
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -19,8 +20,15 @@ function getGeminiClient(): GoogleGenAI | null {
   return new GoogleGenAI({ apiKey });
 }
 
-function getModel(): string {
-  return process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+function modelCandidates(): string[] {
+  const preferred = process.env.GEMINI_MODEL?.trim();
+  const chain = preferred ? [preferred, ...MODEL_FALLBACKS] : [...MODEL_FALLBACKS];
+  return [...new Set(chain)];
+}
+
+function isModelUnavailableError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /not found|404/i.test(message) && /model/i.test(message);
 }
 
 function formatGeminiError(err: unknown): string {
@@ -28,13 +36,47 @@ function formatGeminiError(err: unknown): string {
   if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(message)) {
     return "Invalid GEMINI_API_KEY. Check the key in Vercel matches Google AI Studio.";
   }
-  if (/not found|404/i.test(message) && /model/i.test(message)) {
-    return `Gemini model not available (${getModel()}). Set GEMINI_MODEL=gemini-2.0-flash in Vercel.`;
+  if (isModelUnavailableError(err)) {
+    return `Gemini model not available. Set GEMINI_MODEL to gemini-2.5-flash or gemini-3.5-flash in Vercel.`;
   }
   if (/quota|rate limit|429/i.test(message)) {
     return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
   }
   return `Gemini error: ${message.slice(0, 200)}`;
+}
+
+async function generateWithModels(
+  ai: GoogleGenAI,
+  request: {
+    contents: Content[];
+    config: {
+      systemInstruction: string;
+      tools: [{ functionDeclarations: typeof AGENT_TOOL_DECLARATIONS }];
+    };
+    pinnedModel?: string | null;
+  }
+): Promise<{ response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>; model: string } | { error: string }> {
+  const models = request.pinnedModel ? [request.pinnedModel] : modelCandidates();
+  let lastError: unknown = null;
+
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: request.contents,
+        config: request.config,
+      });
+      return { response, model };
+    } catch (err) {
+      lastError = err;
+      if (!isModelUnavailableError(err)) {
+        return { error: formatGeminiError(err) };
+      }
+      console.warn(`Gemini model unavailable: ${model}`);
+    }
+  }
+
+  return { error: formatGeminiError(lastError) };
 }
 
 function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown> }> }): AgentToolCall[] {
@@ -90,22 +132,24 @@ export async function runAgentTurn(options: {
 
   const actionsTaken: AgentActionSummary[] = [];
   let weekMutated = false;
+  let activeModel: string | null = null;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: getModel(),
-        contents: history,
-        config: {
-          systemInstruction: systemPrompt,
-          tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
-        },
-      });
-    } catch (err) {
-      console.error("Gemini generateContent failed", err);
-      return { error: formatGeminiError(err), status: 502 };
+    const generated = await generateWithModels(ai, {
+      contents: history,
+      config: {
+        systemInstruction: systemPrompt,
+        tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
+      },
+      pinnedModel: activeModel,
+    });
+
+    if ("error" in generated) {
+      return { error: generated.error, status: 502 };
     }
+
+    activeModel = generated.model;
+    const response = generated.response;
 
     const calls = toolCallsFromResponse(response);
     const text = response.text?.trim();

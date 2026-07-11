@@ -2,7 +2,23 @@ interface AgentIconProps {
   className?: string;
 }
 
-/** Large symmetric sparkle left, two smaller sparkles on the right. */
+function sparkle(cx: number, cy: number, hy: number, hx: number): string {
+  const ix = hx * 0.38;
+  const iy = hy * 0.38;
+  return [
+    `M${cx} ${cy - hy}`,
+    `${cx + ix} ${cy - iy}`,
+    `${cx + hx} ${cy}`,
+    `${cx + ix} ${cy + iy}`,
+    `${cx} ${cy + hy}`,
+    `${cx - ix} ${cy + iy}`,
+    `${cx - hx} ${cy}`,
+    `${cx - ix} ${cy - iy}`,
+    "Z",
+  ].join(" ");
+}
+
+/** Oval chat bubble with one large sparkle and three smaller sparkles inside. */
 export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
   return (
     <svg
@@ -12,10 +28,17 @@ export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
       className={className}
       aria-hidden
     >
-      {/* center (6.5, 12); top/bottom ±9.5, left/right ±6, inner points mirrored */}
-      <path d="M6.5 2.5 8.8 8.4 12.5 12 8.8 15.6 6.5 21.5 4.2 15.6 0.5 12 4.2 8.4 6.5 2.5Z" />
-      <path d="M17.2 3.1 17.95 4.28 19.25 5 17.95 5.72 17.2 6.9 16.45 5.72 15.15 5 16.45 4.28 17.2 3.1Z" />
-      <path d="M18 14.75 18.65 15.77 19.75 16.4 18.65 17.03 18 18.05 17.35 17.03 16.25 16.4 17.35 15.77 18 14.75Z" />
+      <path
+        d="M11.5 3.8c5.8 0 9.2 3.1 9.2 6.7 0 2.7-2.1 5.2-5.8 5.7-.8.1-1.7.5-2.4 1.9l2-2.1c-3.2-.3-5.6-2.6-5.6-5.3 0-3.6 3.4-6.7 9.6-6.9Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinejoin="round"
+      />
+      <path d={sparkle(10.6, 10.3, 3.8, 3.2)} />
+      <path d={sparkle(15.5, 7.2, 1.4, 1.35)} />
+      <path d={sparkle(7.5, 12.3, 1.3, 1.25)} />
+      <path d={sparkle(14.9, 13, 1.3, 1.25)} />
     </svg>
   );
 }

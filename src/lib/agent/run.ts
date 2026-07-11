@@ -11,7 +11,7 @@ import type {
 } from "./types";
 
 const MAX_TOOL_ROUNDS = 6;
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-2.0-flash";
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -21,6 +21,20 @@ function getGeminiClient(): GoogleGenAI | null {
 
 function getModel(): string {
   return process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+}
+
+function formatGeminiError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(message)) {
+    return "Invalid GEMINI_API_KEY. Check the key in Vercel matches Google AI Studio.";
+  }
+  if (/not found|404/i.test(message) && /model/i.test(message)) {
+    return `Gemini model not available (${getModel()}). Set GEMINI_MODEL=gemini-2.0-flash in Vercel.`;
+  }
+  if (/quota|rate limit|429/i.test(message)) {
+    return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
+  }
+  return `Gemini error: ${message.slice(0, 200)}`;
 }
 
 function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown> }> }): AgentToolCall[] {
@@ -78,14 +92,20 @@ export async function runAgentTurn(options: {
   let weekMutated = false;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-    const response = await ai.models.generateContent({
-      model: getModel(),
-      contents: history,
-      config: {
-        systemInstruction: systemPrompt,
-        tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
-      },
-    });
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: getModel(),
+        contents: history,
+        config: {
+          systemInstruction: systemPrompt,
+          tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
+        },
+      });
+    } catch (err) {
+      console.error("Gemini generateContent failed", err);
+      return { error: formatGeminiError(err), status: 502 };
+    }
 
     const calls = toolCallsFromResponse(response);
     const text = response.text?.trim();

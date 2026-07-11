@@ -56,6 +56,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Agent request failed" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Agent request failed";
+    return NextResponse.json({ error: message.slice(0, 300) }, { status: 500 });
   }
 }

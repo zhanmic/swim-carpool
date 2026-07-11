@@ -468,6 +468,7 @@ export function WeekView({ slug }: WeekViewProps) {
           slug={slug}
           weekStart={weekStart}
           activeFamilyId={activeFamilyId}
+          activeFamilyName={activeFamily?.name ?? null}
           onClose={() => setShowAgent(false)}
           onScheduleChanged={() => {
             void mutate();

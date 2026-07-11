@@ -1,38 +1,53 @@
 "use client";
 
-import type { AgentProposedPlan, AgentResponseBody } from "@/lib/agent/types";
-import { useState } from "react";
+import { formatAgentClientError } from "@/lib/agent/clientErrors";
+import type { AgentActionSummary, AgentProposedPlan, AgentResponseBody } from "@/lib/agent/types";
+import { useEffect, useRef, useState } from "react";
 
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   plan?: AgentProposedPlan;
+  actions?: AgentActionSummary[];
 }
 
 interface AgentSheetProps {
   slug: string;
   weekStart: string;
   activeFamilyId: string | null;
+  activeFamilyName: string | null;
   onClose: () => void;
   onScheduleChanged: () => void;
+}
+
+const WELCOME =
+  "Tell me what to change — e.g. “Emily drop-off Friday” or “clear the week”.";
+
+function chatHistoryForApi(messages: ChatMessage[]): { role: "user" | "assistant"; text: string }[] {
+  return messages
+    .filter((message) => message.text !== WELCOME)
+    .map((message) => ({ role: message.role, text: message.text }));
 }
 
 export function AgentSheet({
   slug,
   weekStart,
   activeFamilyId,
+  activeFamilyName,
   onClose,
   onScheduleChanged,
 }: AgentSheetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      text: "Tell me what to change — e.g. “Emily drop-off Friday” or “clear the week”.",
-    },
+    { role: "assistant", text: WELCOME },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, busy, error]);
 
   async function postAgent(body: Record<string, unknown>): Promise<AgentResponseBody> {
     const res = await fetch(`/api/teams/${slug}/agent`, {
@@ -42,7 +57,8 @@ export function AgentSheet({
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error((data as { error?: string }).error ?? "Agent request failed");
+      const raw = (data as { error?: string }).error ?? "Agent request failed";
+      throw new Error(formatAgentClientError(raw));
     }
     return data as AgentResponseBody;
   }
@@ -53,6 +69,7 @@ export function AgentSheet({
 
     setError(null);
     setBusy(true);
+    const priorHistory = chatHistoryForApi(messages);
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setInput("");
 
@@ -61,6 +78,7 @@ export function AgentSheet({
         message: trimmed,
         week_start: weekStart,
         active_family_id: activeFamilyId,
+        history: priorHistory,
       });
       setMessages((prev) => [
         ...prev,
@@ -68,6 +86,7 @@ export function AgentSheet({
           role: "assistant",
           text: data.reply,
           plan: data.proposed_plan,
+          actions: data.actions_taken,
         },
       ]);
       if (data.week_mutated) onScheduleChanged();
@@ -90,7 +109,11 @@ export function AgentSheet({
       });
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: data.reply },
+        {
+          role: "assistant",
+          text: data.reply,
+          actions: data.actions_taken,
+        },
       ]);
       if (data.week_mutated) onScheduleChanged();
     } catch (err) {
@@ -100,6 +123,10 @@ export function AgentSheet({
     }
   }
 
+  const inputPlaceholder = activeFamilyName
+    ? `e.g. skip Saturday (as ${activeFamilyName})`
+    : "e.g. Emma pick-up Friday";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
@@ -107,7 +134,15 @@ export function AgentSheet({
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
           <div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Schedule agent</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Powered by Gemini</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {activeFamilyName ? (
+                <>
+                  As <span className="font-medium text-slate-700 dark:text-slate-300">{activeFamilyName}</span>
+                  {" · "}
+                </>
+              ) : null}
+              Powered by Gemini
+            </p>
           </div>
           <button
             type="button"
@@ -118,7 +153,7 @@ export function AgentSheet({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -129,6 +164,15 @@ export function AgentSheet({
               }`}
             >
               <p className="whitespace-pre-wrap">{message.text}</p>
+              {message.actions && message.actions.length > 0 && (
+                <ul className="mt-2 space-y-0.5 border-t border-slate-200/60 pt-2 text-xs dark:border-slate-600">
+                  {message.actions.map((action, actionIndex) => (
+                    <li key={actionIndex} className="text-slate-600 dark:text-slate-300">
+                      • {action.summary}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {message.plan && (
                 <div className="mt-2 space-y-2 border-t border-slate-200/60 pt-2 dark:border-slate-600">
                   <p className="text-xs font-medium">{message.plan.summary}</p>
@@ -155,7 +199,11 @@ export function AgentSheet({
             </div>
           ))}
           {busy && <p className="text-xs text-slate-500 dark:text-slate-400">Thinking…</p>}
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && (
+            <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+              {error}
+            </p>
+          )}
         </div>
 
         <form
@@ -170,7 +218,7 @@ export function AgentSheet({
               type="text"
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="e.g. Emma pick-up Friday"
+              placeholder={inputPlaceholder}
               disabled={busy}
               className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
             />

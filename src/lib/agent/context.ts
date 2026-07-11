@@ -95,7 +95,8 @@ Rules:
 - Use YYYY-MM-DD dates from the date map only.
 - Use exact family names from the schedule context.
 - dropoff = drive to pool; pickup = pick up from pool after practice.
-- If the user says "I" or "me" and active family is set, use that family.
+- If the user says "I", "me", or "my" and active family is set, use that family.
+- When active family is set, short requests like "skip Saturday", "drop-off Friday", or "pickup at 7" refer to that family unless another name is given.
 - If date or family is unclear, ask a short question instead of calling tools.
 - For destructive actions (clear_week, copy_previous_week), call the tool when the user clearly asks; the server will ask them to confirm before running.
 - Safe changes run immediately. Destructive week actions wait for confirmation.

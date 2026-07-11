@@ -47,6 +47,7 @@ export async function POST(
       weekStart: body.week_start,
       message,
       activeFamilyId: body.active_family_id ?? null,
+      history: body.history,
     });
 
     if ("error" in result) {

@@ -65,8 +65,8 @@ function formatGeminiError(err: unknown, triedModels?: string[]): string {
         : " Ensure GEMINI_API_KEY is from Google AI Studio and has model access.";
     return `Gemini model not available.${tried}${detail}${envHint}`;
   }
-  if (/quota|rate limit|429/i.test(message)) {
-    return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
+  if (/quota|rate limit|429|resource exhausted/i.test(message)) {
+    return "Gemini rate limit hit. Wait a minute and try again, or check quotas in Google AI Studio.";
   }
   return `Gemini error: ${message.slice(0, 200)}`;
 }
@@ -112,6 +112,25 @@ async function generateWithModels(
   }
 
   return { error: formatGeminiError(lastError, tried) };
+}
+
+const MAX_CHAT_TURNS = 12;
+
+function buildConversationHistory(turns: { role: "user" | "assistant"; text: string }[], message: string): Content[] {
+  const contents: Content[] = [];
+  for (const turn of turns.slice(-MAX_CHAT_TURNS)) {
+    const text = turn.text.trim();
+    if (!text) continue;
+    contents.push({
+      role: turn.role === "user" ? "user" : "model",
+      parts: [{ text }],
+    });
+  }
+  contents.push({
+    role: "user",
+    parts: [{ text: message.trim() }],
+  });
+  return contents;
 }
 
 function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown>; id?: string }> }): AgentToolCall[] {
@@ -171,6 +190,7 @@ export async function runAgentTurn(options: {
   weekStart: string;
   message: string;
   activeFamilyId: string | null;
+  history?: { role: "user" | "assistant"; text: string }[];
 }): Promise<AgentResponseBody | { error: string; status: number }> {
   const ai = getGeminiClient();
   if (!ai) {
@@ -182,12 +202,7 @@ export async function runAgentTurn(options: {
 
   const { context, scheduleText } = loaded;
   const systemPrompt = buildAgentSystemPrompt(scheduleText);
-  const history: Content[] = [
-    {
-      role: "user",
-      parts: [{ text: options.message.trim() }],
-    },
-  ];
+  const history = buildConversationHistory(options.history ?? [], options.message);
 
   const actionsTaken: AgentActionSummary[] = [];
   let weekMutated = false;

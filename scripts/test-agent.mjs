@@ -207,6 +207,18 @@ async function testAgentEndpoint() {
     week_start: WEEK_START,
   });
   check("phase1 claim via agent", phase1.res.ok && phase1.data.week_mutated, phase1.data.reply);
+  check("phase1 actions_taken", (phase1.data.actions_taken?.length ?? 0) > 0);
+
+  const followUp = await json("POST", `/api/teams/${SLUG}/agent`, {
+    message: "Set her home pickup to 7:15",
+    week_start: WEEK_START,
+    history: [
+      { role: "user", text: "Emily is drop-off driver on Friday July 10 2026" },
+      { role: "assistant", text: phase1.data.reply ?? "Done." },
+    ],
+  });
+  check("multi-turn follow-up", followUp.res.ok && followUp.data.week_mutated, followUp.data.reply);
+  check("multi-turn actions_taken", (followUp.data.actions_taken?.length ?? 0) > 0);
 
   let session = (await getSession()).session;
   const emilyDrop = session?.assignments?.find((a) => a.role === "dropoff" && a.family_name === "Emily");

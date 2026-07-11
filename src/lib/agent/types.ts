@@ -1,9 +1,15 @@
 import type { AssignmentRole } from "@/lib/types";
 
+export interface AgentChatTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
 export interface AgentRequestBody {
   message?: string;
   week_start?: string;
   active_family_id?: string | null;
+  history?: AgentChatTurn[];
   confirm?: {
     token: string;
     approved: boolean;

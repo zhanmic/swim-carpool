@@ -12,7 +12,7 @@ import type {
 
 const MAX_TOOL_ROUNDS = 6;
 const DEFAULT_MODEL = "gemini-2.5-flash";
-const MODEL_FALLBACKS = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"] as const;
+const MODEL_FALLBACKS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"] as const;
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -37,7 +37,7 @@ function formatGeminiError(err: unknown): string {
     return "Invalid GEMINI_API_KEY. Check the key in Vercel matches Google AI Studio.";
   }
   if (isModelUnavailableError(err)) {
-    return `Gemini model not available. Set GEMINI_MODEL to gemini-2.5-flash or gemini-3.5-flash in Vercel.`;
+    return `Gemini model not available. Set GEMINI_MODEL to gemini-2.5-flash in Vercel (gemini-2.0-flash is retired).`;
   }
   if (/quota|rate limit|429/i.test(message)) {
     return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
@@ -79,7 +79,7 @@ async function generateWithModels(
   return { error: formatGeminiError(lastError) };
 }
 
-function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown> }> }): AgentToolCall[] {
+function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown>; id?: string }> }): AgentToolCall[] {
   const calls = response.functionCalls ?? [];
   return calls
     .filter((call) => call.name)
@@ -87,6 +87,30 @@ function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string
       name: call.name!,
       args: (call.args ?? {}) as Record<string, unknown>,
     }));
+}
+
+function modelTurnParts(
+  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>
+): Part[] {
+  const parts = response.candidates?.[0]?.content?.parts;
+  if (parts && parts.length > 0) return parts;
+  const calls = response.functionCalls ?? [];
+  return calls.map((call) => ({
+    functionCall: call,
+  }));
+}
+
+function functionCallId(
+  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
+  call: AgentToolCall,
+  index: number
+): string {
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const functionParts = parts.filter((part) => part.functionCall);
+  const match =
+    functionParts[index] ??
+    functionParts.find((part) => part.functionCall?.name === call.name);
+  return match?.functionCall?.id ?? call.name;
 }
 
 async function runConfirmedTools(
@@ -166,21 +190,15 @@ export async function runAgentTurn(options: {
     const destructiveCalls = calls.filter((call) => DESTRUCTIVE_AGENT_TOOLS.has(call.name));
 
     if (safeCalls.length > 0) {
-      const modelParts: Part[] = safeCalls.map((call) => ({
-        functionCall: {
-          name: call.name,
-          args: call.args,
-        },
-      }));
-      history.push({ role: "model", parts: modelParts });
+      history.push({ role: "model", parts: modelTurnParts(response) });
 
       const functionResponses: Part[] = [];
-      for (const call of safeCalls) {
+      for (const [index, call] of safeCalls.entries()) {
         const result = await executeAgentTool(context, call);
         actionsTaken.push({ tool: call.name, summary: result.message });
         if (result.ok) weekMutated = true;
         functionResponses.push(
-          createPartFromFunctionResponse(call.name, call.name, {
+          createPartFromFunctionResponse(functionCallId(response, call, index), call.name, {
             ok: result.ok,
             message: result.message,
           })

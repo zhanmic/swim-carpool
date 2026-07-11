@@ -311,23 +311,47 @@ export function WeekView({ slug }: WeekViewProps) {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => shiftWeek(1)}
-            className="touch-target-sm shrink-0 rounded-lg border border-slate-200 bg-white px-3 font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-          >
-            Next ›
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowAgent(true)}
+              aria-label="Schedule agent"
+              title="Schedule agent"
+              className="touch-target-sm flex items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 active:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-200 dark:active:bg-violet-950"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden
+              >
+                <path d="M12 3v2" />
+                <path d="M12 19v2" />
+                <path d="M3 12h2" />
+                <path d="M19 12h2" />
+                <path d="m5.6 5.6 1.4 1.4" />
+                <path d="m17 17 1.4 1.4" />
+                <path d="m5.6 18.4 1.4-1.4" />
+                <path d="m17 7 1.4-1.4" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => shiftWeek(1)}
+              className="touch-target-sm shrink-0 rounded-lg border border-slate-200 bg-white px-3 font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            >
+              Next ›
+            </button>
+          </div>
         </div>
 
         <div className="mb-2 flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={() => setShowAgent(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-violet-200 bg-violet-50 px-1.5 text-xs font-medium text-violet-800 active:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-200 dark:active:bg-violet-950"
-          >
-            Agent
-          </button>
           <button
             type="button"
             onClick={() => setShowLocations(true)}

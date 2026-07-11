@@ -187,7 +187,7 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
   {
     name: "clear_week",
     description:
-      "Clear all driver slots, notes, and home pickup times for every visible day in the current week. Destructive.",
+      "Clear all driver slots, notes, home pickup times, and skips for every visible day in the current week. Destructive.",
     parameters: {
       type: Type.OBJECT,
       properties: {},
@@ -445,7 +445,7 @@ export async function executeAgentTool(
         });
         return {
           ok: true,
-          message: `Cleared week slots, notes, and home pickups (${cleared} assignments removed).`,
+          message: `Cleared week slots, notes, home pickups, and skips (${cleared} assignments removed).`,
         };
       }
 

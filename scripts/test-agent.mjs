@@ -87,6 +87,12 @@ async function testPhase1ScheduleApi() {
   ({ res } = await json("POST", `/api/teams/${SLUG}/sessions/${SESSION_DATE}/pickups/default`));
   check("default home pickups", res.ok);
 
+  ({ res } = await json("POST", `/api/teams/${SLUG}/sessions/${SESSION_DATE}/absences`, {
+    family_name: "Ria",
+    action: "mark",
+  }));
+  check("mark skip before week clear", res.ok);
+
   ({ res } = await json("POST", `/api/teams/${SLUG}/week/assignments`, {
     action: "clear",
     weekStart: WEEK_START,
@@ -99,7 +105,8 @@ async function testPhase1ScheduleApi() {
     session &&
       session.assignments.length === 0 &&
       !session.location_notes &&
-      Object.keys(session.dropoff_pickups ?? {}).length === 0
+      Object.keys(session.dropoff_pickups ?? {}).length === 0 &&
+      (session.absences?.length ?? 0) === 0
   );
 }
 

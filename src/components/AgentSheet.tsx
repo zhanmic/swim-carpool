@@ -168,7 +168,7 @@ export function AgentSheet({
                 <ul className="mt-2 space-y-0.5 border-t border-slate-200/60 pt-2 text-xs dark:border-slate-600">
                   {message.actions.map((action, actionIndex) => (
                     <li key={actionIndex} className="text-slate-600 dark:text-slate-300">
-                      • {action.summary}
+                      • <span className="font-semibold">{action.summary}</span>
                     </li>
                   ))}
                 </ul>

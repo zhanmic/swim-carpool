@@ -12,8 +12,8 @@ import type {
 
 const MAX_TOOL_ROUNDS = 6;
 const MODEL_FALLBACKS = [
-  "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
+  "gemini-3.1-flash-lite",
   "gemini-2.5-flash",
   "gemini-3.5-flash",
 ] as const;

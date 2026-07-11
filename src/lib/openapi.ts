@@ -55,7 +55,7 @@ export const OPENAPI_SPEC = {
       post: {
         summary: "Clear driver slots or copy previous week",
         description:
-          "action: clear (drop-off/pick-up slots, notes, and home pickup times) | copy_previous",
+          "action: clear (drop-off/pick-up slots, notes, home pickup times, and skips) | copy_previous",
       },
     },
     "/api/teams/{slug}/week/batch": {

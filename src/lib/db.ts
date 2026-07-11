@@ -853,6 +853,14 @@ export async function clearWeekAssignments(
 
   if (options?.notesAndPickups) {
     await sql`
+      DELETE FROM session_absences sa
+      USING practice_sessions ps
+      WHERE sa.session_id = ps.id
+        AND ps.team_id = ${teamId}
+        AND ps.session_date = ANY(${dates})
+    `;
+
+    await sql`
       UPDATE practice_sessions
       SET location_notes = NULL, dropoff_pickups = '{}'::jsonb
       WHERE team_id = ${teamId}

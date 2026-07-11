@@ -46,7 +46,7 @@ export function summarizePlan(tools: AgentToolCall[]): { summary: string; destru
   const labels = tools.map((tool) => {
     switch (tool.name) {
       case "clear_week":
-        return "clear this week's slots, notes, and home pickups";
+        return "clear this week's slots, notes, home pickups, and skips";
       case "copy_previous_week":
         return "copy last week's times and locations (clears current slots)";
       default:

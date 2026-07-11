@@ -19,7 +19,7 @@ function sparkle(cx: number, cy: number, hy: number, hx: number): string {
 }
 
 /** Oval chat bubble with one large sparkle and three smaller sparkles inside. */
-export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
+export function AgentIcon({ className = "h-6 w-6" }: AgentIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -35,13 +35,13 @@ export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <ellipse cx="12" cy="9.6" rx="9.35" ry="7.1" />
-        <path d="M6.9 16 4.1 19.5 8.8 16.6" />
+        <ellipse cx="12" cy="9.75" rx="10.55" ry="8.35" />
+        <path d="M7.1 17.2 3.6 20.8 9.1 17.6" />
       </g>
-      <path d={sparkle(11.5, 9.6, 3.2, 2.8)} />
-      <path d={sparkle(15.4, 7.2, 1.25, 1.2)} />
-      <path d={sparkle(8.1, 11.8, 1.15, 1.1)} />
-      <path d={sparkle(14.9, 12.2, 1.15, 1.1)} />
+      <path d={sparkle(11.5, 9.75, 3.55, 3.1)} />
+      <path d={sparkle(15.8, 7.1, 1.35, 1.3)} />
+      <path d={sparkle(7.6, 12.1, 1.25, 1.2)} />
+      <path d={sparkle(15.3, 12.5, 1.25, 1.2)} />
     </svg>
   );
 }

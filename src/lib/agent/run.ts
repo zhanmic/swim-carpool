@@ -11,8 +11,14 @@ import type {
 } from "./types";
 
 const MAX_TOOL_ROUNDS = 6;
-const DEFAULT_MODEL = "gemini-2.5-flash";
 const MODEL_FALLBACKS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"] as const;
+const RETIRED_MODELS = new Set([
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
+]);
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -23,21 +29,29 @@ function getGeminiClient(): GoogleGenAI | null {
 function modelCandidates(): string[] {
   const preferred = process.env.GEMINI_MODEL?.trim();
   const chain = preferred ? [preferred, ...MODEL_FALLBACKS] : [...MODEL_FALLBACKS];
-  return [...new Set(chain)];
+  return [...new Set(chain.filter((model) => !RETIRED_MODELS.has(model)))];
 }
 
 function isModelUnavailableError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
-  return /not found|404/i.test(message) && /model/i.test(message);
+  return (
+    /model/i.test(message) &&
+    /not found|404|not available|unavailable|deprecated|retired|shut\s*down/i.test(message)
+  );
 }
 
-function formatGeminiError(err: unknown): string {
+function formatGeminiError(err: unknown, triedModels?: string[]): string {
   const message = err instanceof Error ? err.message : String(err);
   if (/API key not valid|API_KEY_INVALID|invalid api key/i.test(message)) {
     return "Invalid GEMINI_API_KEY. Check the key in Vercel matches Google AI Studio.";
   }
   if (isModelUnavailableError(err)) {
-    return `Gemini model not available. Set GEMINI_MODEL to gemini-2.5-flash in Vercel (gemini-2.0-flash is retired).`;
+    const tried = triedModels?.length ? ` Tried: ${triedModels.join(", ")}.` : "";
+    const envHint =
+      process.env.GEMINI_MODEL?.trim() && RETIRED_MODELS.has(process.env.GEMINI_MODEL.trim())
+        ? " Remove GEMINI_MODEL=gemini-2.0-flash from Vercel (retired June 2026)."
+        : " Set GEMINI_MODEL to gemini-2.5-flash in Vercel, or remove it to use the default.";
+    return `Gemini model not available.${tried}${envHint}`;
   }
   if (/quota|rate limit|429/i.test(message)) {
     return "Gemini rate limit hit. Wait a minute or check Google AI Studio quotas.";
@@ -52,15 +66,23 @@ async function generateWithModels(
     config: {
       systemInstruction: string;
       tools: [{ functionDeclarations: typeof AGENT_TOOL_DECLARATIONS }];
-      thinkingConfig: { thinkingBudget: number };
     };
     pinnedModel?: string | null;
   }
 ): Promise<{ response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>; model: string } | { error: string }> {
   const models = request.pinnedModel ? [request.pinnedModel] : modelCandidates();
+  if (models.length === 0) {
+    return {
+      error:
+        "No Gemini models configured. Remove retired GEMINI_MODEL from Vercel or set GEMINI_MODEL=gemini-2.5-flash.",
+    };
+  }
+
   let lastError: unknown = null;
+  const tried: string[] = [];
 
   for (const model of models) {
+    tried.push(model);
     try {
       const response = await ai.models.generateContent({
         model,
@@ -71,13 +93,13 @@ async function generateWithModels(
     } catch (err) {
       lastError = err;
       if (!isModelUnavailableError(err)) {
-        return { error: formatGeminiError(err) };
+        return { error: formatGeminiError(err, tried) };
       }
       console.warn(`Gemini model unavailable: ${model}`);
     }
   }
 
-  return { error: formatGeminiError(lastError) };
+  return { error: formatGeminiError(lastError, tried) };
 }
 
 function toolCallsFromResponse(response: { functionCalls?: Array<{ name?: string; args?: Record<string, unknown>; id?: string }> }): AgentToolCall[] {
@@ -165,7 +187,6 @@ export async function runAgentTurn(options: {
       config: {
         systemInstruction: systemPrompt,
         tools: [{ functionDeclarations: AGENT_TOOL_DECLARATIONS }],
-        thinkingConfig: { thinkingBudget: 0 },
       },
       pinnedModel: activeModel,
     });

@@ -35,13 +35,13 @@ export function AgentIcon({ className = "h-5 w-5" }: AgentIconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <ellipse cx="12" cy="10" rx="8.25" ry="6.25" />
-        <path d="M7.6 15.4 5.2 18.6 9.4 16.1" />
+        <ellipse cx="12" cy="9.6" rx="9.35" ry="7.1" />
+        <path d="M6.9 16 4.1 19.5 8.8 16.6" />
       </g>
-      <path d={sparkle(11.5, 10, 3.1, 2.7)} />
-      <path d={sparkle(15.1, 7.6, 1.2, 1.15)} />
-      <path d={sparkle(8.4, 12.1, 1.1, 1.05)} />
-      <path d={sparkle(14.6, 12.4, 1.1, 1.05)} />
+      <path d={sparkle(11.5, 9.6, 3.2, 2.8)} />
+      <path d={sparkle(15.4, 7.2, 1.25, 1.2)} />
+      <path d={sparkle(8.1, 11.8, 1.15, 1.1)} />
+      <path d={sparkle(14.9, 12.2, 1.15, 1.1)} />
     </svg>
   );
 }

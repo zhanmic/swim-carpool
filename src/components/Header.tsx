@@ -12,6 +12,7 @@ interface HeaderProps {
   familyName: string | null;
   familyId?: string | null;
   familyColors?: Map<string, FamilyColorClasses>;
+  weekStart?: string;
   onSwitchFamily: () => void;
   onManageTeam?: () => void;
 }
@@ -23,10 +24,16 @@ export function Header({
   familyName,
   familyId,
   familyColors,
+  weekStart,
   onSwitchFamily,
   onManageTeam,
 }: HeaderProps) {
   const familyColor = getFamilyColor(familyColors ?? new Map(), familyId);
+
+  function handlePrint() {
+    const printUrl = `/c/${teamSlug}/print${weekStart ? `?start=${weekStart}` : ""}`;
+    window.open(printUrl, "_blank");
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur pt-[max(0.25rem,var(--safe-top))] dark:border-slate-700 dark:bg-slate-900/95">
@@ -64,6 +71,28 @@ export function Header({
               Schedule
             </a>
           )}
+          <button
+            type="button"
+            onClick={handlePrint}
+            aria-label="Print schedule"
+            title="Print schedule"
+            className="touch-target-sm flex items-center justify-center text-slate-600 active:text-slate-900 dark:text-slate-400 dark:active:text-slate-100"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+            >
+              <path d="M6 9V2h12v7" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <path d="M6 14h12v8H6z" />
+            </svg>
+          </button>
           <ThemeToggle />
           <button
             type="button"

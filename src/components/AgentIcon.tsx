@@ -19,7 +19,7 @@ function sparkle(cx: number, cy: number, hy: number, hx: number): string {
   ].join(" ");
 }
 
-/** Oval chat bubble with gradient and sparkles inside. */
+/** Rounded rectangle chat bubble with neon animated outline and sparkles inside. */
 export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIconProps) {
   return (
     <svg
@@ -41,26 +41,37 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
               0%, 100% { opacity: 1; }
               50% { opacity: 0.2; }
             }
+            @keyframes neon-glow {
+              0% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
+              25% { stroke: #8B5CF6; filter: drop-shadow(0 0 3px #8B5CF6); }
+              50% { stroke: #EC4899; filter: drop-shadow(0 0 2px #EC4899); }
+              75% { stroke: #8B5CF6; filter: drop-shadow(0 0 3px #8B5CF6); }
+              100% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
+            }
             .sparkle-animate {
               animation: sparkle-blink 2.5s ease-in-out infinite;
+            }
+            .neon-animate {
+              animation: neon-glow 4s ease-in-out infinite;
             }
           `}
         </style>
       )}
       <g
         fill="none"
-        stroke="url(#ai-gradient)"
-        strokeWidth="1.35"
+        stroke={animated ? "#3B82F6" : "url(#ai-gradient)"}
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className={animated ? "neon-animate" : ""}
       >
-        <ellipse cx="12" cy="9.75" rx="10.55" ry="8.35" />
-        <path d="M7.1 17.2 3.6 20.8 9.1 17.6" />
+        <rect x="2" y="3" width="20" height="15" rx="3" ry="3" />
+        <path d="M8 18 L6 22 L10 19" />
       </g>
-      <path d={sparkle(11.5, 9.75, 3.55, 3.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} />
-      <path d={sparkle(15.8, 7.1, 1.35, 1.3)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
-      <path d={sparkle(7.6, 12.1, 1.25, 1.2)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
-      <path d={sparkle(15.3, 12.5, 1.25, 1.2)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
+      <path d={sparkle(12, 10.5, 3, 2.8)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} />
+      <path d={sparkle(16, 7.5, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
+      <path d={sparkle(8, 13, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
+      <path d={sparkle(16, 13.5, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
     </svg>
   );
 }

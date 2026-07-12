@@ -23,6 +23,7 @@ interface WeekData {
 }
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr + "T00:00:00");
@@ -30,6 +31,14 @@ function formatDate(dateStr: string): string {
   const day = date.getDate();
   const weekday = DAYS[date.getDay()];
   return `${weekday}, ${month} ${day}`;
+}
+
+function formatDateShort(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00");
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const day = date.getDate();
+  const weekday = SHORT_DAYS[date.getDay()];
+  return `${weekday} ${month} ${day}`;
 }
 
 export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
@@ -137,12 +146,12 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "18%" }}>Date</th>
+                <th style={{ width: "14%" }}>Date</th>
                 <th style={{ width: "15%" }}>Time</th>
                 <th style={{ width: "15%" }}>Location</th>
                 <th style={{ width: "13%" }}>Drop-off</th>
                 <th style={{ width: "13%" }}>Pick-up</th>
-                <th style={{ width: "26%" }}>Notes</th>
+                <th style={{ width: "30%" }}>Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -166,10 +175,7 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
 
                 return (
                   <tr key={session.id} style={session.cancelled ? { backgroundColor: "#fee2e2" } : undefined}>
-                    <td>
-                      <div className="font-medium">{formatDate(session.session_date).split(",")[0]}</div>
-                      <div className="text-xs text-slate-600">{formatDate(session.session_date).split(",")[1]}</div>
-                    </td>
+                    <td className="text-sm">{formatDateShort(session.session_date)}</td>
                     <td className="text-sm">
                       {formatTime12(session.start_time)}–{formatTime12(session.end_time)}
                     </td>

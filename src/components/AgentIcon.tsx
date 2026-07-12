@@ -32,12 +32,12 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
       {animated && (
         <style>
           {`
-            @keyframes sparkle-pulse {
+            @keyframes sparkle-blink {
               0%, 100% { opacity: 1; }
-              50% { opacity: 0.4; }
+              50% { opacity: 0.7; }
             }
             .sparkle-animate {
-              animation: sparkle-pulse 2s ease-in-out infinite;
+              animation: sparkle-blink 2.5s ease-in-out infinite;
             }
           `}
         </style>

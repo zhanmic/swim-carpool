@@ -57,10 +57,10 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
         <ellipse cx="12" cy="9.75" rx="10.55" ry="8.35" />
         <path d="M7.1 17.2 3.6 20.8 9.1 17.6" />
       </g>
-      <path d={sparkle(11.5, 9.75, 3.55, 3.1)} fill="#FFF7CC" className={animated ? "sparkle-animate" : ""} />
-      <path d={sparkle(15.8, 7.1, 1.35, 1.3)} fill="#FFF7CC" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
-      <path d={sparkle(7.6, 12.1, 1.25, 1.2)} fill="#FFF7CC" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
-      <path d={sparkle(15.3, 12.5, 1.25, 1.2)} fill="#FFF7CC" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
+      <path d={sparkle(11.5, 9.75, 3.55, 3.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} />
+      <path d={sparkle(15.8, 7.1, 1.35, 1.3)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
+      <path d={sparkle(7.6, 12.1, 1.25, 1.2)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
+      <path d={sparkle(15.3, 12.5, 1.25, 1.2)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
     </svg>
   );
 }

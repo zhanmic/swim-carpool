@@ -41,6 +41,17 @@ function formatDateShort(dateStr: string): string {
   return `${weekday} ${month} ${day}`;
 }
 
+function formatDateParts(dateStr: string): { weekday: string; date: string } {
+  const date = new Date(dateStr + "T00:00:00");
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const weekday = SHORT_DAYS[date.getDay()];
+  return {
+    weekday,
+    date: `${month}/${day}`,
+  };
+}
+
 export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
   const [data, setData] = useState<WeekData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,11 +184,17 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
                   skipping.length > 0 ? `Skip: ${skipping.map((a) => a.family_name).join(", ")}` : null,
                 ].filter(Boolean).join(" | ");
 
+                const dateParts = formatDateParts(session.session_date);
+
                 return (
                   <tr key={session.id} style={session.cancelled ? { backgroundColor: "#fee2e2" } : undefined}>
-                    <td className="text-sm">{formatDateShort(session.session_date)}</td>
                     <td className="text-sm">
-                      {formatTime12(session.start_time)}–{formatTime12(session.end_time)}
+                      <div className="font-medium">{dateParts.weekday}</div>
+                      <div className="text-xs text-slate-600">{dateParts.date}</div>
+                    </td>
+                    <td className="text-xs">
+                      <div>{formatTime12(session.start_time)}</div>
+                      <div>{formatTime12(session.end_time)}</div>
                     </td>
                     <td className="text-sm">{session.location_name}</td>
                     <td className="text-sm">{dropoff?.family_name || "Open"}</td>

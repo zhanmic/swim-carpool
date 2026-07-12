@@ -38,27 +38,27 @@ export function Header({
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur pt-[max(0.25rem,var(--safe-top))] dark:border-slate-700 dark:bg-slate-900/95">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-3 py-1.5">
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            {onManageTeam ? (
-              <button
-                type="button"
-                onClick={onManageTeam}
-                className="group flex min-w-0 w-fit max-w-full items-center gap-1 truncate text-left text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
-              >
-                <span className="truncate">{teamName}</span>
-              </button>
-            ) : (
-              <span className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{teamName}</span>
-            )}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {onManageTeam ? (
+            <button
+              type="button"
+              onClick={onManageTeam}
+              className="group flex min-w-0 w-fit max-w-full items-center gap-1 truncate text-left text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
+            >
+              <span className="truncate">{teamName}</span>
+            </button>
+          ) : (
+            <span className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{teamName}</span>
+          )}
+          <div className="flex items-center gap-2">
             <Link
               href="/"
               className="w-fit text-[11px] font-normal text-slate-500 active:text-sky-600 dark:text-slate-400 dark:active:text-sky-400"
             >
               ‹ All teams
             </Link>
+            <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
           </div>
-          <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {scheduleUrl && (

@@ -104,7 +104,7 @@ export function Header({
                 rel="noopener noreferrer"
                 className="inline-block text-[11px] font-normal text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
               >
-                Schedule →
+                Official schedule →
               </a>
             )}
           </div>

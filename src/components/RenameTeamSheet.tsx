@@ -305,7 +305,7 @@ export function RenameTeamSheet({
             </label>
 
             <label className="block">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Schedule link</span>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Official schedule link</span>
               <input
                 type="url"
                 value={scheduleLink}
@@ -314,7 +314,7 @@ export function RenameTeamSheet({
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Optional. Shows as Schedule in the week view.
+                Optional. Shows as Official schedule in the week view.
               </p>
             </label>
 

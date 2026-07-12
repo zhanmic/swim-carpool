@@ -2,6 +2,8 @@
 
 import { formatAgentClientError } from "@/lib/agent/clientErrors";
 import type { AgentActionSummary, AgentProposedPlan, AgentResponseBody } from "@/lib/agent/types";
+import type { FamilyColorClasses } from "@/lib/familyColors";
+import type { Family } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
 
 interface ChatMessage {
@@ -16,6 +18,8 @@ interface AgentSheetProps {
   weekStart: string;
   activeFamilyId: string | null;
   activeFamilyName: string | null;
+  families: Family[];
+  familyColors: Map<string, FamilyColorClasses>;
   onClose: () => void;
   onScheduleChanged: () => void;
 }
@@ -29,11 +33,79 @@ function chatHistoryForApi(messages: ChatMessage[]): { role: "user" | "assistant
     .map((message) => ({ role: message.role, text: message.text }));
 }
 
+function renderColorizedSummary(
+  summary: string,
+  families: Family[],
+  familyColors: Map<string, FamilyColorClasses>
+): React.ReactNode {
+  let remaining = summary;
+  const parts: React.ReactNode[] = [];
+  let keyIndex = 0;
+
+  for (const family of families) {
+    const pattern = new RegExp(`\\b${family.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    const newParts: React.ReactNode[] = [];
+
+    for (const part of (parts.length > 0 ? parts : [remaining])) {
+      if (typeof part !== 'string') {
+        newParts.push(part);
+        continue;
+      }
+
+      const matches: { text: string; start: number; end: number }[] = [];
+      let match: RegExpExecArray | null;
+      
+      while ((match = pattern.exec(part)) !== null) {
+        matches.push({
+          text: match[0],
+          start: match.index,
+          end: match.index + match[0].length,
+        });
+      }
+
+      if (matches.length === 0) {
+        newParts.push(part);
+        continue;
+      }
+
+      let lastIndex = 0;
+      for (const m of matches) {
+        if (m.start > lastIndex) {
+          newParts.push(part.slice(lastIndex, m.start));
+        }
+        
+        const color = familyColors.get(family.id);
+        newParts.push(
+          <span
+            key={`family-${keyIndex++}`}
+            className={`font-semibold ${color?.text ?? 'text-slate-700 dark:text-slate-300'}`}
+          >
+            {m.text}
+          </span>
+        );
+        
+        lastIndex = m.end;
+      }
+      
+      if (lastIndex < part.length) {
+        newParts.push(part.slice(lastIndex));
+      }
+    }
+
+    parts.length = 0;
+    parts.push(...newParts);
+  }
+
+  return parts.length > 0 ? parts : remaining;
+}
+
 export function AgentSheet({
   slug,
   weekStart,
   activeFamilyId,
   activeFamilyName,
+  families,
+  familyColors,
   onClose,
   onScheduleChanged,
 }: AgentSheetProps) {
@@ -168,7 +240,7 @@ export function AgentSheet({
                 <ul className="mt-2 space-y-0.5 border-t border-slate-200/60 pt-2 text-xs dark:border-slate-600">
                   {message.actions.map((action, actionIndex) => (
                     <li key={actionIndex} className="text-slate-600 dark:text-slate-300">
-                      • <span className="font-semibold">{action.summary}</span>
+                      • {renderColorizedSummary(action.summary, families, familyColors)}
                     </li>
                   ))}
                 </ul>

@@ -469,6 +469,8 @@ export function WeekView({ slug }: WeekViewProps) {
           weekStart={weekStart}
           activeFamilyId={activeFamilyId}
           activeFamilyName={activeFamily?.name ?? null}
+          families={data.families}
+          familyColors={familyColors}
           onClose={() => setShowAgent(false)}
           onScheduleChanged={() => {
             void mutate();

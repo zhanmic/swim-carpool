@@ -81,7 +81,8 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
       <style>{`
         @media print {
           @page {
-            margin: 0.5in;
+            margin: 0.4in;
+            size: letter portrait;
           }
           body {
             print-color-adjust: exact;
@@ -91,15 +92,31 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
             display: none;
           }
         }
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        th, td {
+          border: 1px solid #cbd5e1;
+          padding: 6px 8px;
+          text-align: left;
+        }
+        th {
+          background-color: #f1f5f9;
+          font-weight: 600;
+        }
       `}</style>
 
       <div className="mx-auto max-w-4xl p-6">
-        <div className="mb-6 border-b-2 border-slate-800 pb-4">
-          <h1 className="text-3xl font-bold text-slate-900">{data.team.name}</h1>
-          <p className="mt-1 text-sm text-slate-600">Practice Schedule</p>
+        <div className="mb-4 flex items-baseline justify-between border-b-2 border-slate-800 pb-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{data.team.name}</h1>
+            <p className="text-xs text-slate-600">Week of {weekStart || new Date().toISOString().split("T")[0]}</p>
+          </div>
+          <p className="text-xs text-slate-500">Generated: {new Date().toLocaleDateString()}</p>
         </div>
 
-        <div className="no-print mb-6 flex gap-2">
+        <div className="no-print mb-4 flex gap-2">
           <button
             type="button"
             onClick={() => window.print()}
@@ -116,98 +133,61 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
           </button>
         </div>
 
-        <div className="space-y-6">
-          {visibleSessions.map((session) => {
-            const dropoff = session.assignments.find((a) => a.role === "dropoff");
-            const pickup = session.assignments.find((a) => a.role === "pickup");
-            const skipping = session.absences || [];
+        {visibleSessions.length > 0 ? (
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "18%" }}>Date</th>
+                <th style={{ width: "15%" }}>Time</th>
+                <th style={{ width: "15%" }}>Location</th>
+                <th style={{ width: "13%" }}>Drop-off</th>
+                <th style={{ width: "13%" }}>Pick-up</th>
+                <th style={{ width: "26%" }}>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleSessions.map((session) => {
+                const dropoff = session.assignments.find((a) => a.role === "dropoff");
+                const pickup = session.assignments.find((a) => a.role === "pickup");
+                const skipping = session.absences || [];
+                
+                const homePickups = Object.entries(session.dropoff_pickups || {})
+                  .map(([familyId, time]) => {
+                    const family = data.families.find((f) => f.id === familyId);
+                    return family && time ? `${family.name}: ${time}` : null;
+                  })
+                  .filter(Boolean);
 
-            return (
-              <div key={session.id} className="border-b border-slate-300 pb-4">
-                <div className="mb-2 flex items-baseline justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900">
-                    {formatDate(session.session_date)}
-                  </h2>
-                  {session.cancelled && (
-                    <span className="text-sm font-medium text-red-600">CANCELLED</span>
-                  )}
-                </div>
+                const notes = [
+                  session.location_notes,
+                  homePickups.length > 0 ? `Home: ${homePickups.join("; ")}` : null,
+                  skipping.length > 0 ? `Skip: ${skipping.map((a) => a.family_name).join(", ")}` : null,
+                ].filter(Boolean).join(" | ");
 
-                <div className="grid gap-3 text-sm">
-                  <div className="flex gap-2">
-                    <span className="w-24 font-medium text-slate-700">Time:</span>
-                    <span className="text-slate-900">
-                      {formatTime12(session.start_time)} – {formatTime12(session.end_time)}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <span className="w-24 font-medium text-slate-700">Location:</span>
-                    <span className="text-slate-900">{session.location_name}</span>
-                  </div>
-
-                  {session.location_notes && (
-                    <div className="flex gap-2">
-                      <span className="w-24 font-medium text-slate-700">Notes:</span>
-                      <span className="text-slate-900">{session.location_notes}</span>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <span className="w-24 font-medium text-slate-700">Drop-off:</span>
-                    <span className="text-slate-900">
-                      {dropoff?.family_name || "Open"}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <span className="w-24 font-medium text-slate-700">Pick-up:</span>
-                    <span className="text-slate-900">
-                      {pickup?.family_name || "Open"}
-                    </span>
-                  </div>
-
-                  {Object.keys(session.dropoff_pickups || {}).length > 0 && (
-                    <div className="flex gap-2">
-                      <span className="w-24 font-medium text-slate-700">Home Pickups:</span>
-                      <div className="flex-1">
-                        {Object.entries(session.dropoff_pickups).map(([familyId, time]) => {
-                          const family = data.families.find((f) => f.id === familyId);
-                          if (!family || !time) return null;
-                          return (
-                            <div key={familyId} className="text-slate-900">
-                              {family.name}: {time}
-                              {family.home_label && (
-                                <span className="ml-1 text-slate-600">({family.home_label})</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {skipping.length > 0 && (
-                    <div className="flex gap-2">
-                      <span className="w-24 font-medium text-slate-700">Skipping:</span>
-                      <span className="text-slate-900">
-                        {skipping.map((a) => a.family_name).join(", ")}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {visibleSessions.length === 0 && (
+                return (
+                  <tr key={session.id} style={session.cancelled ? { backgroundColor: "#fee2e2" } : undefined}>
+                    <td>
+                      <div className="font-medium">{formatDate(session.session_date).split(",")[0]}</div>
+                      <div className="text-xs text-slate-600">{formatDate(session.session_date).split(",")[1]}</div>
+                    </td>
+                    <td className="text-sm">
+                      {formatTime12(session.start_time)}–{formatTime12(session.end_time)}
+                    </td>
+                    <td className="text-sm">{session.location_name}</td>
+                    <td className="text-sm">{dropoff?.family_name || "Open"}</td>
+                    <td className="text-sm">{pickup?.family_name || "Open"}</td>
+                    <td className="text-xs">
+                      {session.cancelled && <strong className="text-red-700">CANCELLED </strong>}
+                      {notes}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
           <p className="py-8 text-center text-slate-500">No practice sessions this week.</p>
         )}
-
-        <div className="mt-8 border-t border-slate-300 pt-4 text-xs text-slate-500">
-          <p>Generated: {new Date().toLocaleString()}</p>
-        </div>
       </div>
     </>
   );

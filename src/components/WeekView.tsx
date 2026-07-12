@@ -279,7 +279,8 @@ export function WeekView({ slug }: WeekViewProps) {
         familyId={activeFamilyId}
         familyColors={familyColors}
         weekStart={weekStart}
-        onSwitchFamily={() => setShowPicker(true)}
+        families={data.families}
+        onSwitchFamily={selectFamily}
         onManageTeam={() => setShowRename(true)}
       />
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { getFamilyColor, type FamilyColorClasses } from "@/lib/familyColors";
+import type { Family } from "@/lib/types";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { ShareTeamButton } from "./ShareTeamButton";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -13,7 +15,8 @@ interface HeaderProps {
   familyId?: string | null;
   familyColors?: Map<string, FamilyColorClasses>;
   weekStart?: string;
-  onSwitchFamily: () => void;
+  families: Family[];
+  onSwitchFamily: (familyId: string) => void;
   onManageTeam?: () => void;
 }
 
@@ -25,14 +28,35 @@ export function Header({
   familyId,
   familyColors,
   weekStart,
+  families,
   onSwitchFamily,
   onManageTeam,
 }: HeaderProps) {
   const familyColor = getFamilyColor(familyColors ?? new Map(), familyId);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [dropdownOpen]);
 
   function handlePrint() {
     const printUrl = `/c/${teamSlug}/print${weekStart ? `?start=${weekStart}` : ""}`;
     window.open(printUrl, "_blank");
+  }
+
+  function handleFamilySelect(selectedFamilyId: string) {
+    onSwitchFamily(selectedFamilyId);
+    setDropdownOpen(false);
   }
 
   return (
@@ -108,15 +132,49 @@ export function Header({
               </svg>
             </button>
             <ThemeToggle />
-            <button
-              type="button"
-              onClick={onSwitchFamily}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium active:opacity-80 ${
-                familyColor?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              }`}
-            >
-              {familyName ?? "Select family"} ›
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium active:opacity-80 ${
+                  familyColor?.pill ?? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                }`}
+              >
+                {familyName ?? "Select family"} ›
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <div className="max-h-[60vh] overflow-y-auto p-1">
+                    {families.map((family) => {
+                      const color = getFamilyColor(familyColors ?? new Map(), family.id);
+                      const isActive = family.id === familyId;
+                      return (
+                        <button
+                          key={family.id}
+                          type="button"
+                          onClick={() => handleFamilySelect(family.id)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm active:bg-slate-100 dark:active:bg-slate-700 ${
+                            isActive
+                              ? "bg-slate-50 font-medium dark:bg-slate-750"
+                              : "font-normal"
+                          }`}
+                        >
+                          {color && (
+                            <span
+                              aria-hidden
+                              className={`h-2.5 w-2.5 shrink-0 rounded-full ${color.swatch}`}
+                            />
+                          )}
+                          <span className="min-w-0 flex-1 truncate text-slate-900 dark:text-slate-100">
+                            {family.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

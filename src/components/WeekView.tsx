@@ -319,7 +319,7 @@ export function WeekView({ slug }: WeekViewProps) {
               onClick={() => setShowAgent(true)}
               aria-label="Schedule agent"
               title="Schedule agent"
-              className="touch-target-sm flex items-center justify-center rounded-full text-violet-600 active:bg-violet-100 dark:text-violet-400 dark:active:bg-violet-950/60"
+              className="touch-target-sm flex items-center justify-center rounded-full active:bg-slate-100 dark:active:bg-slate-800"
             >
               <AgentIcon className="h-6 w-6" animated />
             </button>

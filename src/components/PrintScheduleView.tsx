@@ -157,12 +157,12 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "14%" }}>Date</th>
-                <th style={{ width: "15%" }}>Time</th>
-                <th style={{ width: "15%" }}>Location</th>
-                <th style={{ width: "13%" }}>Drop-off</th>
-                <th style={{ width: "13%" }}>Pick-up</th>
-                <th style={{ width: "30%" }}>Notes</th>
+                <th style={{ width: "12%" }}>Date</th>
+                <th style={{ width: "13%" }}>Time</th>
+                <th style={{ width: "14%" }}>Location</th>
+                <th style={{ width: "12%" }}>Drop-off</th>
+                <th style={{ width: "12%" }}>Pick-up</th>
+                <th style={{ width: "37%" }}>Notes</th>
               </tr>
             </thead>
             <tbody>

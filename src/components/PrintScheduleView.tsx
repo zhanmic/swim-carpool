@@ -1,6 +1,6 @@
 "use client";
 
-import { formatTime } from "@/lib/dates";
+import { formatTime12 } from "@/lib/dates";
 import type { SessionWithAssignments } from "@/lib/types";
 import { useEffect, useState } from "react";
 
@@ -137,7 +137,7 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
                   <div className="flex gap-2">
                     <span className="w-24 font-medium text-slate-700">Time:</span>
                     <span className="text-slate-900">
-                      {formatTime(session.start_time)} – {formatTime(session.end_time)}
+                      {formatTime12(session.start_time)} – {formatTime12(session.end_time)}
                     </span>
                   </div>
 

@@ -38,7 +38,7 @@ export function Header({
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur pt-[max(0.25rem,var(--safe-top))] dark:border-slate-700 dark:bg-slate-900/95">
       <div className="mx-auto max-w-lg px-3 py-1.5">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <Link
             href="/"
             aria-label="All teams"
@@ -58,26 +58,26 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
-          <div className="min-w-0 flex-1 text-center">
+          <div className="min-w-0 flex-1 overflow-hidden text-center">
             {onManageTeam ? (
               <button
                 type="button"
                 onClick={onManageTeam}
-                className="min-w-0 truncate text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
+                className="block w-full truncate text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
               >
                 {teamName}
               </button>
             ) : (
-              <span className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+              <div className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                 {teamName}
-              </span>
+              </div>
             )}
             {scheduleUrl && (
               <a
                 href={scheduleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-[11px] font-normal text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
+                className="block truncate text-[11px] font-normal text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
               >
                 Official schedule →
               </a>

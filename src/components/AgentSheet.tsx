@@ -25,7 +25,7 @@ interface AgentSheetProps {
 }
 
 const WELCOME =
-  "Tell me what to change — e.g. “Emily drop-off Friday” or “clear the week”.";
+  "Tell me what to change — e.g. “Emily drop-off Friday” or “skip Emily for Monday”.";
 
 function chatHistoryForApi(messages: ChatMessage[]): { role: "user" | "assistant"; text: string }[] {
   return messages

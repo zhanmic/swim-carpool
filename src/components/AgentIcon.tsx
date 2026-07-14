@@ -61,6 +61,7 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
           `}
         </style>
       )}
+      <rect x="2" y="3" width="20" height="15" rx="3" ry="3" fill="url(#sparkle-bg)" />
       <g
         fill="none"
         stroke={animated ? "#3B82F6" : "url(#ai-gradient)"}
@@ -72,7 +73,6 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
         <rect x="2" y="3" width="20" height="15" rx="3" ry="3" />
         <path d="M8 18 L6 22 L10 19" />
       </g>
-      <rect x="5" y="6" width="14" height="9" rx="2" ry="2" fill="url(#sparkle-bg)" />
       <path d={sparkle(12, 10.5, 3.2, 3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.3" className={animated ? "sparkle-animate" : ""} />
       <path d={sparkle(16, 7.5, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
       <path d={sparkle(8, 13, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />

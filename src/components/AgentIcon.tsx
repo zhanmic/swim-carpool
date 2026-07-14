@@ -34,8 +34,8 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
           <stop offset="100%" stopColor="#8B5CF6" />
         </linearGradient>
         <radialGradient id="sparkle-bg" cx="50%" cy="50%">
-          <stop offset="0%" stopColor="#000000" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#1a1a1a" stopOpacity="0.6" />
+          <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#1E40AF" stopOpacity="0.5" />
         </radialGradient>
       </defs>
       {animated && (

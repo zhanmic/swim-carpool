@@ -38,8 +38,8 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
         <style>
           {`
             @keyframes sparkle-blink {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.2; }
+              0%, 100% { opacity: 1; filter: drop-shadow(0 0 1px #FFD700); }
+              50% { opacity: 0.3; filter: drop-shadow(0 0 0px #FFD700); }
             }
             @keyframes neon-glow {
               0% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
@@ -68,10 +68,10 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
         <rect x="2" y="3" width="20" height="15" rx="3" ry="3" />
         <path d="M8 18 L6 22 L10 19" />
       </g>
-      <path d={sparkle(12, 10.5, 3, 2.8)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} />
-      <path d={sparkle(16, 7.5, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
-      <path d={sparkle(8, 13, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
-      <path d={sparkle(16, 13.5, 1.2, 1.1)} fill="#FFD700" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
+      <path d={sparkle(12, 10.5, 3.2, 3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.3" className={animated ? "sparkle-animate" : ""} />
+      <path d={sparkle(16, 7.5, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
+      <path d={sparkle(8, 13, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
+      <path d={sparkle(16, 13.5, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
     </svg>
   );
 }

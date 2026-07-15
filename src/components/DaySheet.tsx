@@ -317,14 +317,9 @@ export function DaySheet({
             }`}
           >
             {takenByOther ? (
-              <>
-                <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-                  Release {label.toLowerCase()} for {currentName}?
-                </p>
-                <p className="text-xs leading-snug text-amber-800 dark:text-amber-300">
-                  Only if {currentName} asked you to change it.
-                </p>
-              </>
+              <p className="text-xs text-amber-900 dark:text-amber-200">
+                Release {currentName}'s slot? Only if they asked you to.
+              </p>
             ) : isMine ? (
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 Release {label.toLowerCase()} as {activeFamilyName}?

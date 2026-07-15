@@ -37,6 +37,7 @@ export function Header({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [scrollKey, setScrollKey] = useState(0);
+  const [scrollDistance, setScrollDistance] = useState(0);
   const titleRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLButtonElement | HTMLDivElement>(null);
 
@@ -58,7 +59,11 @@ export function Header({
       if (textRef.current && titleRef.current) {
         const textWidth = textRef.current.scrollWidth;
         const containerWidth = titleRef.current.clientWidth;
-        setShouldScroll(textWidth > containerWidth);
+        const overflow = textWidth > containerWidth;
+        setShouldScroll(overflow);
+        if (overflow) {
+          setScrollDistance(textWidth - containerWidth);
+        }
       }
     }, 200);
     return () => clearTimeout(timer);
@@ -113,8 +118,8 @@ export function Header({
                 {`
                   @keyframes marquee-${scrollKey} {
                     0% { transform: translateX(0); }
-                    62.5% { transform: translateX(calc(12rem - 100%)); }
-                    100% { transform: translateX(calc(12rem - 100%)); }
+                    62.5% { transform: translateX(-${scrollDistance}px); }
+                    100% { transform: translateX(-${scrollDistance}px); }
                   }
                   .marquee-scroll-${scrollKey} {
                     display: inline-block;

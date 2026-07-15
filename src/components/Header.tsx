@@ -107,14 +107,14 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
-          <div ref={titleRef} className="min-w-0 flex-1 overflow-hidden text-center">
+          <div ref={titleRef} className={`min-w-0 flex-1 overflow-hidden ${shouldScroll ? "text-left" : "text-center"}`}>
             {shouldScroll && (
               <style>
                 {`
                   @keyframes marquee-${scrollKey} {
                     0% { transform: translateX(0); }
-                    62.5% { transform: translateX(calc(-100% + 12rem)); }
-                    100% { transform: translateX(calc(-100% + 12rem)); }
+                    62.5% { transform: translateX(calc(12rem - 100%)); }
+                    100% { transform: translateX(calc(12rem - 100%)); }
                   }
                   .marquee-scroll-${scrollKey} {
                     display: inline-block;

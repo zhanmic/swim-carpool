@@ -52,11 +52,19 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
               75% { stroke: #8B5CF6; filter: drop-shadow(0 0 3px #8B5CF6); }
               100% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
             }
+            @keyframes dash-draw {
+              to { stroke-dashoffset: 0; }
+            }
             .sparkle-animate {
               animation: sparkle-blink 2.5s ease-in-out infinite;
             }
             .neon-animate {
               animation: neon-glow 4s ease-in-out infinite;
+            }
+            .dash-animate {
+              stroke-dasharray: 120;
+              stroke-dashoffset: 120;
+              animation: dash-draw 2s linear infinite;
             }
           `}
         </style>
@@ -68,7 +76,7 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={animated ? "neon-animate" : ""}
+        className={animated ? "neon-animate dash-animate" : ""}
       >
         <rect x="2" y="3" width="20" height="15" rx="3" ry="3" />
         <path d="M8 18 L6 22 L10 19" />

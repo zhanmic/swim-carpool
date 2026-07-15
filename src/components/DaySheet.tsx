@@ -55,7 +55,7 @@ interface DaySheetProps {
     dropoff_pickups: DropoffPickups;
     cancelled: boolean;
   }) => Promise<boolean>;
-  onClaim: (role: AssignmentRole, action: "claim" | "release") => Promise<void>;
+  onClaim: (role: AssignmentRole, action: "claim" | "release", targetFamilyId?: string) => Promise<void>;
   onSkip: (action: "mark" | "clear") => Promise<void>;
 }
 
@@ -155,6 +155,7 @@ export function DaySheet({
   );
   const [saving, setSaving] = useState(false);
   const [confirmRole, setConfirmRole] = useState<AssignmentRole | null>(null);
+  const [assignDropdownRole, setAssignDropdownRole] = useState<AssignmentRole | null>(null);
   const [busy, setBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
@@ -274,14 +275,15 @@ export function DaySheet({
     }
   }
 
-  async function handleClaim(role: AssignmentRole) {
-    if (!activeFamilyId || activeFamilySkipping) return;
+  async function handleClaim(role: AssignmentRole, targetFamilyId?: string) {
+    if ((!activeFamilyId || activeFamilySkipping) && !targetFamilyId) return;
     setBusy(true);
     try {
       const assignment = session.assignments.find((a) => a.role === role);
       const action = assignment ? "release" : "claim";
-      await onClaim(role, action);
+      await onClaim(role, action, targetFamilyId);
       setConfirmRole(null);
+      setAssignDropdownRole(null);
     } finally {
       setBusy(false);
     }
@@ -352,7 +354,7 @@ export function DaySheet({
               </button>
             </div>
           </div>
-        ) : (
+        ) : assignment ? (
           <button
             type="button"
             disabled={!activeFamilyId || busy}
@@ -362,9 +364,7 @@ export function DaySheet({
             } ${
               isMine
                 ? mineColor ?? claimedColor ?? OPEN_SLOT_BUTTON
-                : takenByOther
-                  ? claimedColor ?? "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                  : OPEN_SLOT_BUTTON
+                : claimedColor ?? "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
             }`}
           >
             {isMine ? (
@@ -374,14 +374,64 @@ export function DaySheet({
                   {role === "dropoff" ? "Drop off" : "Pick up"}: {activeFamilyName} (tap to release)
                 </span>
               </>
-            ) : takenByOther ? (
+            ) : (
               <span className="block min-w-0 truncate">
                 {role === "dropoff" ? "Drop off" : "Pick up"}: {currentName} (tap to release)
               </span>
-            ) : (
-              `I'll do ${label.toLowerCase()}`
             )}
           </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={!activeFamilyId || busy}
+              onClick={() => setConfirmRole(role)}
+              className={`touch-target-compact flex-1 min-w-0 rounded-xl px-2 text-sm font-semibold disabled:opacity-50 ${OPEN_SLOT_BUTTON}`}
+            >
+              I'll do {label.toLowerCase()}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setAssignDropdownRole(role)}
+              className={`touch-target-compact rounded-xl px-3 text-sm font-semibold ${OPEN_SLOT_BUTTON}`}
+            >
+              Assign
+            </button>
+          </div>
+        )}
+
+        {!assignment && assignDropdownRole === role && (
+          <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+            <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Assign {label.toLowerCase()} to:
+            </p>
+            <div className="space-y-1">
+              {families.map((family) => {
+                const familyColor = getFamilyColor(familyColors, family.id);
+                return (
+                  <button
+                    key={family.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleClaim(role, family.id)}
+                    className={`touch-target-compact w-full rounded-lg px-3 text-left text-sm font-medium disabled:opacity-50 ${
+                      familyColor?.button ?? "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                    }`}
+                  >
+                    {family.name}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setAssignDropdownRole(null)}
+                className="touch-target-compact w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
       </div>
     );

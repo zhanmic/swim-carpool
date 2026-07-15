@@ -108,14 +108,16 @@ export function WeekView({ slug }: WeekViewProps) {
     setShowPicker(false);
   }
 
-  async function handleClaim(role: AssignmentRole, action: "claim" | "release") {
-    if (!openSession || !activeFamilyId) return;
+  async function handleClaim(role: AssignmentRole, action: "claim" | "release", targetFamilyId?: string) {
+    if (!openSession) return;
+    const familyIdToUse = targetFamilyId || activeFamilyId;
+    if (!familyIdToUse) return;
     const res = await fetch("/api/assignments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId: openSession.id,
-        familyId: activeFamilyId,
+        familyId: familyIdToUse,
         role,
         action,
         slug,

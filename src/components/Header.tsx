@@ -35,6 +35,8 @@ export function Header({
   const familyColor = getFamilyColor(familyColors ?? new Map(), familyId);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isMarquee, setIsMarquee] = useState(false);
+  const titleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,6 +50,23 @@ export function Header({
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [dropdownOpen]);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (titleRef.current) {
+        const isOverflowing = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+        if (isOverflowing) {
+          setIsMarquee(true);
+          const interval = setInterval(() => {
+            setIsMarquee((prev) => !prev);
+            setTimeout(() => setIsMarquee(true), 100);
+          }, 5000);
+          return () => clearInterval(interval);
+        }
+      }
+    };
+    checkOverflow();
+  }, [teamName]);
 
   function handlePrint() {
     const printUrl = `/c/${teamSlug}/print${weekStart ? `?start=${weekStart}` : ""}`;
@@ -82,18 +101,33 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
-          <div className="min-w-0 flex-1 overflow-hidden text-center">
+          <div ref={titleRef} className="min-w-0 flex-1 overflow-hidden text-center">
+            <style>
+              {`
+                @keyframes marquee {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .marquee-scroll {
+                  animation: marquee 8s linear;
+                }
+              `}
+            </style>
             {onManageTeam ? (
               <button
                 type="button"
                 onClick={onManageTeam}
-                className="block w-full truncate text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300"
+                className={`block w-full text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300 ${
+                  isMarquee ? "marquee-scroll whitespace-nowrap" : "truncate"
+                }`}
               >
-                {teamName}
+                {isMarquee ? `${teamName}  •  ${teamName}` : teamName}
               </button>
             ) : (
-              <div className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                {teamName}
+              <div className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
+                isMarquee ? "marquee-scroll whitespace-nowrap" : "truncate"
+              }`}>
+                {isMarquee ? `${teamName}  •  ${teamName}` : teamName}
               </div>
             )}
             {scheduleUrl && (

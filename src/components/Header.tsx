@@ -38,6 +38,7 @@ export function Header({
   const [shouldScroll, setShouldScroll] = useState(false);
   const [scrollKey, setScrollKey] = useState(0);
   const titleRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLButtonElement | HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -54,11 +55,12 @@ export function Header({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (titleRef.current) {
-        const isOverflowing = titleRef.current.scrollWidth > titleRef.current.clientWidth;
-        setShouldScroll(isOverflowing);
+      if (textRef.current && titleRef.current) {
+        const textWidth = textRef.current.scrollWidth;
+        const containerWidth = titleRef.current.clientWidth;
+        setShouldScroll(textWidth > containerWidth);
       }
-    }, 100);
+    }, 200);
     return () => clearTimeout(timer);
   }, [teamName]);
 
@@ -121,6 +123,7 @@ export function Header({
             )}
             {onManageTeam ? (
               <button
+                ref={textRef as React.RefObject<HTMLButtonElement>}
                 type="button"
                 onClick={onManageTeam}
                 className={`block w-full text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300 ${
@@ -130,9 +133,12 @@ export function Header({
                 {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
               </button>
             ) : (
-              <div className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
-                shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
-              }`}>
+              <div
+                ref={textRef as React.RefObject<HTMLDivElement>}
+                className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
+                  shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
+                }`}
+              >
                 {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
               </div>
             )}

@@ -35,7 +35,8 @@ export function Header({
   const familyColor = getFamilyColor(familyColors ?? new Map(), familyId);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isMarquee, setIsMarquee] = useState(false);
+  const [shouldScroll, setShouldScroll] = useState(false);
+  const [scrollKey, setScrollKey] = useState(0);
   const titleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,21 +53,24 @@ export function Header({
   }, [dropdownOpen]);
 
   useEffect(() => {
-    const checkOverflow = () => {
+    const timer = setTimeout(() => {
       if (titleRef.current) {
         const isOverflowing = titleRef.current.scrollWidth > titleRef.current.clientWidth;
-        if (isOverflowing) {
-          setIsMarquee(true);
-          const interval = setInterval(() => {
-            setIsMarquee((prev) => !prev);
-            setTimeout(() => setIsMarquee(true), 100);
-          }, 5000);
-          return () => clearInterval(interval);
-        }
+        setShouldScroll(isOverflowing);
       }
-    };
-    checkOverflow();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [teamName]);
+
+  useEffect(() => {
+    if (!shouldScroll) return;
+    
+    const interval = setInterval(() => {
+      setScrollKey((prev) => prev + 1);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [shouldScroll]);
 
   function handlePrint() {
     const printUrl = `/c/${teamSlug}/print${weekStart ? `?start=${weekStart}` : ""}`;
@@ -102,32 +106,34 @@ export function Header({
             </svg>
           </Link>
           <div ref={titleRef} className="min-w-0 flex-1 overflow-hidden text-center">
-            <style>
-              {`
-                @keyframes marquee {
-                  0% { transform: translateX(0); }
-                  100% { transform: translateX(-50%); }
-                }
-                .marquee-scroll {
-                  animation: marquee 8s linear;
-                }
-              `}
-            </style>
+            {shouldScroll && (
+              <style>
+                {`
+                  @keyframes marquee-${scrollKey} {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                  }
+                  .marquee-scroll-${scrollKey} {
+                    animation: marquee-${scrollKey} 8s linear forwards;
+                  }
+                `}
+              </style>
+            )}
             {onManageTeam ? (
               <button
                 type="button"
                 onClick={onManageTeam}
                 className={`block w-full text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300 ${
-                  isMarquee ? "marquee-scroll whitespace-nowrap" : "truncate"
+                  shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
                 }`}
               >
-                {isMarquee ? `${teamName}  •  ${teamName}` : teamName}
+                {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
               </button>
             ) : (
               <div className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
-                isMarquee ? "marquee-scroll whitespace-nowrap" : "truncate"
+                shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
               }`}>
-                {isMarquee ? `${teamName}  •  ${teamName}` : teamName}
+                {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
               </div>
             )}
             {scheduleUrl && (

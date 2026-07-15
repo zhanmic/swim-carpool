@@ -381,7 +381,7 @@ export function DaySheet({
             )}
           </button>
         ) : (
-          <div className="flex gap-2">
+          <div className="relative flex gap-2">
             <button
               type="button"
               disabled={!activeFamilyId || busy}
@@ -393,44 +393,36 @@ export function DaySheet({
             <button
               type="button"
               disabled={busy}
-              onClick={() => setAssignDropdownRole(role)}
+              onClick={() => setAssignDropdownRole(assignDropdownRole === role ? null : role)}
               className={`touch-target-compact rounded-xl px-3 text-sm font-semibold ${OPEN_SLOT_BUTTON}`}
             >
               Assign
             </button>
-          </div>
-        )}
-
-        {!assignment && assignDropdownRole === role && (
-          <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-            <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Assign {label.toLowerCase()} to:
-            </p>
-            <div className="space-y-1">
-              {families.map((family) => {
-                const familyColor = getFamilyColor(familyColors, family.id);
-                return (
-                  <button
-                    key={family.id}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => handleClaim(role, family.id)}
-                    className={`touch-target-compact w-full rounded-lg px-3 text-left text-sm font-medium disabled:opacity-50 ${
-                      familyColor?.button ?? "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-                    }`}
-                  >
-                    {family.name}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setAssignDropdownRole(null)}
-                className="touch-target-compact w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-              >
-                Cancel
-              </button>
-            </div>
+            
+            {assignDropdownRole === role && (
+              <div className="absolute right-0 bottom-full mb-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                <div className="p-1">
+                  {families
+                    .filter((family) => family.id !== activeFamilyId)
+                    .map((family) => {
+                      const familyColor = getFamilyColor(familyColors, family.id);
+                      return (
+                        <button
+                          key={family.id}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => handleClaim(role, family.id)}
+                          className={`touch-target-compact w-full rounded-md px-2 text-left text-sm font-medium disabled:opacity-50 ${
+                            familyColor?.button ?? "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                          }`}
+                        >
+                          {family.name}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

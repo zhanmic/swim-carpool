@@ -69,7 +69,7 @@ export function Header({
     
     const interval = setInterval(() => {
       setScrollKey((prev) => prev + 1);
-    }, 5000);
+    }, 8000);
     
     return () => clearInterval(interval);
   }, [shouldScroll]);
@@ -113,10 +113,12 @@ export function Header({
                 {`
                   @keyframes marquee-${scrollKey} {
                     0% { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
+                    62.5% { transform: translateX(calc(-100% + 12rem)); }
+                    100% { transform: translateX(calc(-100% + 12rem)); }
                   }
                   .marquee-scroll-${scrollKey} {
-                    animation: marquee-${scrollKey} 8s linear forwards;
+                    display: inline-block;
+                    animation: marquee-${scrollKey} 8s ease-in-out forwards;
                   }
                 `}
               </style>
@@ -130,7 +132,7 @@ export function Header({
                   shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
                 }`}
               >
-                {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
+                {teamName}
               </button>
             ) : (
               <div
@@ -139,7 +141,7 @@ export function Header({
                   shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
                 }`}
               >
-                {shouldScroll ? `${teamName}  •  ${teamName}` : teamName}
+                {teamName}
               </div>
             )}
             {scheduleUrl && (

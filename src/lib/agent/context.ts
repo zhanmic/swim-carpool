@@ -35,8 +35,7 @@ function formatSessionLine(session: SessionWithAssignments, families: Family[]):
   return `${day} (${session.session_date}): ${time} @ ${session.location_name} | drop: ${drop} | pick: ${pick}${pickupPart} | ${notes}${skipPart}`;
 }
 
-export function buildDateLexicon(weekStart: string, visibleDays: number[]): string {
-  const today = formatDateOnly(new Date());
+export function buildDateLexicon(weekStart: string, visibleDays: number[], today: string): string {
   const lines = visibleSessionDates(weekStart, visibleDays).map((date) => {
     const label = parseDateOnly(date).toLocaleDateString("en-US", { weekday: "long" });
     const markers = date === today ? " (today)" : "";
@@ -48,7 +47,8 @@ export function buildDateLexicon(weekStart: string, visibleDays: number[]): stri
 export async function loadAgentScheduleContext(
   slug: string,
   weekStart: string,
-  activeFamilyId: string | null
+  activeFamilyId: string | null,
+  clientToday?: string | null
 ): Promise<{ context: AgentContext; scheduleText: string; locationNames: string[] } | null> {
   const data = await getWeekData(slug, weekStart);
   if (!data) return null;
@@ -68,9 +68,10 @@ export async function loadAgentScheduleContext(
     activeFamilyName: activeFamily?.name ?? null,
   };
 
+  const today = clientToday || formatDateOnly(new Date());
   const familyNames = data.families.map((family) => family.name).join(", ");
   const sessionLines = data.sessions.map((session) => formatSessionLine(session, data.families));
-  const dateLexicon = buildDateLexicon(data.weekStart, data.team.visible_days);
+  const dateLexicon = buildDateLexicon(data.weekStart, data.team.visible_days, today);
   const locationNames = data.locations.map((location) => location.name);
 
   const scheduleText = [
@@ -79,7 +80,7 @@ export async function loadAgentScheduleContext(
     `Families: ${familyNames}`,
     `Saved locations: ${locationNames.join(", ") || "none"}`,
     `Active family on this device: ${activeFamily?.name ?? "not set"}`,
-    `Today: ${formatDateOnly(new Date())}`,
+    `Today: ${today}`,
     `Date map:\n${dateLexicon}`,
     "Schedule:",
     ...sessionLines,

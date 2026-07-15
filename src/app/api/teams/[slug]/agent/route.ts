@@ -25,6 +25,7 @@ export async function POST(
         slug,
         weekStart: body.week_start,
         activeFamilyId: body.active_family_id ?? null,
+        clientToday: body.client_today ?? null,
         token: body.confirm.token,
         approved: body.confirm.approved,
       });
@@ -47,6 +48,7 @@ export async function POST(
       weekStart: body.week_start,
       message,
       activeFamilyId: body.active_family_id ?? null,
+      clientToday: body.client_today ?? null,
       history: body.history,
     });
 

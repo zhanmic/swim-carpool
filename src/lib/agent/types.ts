@@ -9,6 +9,7 @@ export interface AgentRequestBody {
   message?: string;
   week_start?: string;
   active_family_id?: string | null;
+  client_today?: string | null;
   history?: AgentChatTurn[];
   confirm?: {
     token: string;

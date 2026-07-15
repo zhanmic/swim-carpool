@@ -146,10 +146,13 @@ export function AgentSheet({
     setInput("");
 
     try {
+      const now = new Date();
+      const clientToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const data = await postAgent({
         message: trimmed,
         week_start: weekStart,
         active_family_id: activeFamilyId,
+        client_today: clientToday,
         history: priorHistory,
       });
       setMessages((prev) => [
@@ -174,9 +177,12 @@ export function AgentSheet({
     setError(null);
     setBusy(true);
     try {
+      const now = new Date();
+      const clientToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const data = await postAgent({
         week_start: weekStart,
         active_family_id: activeFamilyId,
+        client_today: clientToday,
         confirm: { token: plan.token, approved },
       });
       setMessages((prev) => [

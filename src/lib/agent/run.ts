@@ -190,6 +190,7 @@ export async function runAgentTurn(options: {
   weekStart: string;
   message: string;
   activeFamilyId: string | null;
+  clientToday?: string | null;
   history?: { role: "user" | "assistant"; text: string }[];
 }): Promise<AgentResponseBody | { error: string; status: number }> {
   const ai = getGeminiClient();
@@ -197,7 +198,7 @@ export async function runAgentTurn(options: {
     return { error: "Agent is not configured (missing GEMINI_API_KEY)", status: 503 };
   }
 
-  const loaded = await loadAgentScheduleContext(options.slug, options.weekStart, options.activeFamilyId);
+  const loaded = await loadAgentScheduleContext(options.slug, options.weekStart, options.activeFamilyId, options.clientToday);
   if (!loaded) return { error: "Team not found", status: 404 };
 
   const { context, scheduleText } = loaded;
@@ -297,6 +298,7 @@ export async function runAgentConfirmation(options: {
   slug: string;
   weekStart: string;
   activeFamilyId: string | null;
+  clientToday?: string | null;
   token: string;
   approved: boolean;
 }): Promise<AgentResponseBody | { error: string; status: number }> {
@@ -307,7 +309,7 @@ export async function runAgentConfirmation(options: {
   const plan = verifyAgentPlan(options.token, options.slug);
   if (!plan) return { error: "Confirmation expired or invalid. Please ask again.", status: 400 };
 
-  const loaded = await loadAgentScheduleContext(options.slug, options.weekStart, options.activeFamilyId);
+  const loaded = await loadAgentScheduleContext(options.slug, options.weekStart, options.activeFamilyId, options.clientToday);
   if (!loaded) return { error: "Team not found", status: 404 };
 
   const { actions, weekMutated, errors } = await runConfirmedTools(loaded.context, plan.tools);

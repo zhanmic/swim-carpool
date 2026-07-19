@@ -62,25 +62,14 @@ export function DayCard({ session, families, familyColors, onOpen }: DayCardProp
       type="button"
       onClick={onOpen}
       className={`flex min-h-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl border px-3 py-2 text-left transition-colors active:scale-[0.99] ${
-        session.cancelled || session.no_practice
+        session.cancelled
           ? "border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800/60"
           : today
             ? "border-sky-400 bg-sky-50 shadow-sm dark:border-sky-500 dark:bg-sky-950"
             : "border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
       }`}
     >
-      {session.no_practice ? (
-        <>
-          <div className="flex shrink-0 items-center gap-2 text-sm">
-            <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>
-              {weekday} {dateLabel}
-            </span>
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">No Practice</span>
-          </div>
-          <div className="mt-1.5 h-5 shrink-0" aria-hidden />
-          <p className="mt-1 h-4 shrink-0" aria-hidden />
-        </>
-      ) : session.cancelled ? (
+      {session.cancelled ? (
         <>
           <div className="flex shrink-0 items-center gap-2 text-sm">
             <span className={`font-semibold ${today ? "text-sky-800 dark:text-sky-200" : "text-slate-900 dark:text-slate-100"}`}>

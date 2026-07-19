@@ -187,7 +187,7 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
                 const dateParts = formatDateParts(session.session_date);
 
                 return (
-                  <tr key={session.id} style={session.cancelled || session.no_practice ? { backgroundColor: "#fee2e2" } : undefined}>
+                  <tr key={session.id} style={session.cancelled ? { backgroundColor: "#fee2e2" } : undefined}>
                     <td className="text-sm">
                       <div className="font-medium">{dateParts.weekday}</div>
                       <div className="text-xs text-slate-600">{dateParts.date}</div>
@@ -200,7 +200,6 @@ export function PrintScheduleView({ slug, weekStart }: PrintScheduleViewProps) {
                     <td className="text-sm">{dropoff?.family_name || "Open"}</td>
                     <td className="text-sm">{pickup?.family_name || "Open"}</td>
                     <td className="text-xs">
-                      {session.no_practice && <strong className="text-red-700">NO PRACTICE </strong>}
                       {session.cancelled && <strong className="text-red-700">CANCELLED </strong>}
                       {notes}
                     </td>

@@ -159,7 +159,6 @@ export function WeekView({ slug }: WeekViewProps) {
     location_notes: string | null;
     dropoff_pickups: Record<string, string>;
     cancelled: boolean;
-    no_practice: boolean;
   }): Promise<boolean> {
     if (!openSession) return false;
     const res = await fetch(`/api/sessions/${openSession.id}`, {

@@ -423,31 +423,29 @@ type TemplateRow = {
   end_time: string;
   location_name: string;
   cancelled: boolean;
-  no_practice: boolean;
 };
 
 export async function ensureRecurringTemplatesForDays(teamId: string, visibleDays: number[]): Promise<void> {
   const sql = getSql();
   const sourceRows = await sql`
-    SELECT start_time::text, end_time::text, location_name, cancelled, COALESCE(no_practice, FALSE) AS no_practice
+    SELECT start_time::text, end_time::text, location_name, cancelled
     FROM recurring_templates
     WHERE team_id = ${teamId}
     ORDER BY day_of_week
     LIMIT 1
   `;
   const source = sourceRows[0] as
-    | { start_time: string; end_time: string; location_name: string; cancelled: boolean; no_practice: boolean }
+    | { start_time: string; end_time: string; location_name: string; cancelled: boolean }
     | undefined;
   const startTime = normalizeTime(source?.start_time?.slice(0, 5) ?? "05:45");
   const endTime = normalizeTime(source?.end_time?.slice(0, 5) ?? "08:15");
   const locationName = source?.location_name ?? "Main Pool";
   const cancelled = source?.cancelled ?? false;
-  const noPractice = source?.no_practice ?? false;
 
   for (const day of visibleDays) {
     await sql`
-      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled, no_practice)
-      VALUES (${teamId}, ${day}, ${startTime}, ${endTime}, ${locationName}, ${cancelled}, ${noPractice})
+      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled)
+      VALUES (${teamId}, ${day}, ${startTime}, ${endTime}, ${locationName}, ${cancelled})
       ON CONFLICT (team_id, day_of_week) DO NOTHING
     `;
   }
@@ -467,7 +465,7 @@ export async function ensureWeekSessions(
   const dates = getVisibleWeekDates(weekStart, visibleDays);
 
   const templates = (await sql`
-    SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled, COALESCE(no_practice, FALSE) AS no_practice
+    SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled
     FROM recurring_templates
     WHERE team_id = ${teamId}
   `) as TemplateRow[];
@@ -492,11 +490,10 @@ export async function ensureWeekSessions(
     const endTime = normalizeTime(tmpl?.end_time?.slice(0, 5) ?? "08:15");
     const locationName = tmpl?.location_name ?? "Main Pool";
     const cancelled = tmpl?.cancelled ?? false;
-    const noPractice = tmpl?.no_practice ?? false;
 
     await sql`
-      INSERT INTO practice_sessions (team_id, session_date, start_time, end_time, location_name, cancelled, no_practice)
-      VALUES (${teamId}, ${dateStr}, ${startTime}, ${endTime}, ${locationName}, ${cancelled}, ${noPractice})
+      INSERT INTO practice_sessions (team_id, session_date, start_time, end_time, location_name, cancelled)
+      VALUES (${teamId}, ${dateStr}, ${startTime}, ${endTime}, ${locationName}, ${cancelled})
     `;
   }
 }
@@ -514,7 +511,6 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
       ps.location_notes,
       ps.dropoff_pickups,
       ps.cancelled,
-      COALESCE(ps.no_practice, FALSE) AS no_practice,
       COALESCE(
         json_agg(
           json_build_object(
@@ -756,8 +752,7 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       location_name = COALESCE(${data.location_name ?? null}, location_name),
       location_notes = CASE WHEN ${data.location_notes !== undefined} THEN ${data.location_notes?.trim() || null} ELSE location_notes END,
       dropoff_pickups = CASE WHEN ${data.dropoff_pickups !== undefined} THEN ${dropoffPickups}::jsonb ELSE dropoff_pickups END,
-      cancelled = COALESCE(${data.cancelled ?? null}, cancelled),
-      no_practice = COALESCE(${data.no_practice ?? null}, no_practice)
+      cancelled = COALESCE(${data.cancelled ?? null}, cancelled)
     WHERE id = ${id}
     RETURNING
       id,
@@ -768,8 +763,7 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       location_name,
       location_notes,
       dropoff_pickups,
-      cancelled,
-      COALESCE(no_practice, FALSE) AS no_practice
+      cancelled
   `;
 
   const row = rows[0] as (PracticeSession & { dropoff_pickups?: unknown }) | undefined;

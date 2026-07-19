@@ -423,29 +423,31 @@ type TemplateRow = {
   end_time: string;
   location_name: string;
   cancelled: boolean;
+  no_practice: boolean;
 };
 
 export async function ensureRecurringTemplatesForDays(teamId: string, visibleDays: number[]): Promise<void> {
   const sql = getSql();
   const sourceRows = await sql`
-    SELECT start_time::text, end_time::text, location_name, cancelled
+    SELECT start_time::text, end_time::text, location_name, cancelled, COALESCE(no_practice, FALSE) AS no_practice
     FROM recurring_templates
     WHERE team_id = ${teamId}
     ORDER BY day_of_week
     LIMIT 1
   `;
   const source = sourceRows[0] as
-    | { start_time: string; end_time: string; location_name: string; cancelled: boolean }
+    | { start_time: string; end_time: string; location_name: string; cancelled: boolean; no_practice: boolean }
     | undefined;
   const startTime = normalizeTime(source?.start_time?.slice(0, 5) ?? "05:45");
   const endTime = normalizeTime(source?.end_time?.slice(0, 5) ?? "08:15");
   const locationName = source?.location_name ?? "Main Pool";
   const cancelled = source?.cancelled ?? false;
+  const noPractice = source?.no_practice ?? false;
 
   for (const day of visibleDays) {
     await sql`
-      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled)
-      VALUES (${teamId}, ${day}, ${startTime}, ${endTime}, ${locationName}, ${cancelled})
+      INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name, cancelled, no_practice)
+      VALUES (${teamId}, ${day}, ${startTime}, ${endTime}, ${locationName}, ${cancelled}, ${noPractice})
       ON CONFLICT (team_id, day_of_week) DO NOTHING
     `;
   }
@@ -465,7 +467,7 @@ export async function ensureWeekSessions(
   const dates = getVisibleWeekDates(weekStart, visibleDays);
 
   const templates = (await sql`
-    SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled
+    SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled, COALESCE(no_practice, FALSE) AS no_practice
     FROM recurring_templates
     WHERE team_id = ${teamId}
   `) as TemplateRow[];

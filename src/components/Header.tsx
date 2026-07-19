@@ -150,7 +150,8 @@ export function Header({
                 href={scheduleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Official schedule"
+                aria-label="Schedule"
+                title="Schedule"
                 className="touch-target-sm flex items-center justify-center text-base"
               >
                 📅

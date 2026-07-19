@@ -304,19 +304,37 @@ export function RenameTeamSheet({
               />
             </label>
 
-            <label className="block">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Official schedule link</span>
-              <input
-                type="url"
-                value={scheduleLink}
-                onChange={(e) => setScheduleLink(e.target.value)}
-                placeholder="https://…"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
-              />
+            <div className="block">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Schedule Link</span>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="url"
+                  value={scheduleLink}
+                  onChange={(e) => setScheduleLink(e.target.value)}
+                  placeholder="https://…"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+                />
+                {scheduleUrl && scheduleUrl.trim() && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(scheduleUrl);
+                      } catch (err) {
+                        console.error('Failed to copy:', err);
+                      }
+                    }}
+                    className="shrink-0 touch-target-compact rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:active:bg-slate-700"
+                    title="Copy schedule link"
+                  >
+                    Copy
+                  </button>
+                )}
+              </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Optional. Shows as Official schedule in the week view.
+                Optional. Shows as Schedule in the week view.
               </p>
-            </label>
+            </div>
 
             <div className="block">
               <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Team link</span>

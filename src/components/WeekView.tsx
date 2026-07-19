@@ -298,7 +298,7 @@ export function WeekView({ slug }: WeekViewProps) {
             ‹
           </button>
           <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
               Week of {weekStart}
             </span>
             <div className="flex h-11 w-full items-center justify-center">

@@ -112,6 +112,7 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
+          <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
           <div ref={titleRef} className={`min-w-0 flex-1 overflow-hidden ${shouldScroll ? "text-left" : "text-center"}`}>
             {shouldScroll && (
               <style>
@@ -161,7 +162,6 @@ export function Header({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
             <button
               type="button"
               onClick={handlePrint}

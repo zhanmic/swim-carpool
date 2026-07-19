@@ -4,7 +4,6 @@ import { getFamilyColor, type FamilyColorClasses } from "@/lib/familyColors";
 import type { Family } from "@/lib/types";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ShareTeamButton } from "./ShareTeamButton";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
@@ -107,7 +106,6 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
-          <ShareTeamButton slug={teamSlug} teamName={teamName} variant="icon" />
           <div ref={titleRef} className={`min-w-0 flex-1 overflow-hidden ${shouldScroll ? "text-left" : "text-center"}`}>
             {shouldScroll && (
               <style>
@@ -152,9 +150,10 @@ export function Header({
                 href={scheduleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="touch-target-sm flex items-center justify-center text-xs font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
+                aria-label="Official schedule"
+                className="touch-target-sm flex items-center justify-center text-base"
               >
-                Schedule
+                📅
               </a>
             )}
             <ThemeToggle />

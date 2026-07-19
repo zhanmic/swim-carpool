@@ -21,6 +21,7 @@ import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
 import { LocationsSheet } from "./LocationsSheet";
 import { RenameTeamSheet } from "./RenameTeamSheet";
+import { ShareTeamButton } from "./ShareTeamButton";
 import { TimeSheet } from "./TimeSheet";
 
 class WeekFetchError extends Error {
@@ -288,15 +289,18 @@ export function WeekView({ slug }: WeekViewProps) {
 
       <div className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))]">
         <div className="mb-2 flex shrink-0 items-center justify-between gap-1">
-          <button
-            type="button"
-            onClick={() => shiftWeek(-1)}
-            disabled={isEarliestWeek}
-            aria-label="Previous week"
-            className="touch-target-sm shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-white font-medium disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-          >
-            ‹
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => shiftWeek(-1)}
+              disabled={isEarliestWeek}
+              aria-label="Previous week"
+              className="touch-target-sm shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-white font-medium disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            >
+              ‹
+            </button>
+            <ShareTeamButton slug={slug} teamName={data.team.name} variant="icon" />
+          </div>
           <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
             <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
               Week of {weekStart}

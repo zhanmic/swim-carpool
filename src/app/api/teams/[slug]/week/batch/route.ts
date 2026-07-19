@@ -2,6 +2,7 @@ import { assertTeamScheduleAccess, isTeamAccessError } from "@/lib/apiAuth";
 import {
   applyCancelledToDates,
   applyLocationToWeek,
+  applyNoPracticeToDates,
   applyNotesToDates,
   applyTimeToWeek,
   clearWeekAssignments,
@@ -21,6 +22,7 @@ type BatchOperation =
   | { op: "clear_assignments" }
   | { op: "copy_previous_week" }
   | { op: "set_cancelled"; cancelled: boolean; dates?: string[] }
+  | { op: "set_no_practice"; no_practice: boolean; dates?: string[] }
   | { op: "set_notes"; location_notes: string | null; dates?: string[] }
   | { op: "set_pickups_default"; dates?: string[] };
 
@@ -97,6 +99,12 @@ export async function POST(
         case "set_cancelled": {
           const dates = resolveDates(weekStart, team.visible_days, operation.dates);
           const updated = await applyCancelledToDates(team.id, dates, operation.cancelled);
+          results.push({ op: operation.op, updated, dates });
+          break;
+        }
+        case "set_no_practice": {
+          const dates = resolveDates(weekStart, team.visible_days, operation.dates);
+          const updated = await applyNoPracticeToDates(team.id, dates, operation.no_practice);
           results.push({ op: operation.op, updated, dates });
           break;
         }

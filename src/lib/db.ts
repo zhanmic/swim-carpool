@@ -633,6 +633,23 @@ export async function applyCancelledToDates(
   return rows.length;
 }
 
+export async function applyNoPracticeToDates(
+  teamId: string,
+  dates: string[],
+  noPractice: boolean
+): Promise<number> {
+  if (dates.length === 0) return 0;
+  const sql = getSql();
+  const rows = await sql`
+    UPDATE practice_sessions
+    SET no_practice = ${noPractice}
+    WHERE team_id = ${teamId}
+      AND session_date = ANY(${dates})
+    RETURNING id
+  `;
+  return rows.length;
+}
+
 export async function applyNotesToDates(
   teamId: string,
   dates: string[],

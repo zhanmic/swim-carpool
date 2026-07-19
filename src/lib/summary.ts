@@ -20,6 +20,11 @@ export function formatWeekSummary(
     const date = parseDateOnly(session.session_date);
     const day = formatDayLabel(date);
 
+    if (session.no_practice) {
+      lines.push(`${day}: NO PRACTICE`);
+      continue;
+    }
+
     if (session.cancelled) {
       lines.push(`${day}: CANCELLED`);
       continue;

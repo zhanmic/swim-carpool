@@ -27,7 +27,7 @@ export const OPENAPI_SPEC = {
       patch: {
         summary: "Update day schedule",
         description:
-          "Fields: start_time, end_time, location_name, location_notes, dropoff_pickups (family id or name keys), cancelled",
+          "Fields: start_time, end_time, location_name, location_notes, dropoff_pickups (family id or name keys), cancelled, no_practice",
       },
     },
     "/api/teams/{slug}/sessions/{date}/assignments": {
@@ -62,14 +62,14 @@ export const OPENAPI_SPEC = {
       post: {
         summary: "Run multiple week operations in one request",
         description:
-          "operations: set_time, set_location, clear_assignments, copy_previous_week, set_cancelled, set_notes, set_pickups_default",
+          "operations: set_time, set_location, clear_assignments, copy_previous_week, set_cancelled, set_no_practice, set_notes, set_pickups_default",
       },
     },
     "/api/teams/{slug}/agent": {
       post: {
         summary: "Natural-language schedule agent (Gemini)",
         description:
-          "Body: message + week_start + optional history[], or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, clear/copy week. Uses GEMINI_API_KEY.",
+          "Body: message + week_start + optional history[], or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, no practice day, clear/copy week. Uses GEMINI_API_KEY.",
       },
     },
     "/api/teams/{slug}/locations": {

@@ -162,6 +162,18 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
     },
   },
   {
+    name: "set_session_no_practice",
+    description: "Mark a day as having no practice scheduled (not cancelled - never was scheduled).",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        date: { type: Type.STRING, description: "Practice date YYYY-MM-DD" },
+        no_practice: { type: Type.BOOLEAN, description: "true to mark as no practice, false to restore normal practice" },
+      },
+      required: ["date", "no_practice"],
+    },
+  },
+  {
     name: "set_week_time",
     description: "Set start and end time for all visible practice days this week.",
     parameters: {
@@ -421,6 +433,19 @@ export async function executeAgentTool(
         return {
           ok: true,
           message: cancelled ? `Practice cancelled on ${date}.` : `Practice restored on ${date}.`,
+        };
+      }
+
+      case "set_session_no_practice": {
+        const date = String(args.date ?? "");
+        const noPractice = args.no_practice === true;
+        const loaded = await loadSession(ctx, date);
+        if ("error" in loaded) return { ok: false, message: loaded.error };
+
+        await updateSession(loaded.session.id, { no_practice: noPractice });
+        return {
+          ok: true,
+          message: noPractice ? `${date} marked as no practice day.` : `Practice restored on ${date}.`,
         };
       }
 

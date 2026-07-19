@@ -26,6 +26,7 @@ export interface RecurringTemplate {
   end_time: string;
   location_name: string;
   cancelled: boolean;
+  no_practice: boolean;
 }
 
 export interface SessionAbsence {
@@ -43,6 +44,7 @@ export interface PracticeSession {
   location_notes: string | null;
   dropoff_pickups: Record<string, string>;
   cancelled: boolean;
+  no_practice: boolean;
 }
 
 export interface Assignment {
@@ -87,6 +89,7 @@ export interface SessionUpdate {
   location_notes?: string | null;
   dropoff_pickups?: Record<string, string>;
   cancelled?: boolean;
+  no_practice?: boolean;
 }
 
 export interface CreateTeamTemplate {
@@ -95,4 +98,5 @@ export interface CreateTeamTemplate {
   end_time?: string;
   location_name?: string;
   cancelled?: boolean;
+  no_practice?: boolean;
 }

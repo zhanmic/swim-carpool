@@ -151,7 +151,7 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: "set_session_cancelled",
-    description: "Cancel or uncancel practice on a single day.",
+    description: "Cancel or uncancel practice on a single day. Use when practice was scheduled but is now cancelled. For days that never had practice scheduled, use set_session_no_practice instead.",
     parameters: {
       type: Type.OBJECT,
       properties: {
@@ -163,7 +163,7 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: "set_session_no_practice",
-    description: "Mark a day as having no practice scheduled (not cancelled - never was scheduled).",
+    description: "Mark a day as having no practice or restore practice on a no-practice day. Use no_practice=true when there is no practice scheduled (never was scheduled). Use no_practice=false to restore practice on a day that was marked as no practice.",
     parameters: {
       type: Type.OBJECT,
       properties: {

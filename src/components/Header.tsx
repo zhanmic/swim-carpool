@@ -150,9 +150,10 @@ export function Header({
                 href={scheduleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="touch-target-sm flex items-center justify-center text-xs font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
+                aria-label="Official schedule"
+                className="touch-target-sm flex items-center justify-center text-base"
               >
-                Schedule
+                📅
               </a>
             )}
             <ThemeToggle />

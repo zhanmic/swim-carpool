@@ -490,10 +490,11 @@ export async function ensureWeekSessions(
     const endTime = normalizeTime(tmpl?.end_time?.slice(0, 5) ?? "08:15");
     const locationName = tmpl?.location_name ?? "Main Pool";
     const cancelled = tmpl?.cancelled ?? false;
+    const noPractice = tmpl?.no_practice ?? false;
 
     await sql`
-      INSERT INTO practice_sessions (team_id, session_date, start_time, end_time, location_name, cancelled)
-      VALUES (${teamId}, ${dateStr}, ${startTime}, ${endTime}, ${locationName}, ${cancelled})
+      INSERT INTO practice_sessions (team_id, session_date, start_time, end_time, location_name, cancelled, no_practice)
+      VALUES (${teamId}, ${dateStr}, ${startTime}, ${endTime}, ${locationName}, ${cancelled}, ${noPractice})
     `;
   }
 }
@@ -511,6 +512,7 @@ async function getSessionsWithAssignments(teamId: string, weekStart: string, wee
       ps.location_notes,
       ps.dropoff_pickups,
       ps.cancelled,
+      COALESCE(ps.no_practice, FALSE) AS no_practice,
       COALESCE(
         json_agg(
           json_build_object(
@@ -752,7 +754,8 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       location_name = COALESCE(${data.location_name ?? null}, location_name),
       location_notes = CASE WHEN ${data.location_notes !== undefined} THEN ${data.location_notes?.trim() || null} ELSE location_notes END,
       dropoff_pickups = CASE WHEN ${data.dropoff_pickups !== undefined} THEN ${dropoffPickups}::jsonb ELSE dropoff_pickups END,
-      cancelled = COALESCE(${data.cancelled ?? null}, cancelled)
+      cancelled = COALESCE(${data.cancelled ?? null}, cancelled),
+      no_practice = COALESCE(${data.no_practice ?? null}, no_practice)
     WHERE id = ${id}
     RETURNING
       id,
@@ -763,7 +766,8 @@ export async function updateSession(id: string, data: SessionUpdate): Promise<Pr
       location_name,
       location_notes,
       dropoff_pickups,
-      cancelled
+      cancelled,
+      COALESCE(no_practice, FALSE) AS no_practice
   `;
 
   const row = rows[0] as (PracticeSession & { dropoff_pickups?: unknown }) | undefined;

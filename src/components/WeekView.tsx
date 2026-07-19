@@ -292,9 +292,10 @@ export function WeekView({ slug }: WeekViewProps) {
             type="button"
             onClick={() => shiftWeek(-1)}
             disabled={isEarliestWeek}
-            className="touch-target-sm shrink-0 rounded-lg border border-slate-200 bg-white px-3 font-medium disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            aria-label="Previous week"
+            className="touch-target-sm shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-white font-medium disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           >
-            ‹ Prev
+            ‹
           </button>
           <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -329,9 +330,10 @@ export function WeekView({ slug }: WeekViewProps) {
             <button
               type="button"
               onClick={() => shiftWeek(1)}
-              className="touch-target-sm shrink-0 rounded-lg border border-slate-200 bg-white px-3 font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              aria-label="Next week"
+              className="touch-target-sm shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-white font-medium dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             >
-              Next ›
+              ›
             </button>
           </div>
         </div>

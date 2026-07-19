@@ -79,11 +79,6 @@ export function Header({
     return () => clearInterval(interval);
   }, [shouldScroll]);
 
-  function handlePrint() {
-    const printUrl = `/c/${teamSlug}/print${weekStart ? `?start=${weekStart}` : ""}`;
-    window.open(printUrl, "_blank");
-  }
-
   function handleFamilySelect(selectedFamilyId: string) {
     onSwitchFamily(selectedFamilyId);
     setDropdownOpen(false);
@@ -162,28 +157,6 @@ export function Header({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            <button
-              type="button"
-              onClick={handlePrint}
-              aria-label="Print schedule"
-              title="Print schedule"
-              className="touch-target-sm flex items-center justify-center text-slate-600 active:text-slate-900 dark:text-slate-400 dark:active:text-slate-100"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
-              >
-                <path d="M6 9V2h12v7" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <path d="M6 14h12v8H6z" />
-              </svg>
-            </button>
             <ThemeToggle />
             <div className="relative" ref={dropdownRef}>
               <button

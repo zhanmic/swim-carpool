@@ -145,18 +145,18 @@ export function Header({
                 {teamName}
               </div>
             )}
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5">
             {scheduleUrl && (
               <a
                 href={scheduleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block truncate text-[11px] font-normal text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
+                className="touch-target-sm flex items-center justify-center text-xs font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
               >
-                Official schedule →
+                Schedule
               </a>
             )}
-          </div>
-          <div className="flex shrink-0 items-center gap-0.5">
             <ThemeToggle />
             <div className="relative" ref={dropdownRef}>
               <button

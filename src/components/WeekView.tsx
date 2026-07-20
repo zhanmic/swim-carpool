@@ -351,7 +351,7 @@ export function WeekView({ slug }: WeekViewProps) {
             onClick={() => setShowLocations(true)}
             className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
           >
-            Locations
+            Location
           </button>
           <button
             type="button"

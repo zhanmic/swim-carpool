@@ -35,6 +35,7 @@ Mobile-first web app for swim team families to coordinate practice drop-offs and
 - **Visible days** - configure which days of the week show in schedule
 - **Location management** - add/edit practice locations with map links
 - **Team renaming** - update team name anytime
+- **Schedule source** - optionally connect a Commit Swimming team to auto-fill weekly practices by group
 
 ### Mobile-First Design
 - **iPhone-optimized** - designed for one-screen-no-scroll layouts
@@ -200,6 +201,15 @@ The app opens full-screen with safe-area padding for the notch and home indicato
 ### AI Agent
 - `POST /api/teams/[slug]/agent` - Send agent command
 - `POST /api/teams/[slug]/agent?turn_id=X&confirm=true` - Confirm agent action
+
+### Schedule Import (Commit Swimming)
+Optionally fill a week's practices from a club's [Commit Swimming](https://www.commitswimming.com) public calendar. Configured per team under **Team settings → Schedule source** (Super Team ID, timezone, group, and title-parsing rules), then imported per week from the **Import** button in the week view.
+
+- `GET /api/teams/[slug]/commit/groups` - List detected training groups (accepts `superTeamId`, `timezone`, `mode`, `separator`, `fields` query overrides to preview an unsaved config)
+- `GET /api/teams/[slug]/commit/preview?week_start=YYYY-MM-DD` - Preview the per-day import plan (no writes)
+- `POST /api/teams/[slug]/commit/import` - Apply the plan to the week's sessions (`{ week_start, group? }`); driver assignments, skips, and home pickups are preserved
+
+> Data comes from the public `utility.commitswimming.com` website API, which is undocumented and may change. Responses are cached server-side. Each team stores its own `superTeamId` and parsing rules, so any Commit-based club can connect.
 
 ### Utilities
 - `GET /api/places/search?input=query` - Google Places autocomplete

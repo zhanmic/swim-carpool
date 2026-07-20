@@ -13,6 +13,7 @@ import {
   updateSession,
 } from "@/lib/db";
 import { snapTimeToStep } from "@/lib/dates";
+import { applyCommitWeekImport } from "@/lib/commitImport";
 import {
   buildDefaultHomePickups,
   finalizeDropoffPickupsForSession,
@@ -212,6 +213,21 @@ export const AGENT_TOOL_DECLARATIONS: FunctionDeclaration[] = [
     parameters: {
       type: Type.OBJECT,
       properties: {},
+    },
+  },
+  {
+    name: "import_from_commit",
+    description:
+      "Fill this week's practices from the team's connected Commit Swimming schedule: sets each day's time, location, and no-practice/cancelled status for the selected group. Keeps existing driver slots, skips, and home pickups. Only works when a Commit schedule source is connected.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        group: {
+          type: Type.STRING,
+          description:
+            "Optional training group to import (e.g. Sr, Jr). Omit to use the team's configured group.",
+        },
+      },
     },
   },
 ];
@@ -479,6 +495,31 @@ export async function executeAgentTool(
         return {
           ok: true,
           message: `Copied previous week (${result.copied} days updated, ${result.cleared} slots cleared).`,
+        };
+      }
+
+      case "import_from_commit": {
+        if (!ctx.scheduleIntegration) {
+          return {
+            ok: false,
+            message:
+              "No Commit schedule source is connected. Add one in Team settings → Schedule source.",
+          };
+        }
+        const groupArg =
+          typeof args.group === "string" && args.group.trim() ? args.group.trim() : undefined;
+        const result = await applyCommitWeekImport({
+          teamId: ctx.teamId,
+          teamCreatedAt: ctx.teamCreatedAt,
+          visibleDays: ctx.visibleDays,
+          integration: ctx.scheduleIntegration,
+          weekStart: ctx.weekStart,
+          ...(groupArg !== undefined ? { group: groupArg } : {}),
+        });
+        const groupLabel = result.group ?? "all practices";
+        return {
+          ok: true,
+          message: `Imported this week from Commit for ${groupLabel} (${result.updated} day(s) updated).`,
         };
       }
 

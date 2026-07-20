@@ -49,6 +49,14 @@ export function summarizePlan(tools: AgentToolCall[]): { summary: string; destru
         return "clear this week's slots, notes, home pickups, and skips";
       case "copy_previous_week":
         return "copy last week's times and locations (clears current slots)";
+      case "import_from_commit": {
+        const group = typeof tool.args?.group === "string" && tool.args.group.trim()
+          ? tool.args.group.trim()
+          : null;
+        return group
+          ? `fill this week's practices from Commit for ${group}`
+          : "fill this week's practices from Commit";
+      }
       default:
         return tool.name.replaceAll("_", " ");
     }
@@ -60,4 +68,8 @@ export function summarizePlan(tools: AgentToolCall[]): { summary: string; destru
   };
 }
 
-export const DESTRUCTIVE_AGENT_TOOLS = new Set(["clear_week", "copy_previous_week"]);
+export const DESTRUCTIVE_AGENT_TOOLS = new Set([
+  "clear_week",
+  "copy_previous_week",
+  "import_from_commit",
+]);

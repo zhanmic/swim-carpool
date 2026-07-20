@@ -15,6 +15,7 @@ export {
 export { fetchScheduleData, fetchTeamConfig } from "./client";
 export { expandEvents, expandMeets, expandPractices } from "./expand";
 export { canonicalGroupLabel, groupMatches, parsePracticeName } from "./parse";
+export { planWeekImport, type SessionPlanItem } from "./import";
 
 /**
  * Absolute [start, end) instants for a calendar week defined in the team

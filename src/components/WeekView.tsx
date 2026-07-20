@@ -374,7 +374,7 @@ export function WeekView({ slug }: WeekViewProps) {
             type="button"
             disabled={slotsBusy}
             onClick={() => setShowCopyConfirm(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+            className="touch-target-compact flex-[1.6] whitespace-nowrap rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
           >
             Copy week
           </button>
@@ -382,7 +382,7 @@ export function WeekView({ slug }: WeekViewProps) {
             type="button"
             disabled={slotsBusy}
             onClick={handleClearSlots}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
+            className="touch-target-compact flex-none whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
           >
             Clear
           </button>

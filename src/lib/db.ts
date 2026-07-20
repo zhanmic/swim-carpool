@@ -8,6 +8,7 @@ import {
   verifyTeamPassword,
 } from "./teamPassword";
 import { generateTeamApiKey, hashTeamApiKey } from "./apiKey";
+import { parseScheduleIntegration } from "./commit/config";
 import {
   DEFAULT_VISIBLE_DAYS,
   getWeekEndForVisibleDays,
@@ -23,6 +24,7 @@ import type {
   Family,
   PracticeSession,
   SessionAbsence,
+  ScheduleIntegration,
   SessionUpdate,
   SessionWithAssignments,
   Team,
@@ -135,34 +137,42 @@ function normalizeTime(t: string): string {
   return `${snapped}:00`;
 }
 
-function mapTeamRow(row: Team & { visible_days?: unknown; delete_password_hash?: string | null; api_key_hash?: string | null }): Team {
-  const { delete_password_hash, api_key_hash, ...rest } = row;
+type TeamRow = Team & {
+  visible_days?: unknown;
+  delete_password_hash?: string | null;
+  api_key_hash?: string | null;
+  schedule_integration?: unknown;
+};
+
+function mapTeamRow(row: TeamRow): Team {
+  const { delete_password_hash, api_key_hash, schedule_integration, ...rest } = row;
   return {
     ...rest,
     visible_days: parseVisibleDays(row.visible_days),
     has_delete_password: !!delete_password_hash,
     has_api_key: !!api_key_hash,
+    schedule_integration: parseScheduleIntegration(schedule_integration),
   };
 }
 
 export async function getTeamBySlug(slug: string): Promise<Team | null> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, created_at::text AS created_at
+    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, schedule_integration, created_at::text AS created_at
     FROM teams WHERE secret_slug = ${slug} LIMIT 1
   `;
-  const row = rows[0] as (Team & { visible_days?: unknown; delete_password_hash?: string | null; api_key_hash?: string | null }) | undefined;
+  const row = rows[0] as TeamRow | undefined;
   return row ? mapTeamRow(row) : null;
 }
 
 export async function listTeams(): Promise<Team[]> {
   const sql = getSql();
   const rows = await sql`
-    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, created_at::text AS created_at
+    SELECT id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, schedule_integration, created_at::text AS created_at
     FROM teams
     ORDER BY name
   `;
-  return (rows as Array<Team & { visible_days?: unknown; delete_password_hash?: string | null; api_key_hash?: string | null }>).map(mapTeamRow);
+  return (rows as TeamRow[]).map(mapTeamRow);
 }
 
 export async function getTeamApiKeyHash(slug: string): Promise<string | null> {
@@ -181,6 +191,7 @@ export async function updateTeam(
     schedule_url?: string | null;
     visible_days?: number[];
     delete_password?: string;
+    schedule_integration?: ScheduleIntegration | null;
   }
 ): Promise<Team | null> {
   const trimmed = data.name.trim();
@@ -194,6 +205,12 @@ export async function updateTeam(
         ? hashTeamPassword(data.delete_password.trim())
         : null
       : undefined;
+  const integrationJson =
+    data.schedule_integration !== undefined
+      ? data.schedule_integration
+        ? JSON.stringify(data.schedule_integration)
+        : null
+      : undefined;
   const sql = getSql();
   const rows = await sql`
     UPDATE teams
@@ -204,11 +221,15 @@ export async function updateTeam(
       delete_password_hash = CASE
         WHEN ${data.delete_password !== undefined} THEN ${passwordHash ?? null}
         ELSE delete_password_hash
+      END,
+      schedule_integration = CASE
+        WHEN ${data.schedule_integration !== undefined} THEN ${integrationJson ?? null}::jsonb
+        ELSE schedule_integration
       END
     WHERE secret_slug = ${slug}
-    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, schedule_integration, created_at::text AS created_at
   `;
-  const row = rows[0] as (Team & { visible_days?: unknown; delete_password_hash?: string | null; api_key_hash?: string | null }) | undefined;
+  const row = rows[0] as TeamRow | undefined;
   if (!row) return null;
   const team = mapTeamRow(row);
   if (data.visible_days !== undefined) {
@@ -965,9 +986,9 @@ export async function createTeam(
   const teamRows = await sql`
     INSERT INTO teams (name, secret_slug, delete_password_hash, api_key_hash)
     VALUES (${name}, ${slug}, ${passwordHash}, ${apiKeyHash})
-    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, created_at::text AS created_at
+    RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, schedule_integration, created_at::text AS created_at
   `;
-  const team = mapTeamRow(teamRows[0] as Team & { visible_days?: unknown; delete_password_hash?: string | null; api_key_hash?: string | null });
+  const team = mapTeamRow(teamRows[0] as TeamRow);
 
   const families: Family[] = [];
   for (const familyName of familyNames) {

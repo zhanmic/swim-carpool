@@ -1,5 +1,38 @@
 export type AssignmentRole = "dropoff" | "pickup";
 
+/** How a practice title is split into group / location segments. */
+export type PracticeParseMode = "fields" | "keywords";
+
+/** Meaning of each segment after splitting a practice title on the separator. */
+export type NameField = "group" | "location" | "time" | "ignore";
+
+export interface PracticeNameFormat {
+  /** `fields` = split title by separator; `keywords` = scan whole title. */
+  mode: PracticeParseMode;
+  /** Separator between group / location / time segments (default "-"). */
+  separator: string;
+  /** Ordered meaning of each segment after splitting. */
+  fields: NameField[];
+}
+
+/**
+ * Per-team external schedule provider config. Stored on the team as JSON so any
+ * team can point at its own Commit super team id and title-parsing rules.
+ */
+export interface ScheduleIntegration {
+  provider: "commit";
+  /** Commit Swimming super team id (from the club's public website API). */
+  superTeamId: string;
+  /** IANA timezone used to place occurrences on calendar days (e.g. America/New_York). */
+  timezone: string;
+  /** Selected group label to import into this team's schedule; null = all practices. */
+  group: string | null;
+  /** How to parse practice titles into group + location. */
+  nameFormat: PracticeNameFormat;
+  /** Whether to also fetch Commit meets. */
+  includeMeets: boolean;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -8,6 +41,7 @@ export interface Team {
   visible_days: number[];
   has_delete_password: boolean;
   has_api_key: boolean;
+  schedule_integration: ScheduleIntegration | null;
   created_at: string;
 }
 

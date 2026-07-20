@@ -1,6 +1,6 @@
 "use client";
 
-import type { Family } from "@/lib/types";
+import type { Family, ScheduleIntegration, Team } from "@/lib/types";
 import {
   DEFAULT_VISIBLE_DAYS,
   normalizeVisibleDays,
@@ -9,24 +9,27 @@ import {
 } from "@/lib/visibleDays";
 import { getTeamUrl } from "@/lib/shareTeam";
 import { clearActiveFamilyId, removeKnownTeam } from "@/lib/storage";
+import { ScheduleSourceSettings } from "@/components/ScheduleSourceSettings";
 import { ShareTeamButton } from "@/components/ShareTeamButton";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+
+type TeamPatch = Partial<
+  Pick<Team, "name" | "schedule_url" | "visible_days" | "has_delete_password" | "schedule_integration">
+>;
+
+type SettingsTab = "team" | "schedule";
 
 interface RenameTeamSheetProps {
   teamName: string;
   scheduleUrl?: string | null;
   visibleDays?: number[];
   hasDeletePassword?: boolean;
+  scheduleIntegration?: ScheduleIntegration | null;
   families: Family[];
   slug: string;
   onClose: () => void;
-  onUpdated: (team: {
-    name: string;
-    schedule_url: string | null;
-    visible_days: number[];
-    has_delete_password: boolean;
-  }) => void;
+  onUpdated: (team: TeamPatch) => void;
   onFamiliesUpdated: (families: Family[]) => void;
 }
 
@@ -35,6 +38,7 @@ export function RenameTeamSheet({
   scheduleUrl,
   visibleDays: initialVisibleDays = [...DEFAULT_VISIBLE_DAYS],
   hasDeletePassword: initialHasDeletePassword = false,
+  scheduleIntegration = null,
   families: initialFamilies,
   slug,
   onClose,
@@ -42,6 +46,8 @@ export function RenameTeamSheet({
   onFamiliesUpdated,
 }: RenameTeamSheetProps) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<SettingsTab>("team");
+  const [integration, setIntegration] = useState<ScheduleIntegration | null>(scheduleIntegration);
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
   const [visibleDays, setVisibleDays] = useState<number[]>(initialVisibleDays);
@@ -259,14 +265,16 @@ export function RenameTeamSheet({
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-semibold dark:text-slate-100">Team settings</h2>
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={busy || !name.trim() || !isDirty}
-              className="touch-target-sm rounded-lg px-3 text-sm font-semibold text-sky-600 disabled:opacity-35 dark:text-sky-400"
-            >
-              {busy ? "Saving…" : "Save"}
-            </button>
+            {activeTab === "team" && (
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={busy || !name.trim() || !isDirty}
+                className="touch-target-sm rounded-lg px-3 text-sm font-semibold text-sky-600 disabled:opacity-35 dark:text-sky-400"
+              >
+                {busy ? "Saving…" : "Save"}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -290,6 +298,36 @@ export function RenameTeamSheet({
           </div>
         </div>
 
+        <div className="sticky top-[57px] z-10 flex gap-1 border-b border-slate-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900">
+          {(["team", "schedule"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`touch-target-compact -mb-px border-b-2 px-3 text-sm font-semibold ${
+                activeTab === tab
+                  ? "border-sky-500 text-sky-600 dark:text-sky-400"
+                  : "border-transparent text-slate-500 dark:text-slate-400"
+              }`}
+            >
+              {tab === "team" ? "Team" : "Schedule source"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "schedule" ? (
+          <div className="max-w-lg mx-auto p-4">
+            <ScheduleSourceSettings
+              teamName={teamName}
+              slug={slug}
+              integration={integration}
+              onSaved={(next) => {
+                setIntegration(next);
+                onUpdated({ schedule_integration: next });
+              }}
+            />
+          </div>
+        ) : (
         <div className="max-w-lg mx-auto space-y-6 p-4">
           <section className="space-y-3">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Team</p>
@@ -503,6 +541,7 @@ export function RenameTeamSheet({
             </button>
           </form>
         </div>
+        )}
       </div>
     </div>
   );

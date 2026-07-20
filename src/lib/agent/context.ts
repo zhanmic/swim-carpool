@@ -66,6 +66,7 @@ export async function loadAgentScheduleContext(
     teamCreatedAt: data.team.created_at,
     activeFamilyId: activeFamily?.id ?? null,
     activeFamilyName: activeFamily?.name ?? null,
+    scheduleIntegration: data.team.schedule_integration,
   };
 
   const today = clientToday || formatDateOnly(new Date());
@@ -74,12 +75,18 @@ export async function loadAgentScheduleContext(
   const dateLexicon = buildDateLexicon(data.weekStart, data.team.visible_days, today);
   const locationNames = data.locations.map((location) => location.name);
 
+  const integration = data.team.schedule_integration;
+  const commitStatus = integration
+    ? `connected (group: ${integration.group ?? "all practices"})`
+    : "not connected";
+
   const scheduleText = [
     `Team: ${data.team.name}`,
     `Week start (Sunday): ${data.weekStart}`,
     `Families: ${familyNames}`,
     `Saved locations: ${locationNames.join(", ") || "none"}`,
     `Active family on this device: ${activeFamily?.name ?? "not set"}`,
+    `Commit schedule source: ${commitStatus}`,
     `Today: ${today}`,
     `Date map:\n${dateLexicon}`,
     "Schedule:",
@@ -99,7 +106,8 @@ Rules:
 - If the user says "I", "me", or "my" and active family is set, use that family.
 - When active family is set, short requests like "skip Saturday", "drop-off Friday", or "pickup at 7" refer to that family unless another name is given.
 - If date or family is unclear, ask a short question instead of calling tools.
-- For destructive actions (clear_week, copy_previous_week), call the tool when the user clearly asks; the server will ask them to confirm before running.
+- When a Commit schedule source is connected and the user asks to fill/import/sync this week from Commit (optionally naming a group), call import_from_commit; it fills times, locations, and no-practice days for the week and keeps existing driver slots. If no source is connected, tell them to connect one in Team settings → Schedule source.
+- For destructive actions (clear_week, copy_previous_week, import_from_commit), call the tool when the user clearly asks; the server will ask them to confirm before running.
 - Safe changes run immediately. Destructive week actions wait for confirmation.
 - Times use HH:MM 24-hour format. Locations should match saved location names when possible.
 - You can combine steps in one turn (e.g. skip a family and set default home pickups).

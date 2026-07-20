@@ -1,5 +1,7 @@
 import { verifyAdminPassword } from "@/lib/admin";
+import { parseScheduleIntegration } from "@/lib/commit/config";
 import { deleteTeamBySlug, updateTeam, verifyTeamDeletePassword } from "@/lib/db";
+import type { ScheduleIntegration } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -14,9 +16,19 @@ export async function PATCH(
       schedule_url?: string | null;
       visible_days?: number[];
       delete_password?: string;
+      schedule_integration?: unknown;
     };
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
+    }
+
+    // Only touch schedule_integration when the key is present. An empty/invalid
+    // value clears it (disables the integration).
+    let integration: ScheduleIntegration | null | undefined;
+    if ("schedule_integration" in body) {
+      integration = body.schedule_integration
+        ? parseScheduleIntegration(body.schedule_integration)
+        : null;
     }
 
     const team = await updateTeam(slug, {
@@ -24,6 +36,7 @@ export async function PATCH(
       schedule_url: body.schedule_url ?? null,
       visible_days: body.visible_days,
       ...(body.delete_password !== undefined ? { delete_password: body.delete_password } : {}),
+      ...(integration !== undefined ? { schedule_integration: integration } : {}),
     });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });

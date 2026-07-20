@@ -17,6 +17,7 @@ import { DayCard } from "./DayCard";
 import { DaySheet } from "./DaySheet";
 import { AgentSheet } from "./AgentSheet";
 import { AgentIcon } from "./AgentIcon";
+import { CommitImportSheet } from "./CommitImportSheet";
 import { FamilyPicker } from "./FamilyPicker";
 import { Header } from "./Header";
 import { LocationsSheet } from "./LocationsSheet";
@@ -52,6 +53,7 @@ export function WeekView({ slug }: WeekViewProps) {
   const [showTime, setShowTime] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
@@ -358,6 +360,16 @@ export function WeekView({ slug }: WeekViewProps) {
           >
             Time
           </button>
+          {data.team.schedule_integration && (
+            <button
+              type="button"
+              disabled={slotsBusy}
+              onClick={() => setShowImport(true)}
+              className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
+            >
+              Import
+            </button>
+          )}
           <button
             type="button"
             disabled={slotsBusy}
@@ -489,12 +501,24 @@ export function WeekView({ slug }: WeekViewProps) {
         />
       )}
 
+      {showImport && (
+        <CommitImportSheet
+          slug={slug}
+          weekStart={weekStart}
+          onClose={() => setShowImport(false)}
+          onImported={() => {
+            void mutate();
+          }}
+        />
+      )}
+
       {showRename && (
         <RenameTeamSheet
           teamName={data.team.name}
           scheduleUrl={data.team.schedule_url}
           visibleDays={data.team.visible_days}
           hasDeletePassword={data.team.has_delete_password}
+          scheduleIntegration={data.team.schedule_integration}
           families={data.families}
           slug={slug}
           onClose={() => setShowRename(false)}

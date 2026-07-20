@@ -1,4 +1,4 @@
-import type { AssignmentRole } from "@/lib/types";
+import type { AssignmentRole, ScheduleIntegration } from "@/lib/types";
 
 export interface AgentChatTurn {
   role: "user" | "assistant";
@@ -49,6 +49,7 @@ export interface AgentContext {
   teamCreatedAt: string;
   activeFamilyId: string | null;
   activeFamilyName: string | null;
+  scheduleIntegration: ScheduleIntegration | null;
 }
 
 export interface ToolExecutionResult {

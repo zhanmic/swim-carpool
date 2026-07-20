@@ -69,7 +69,22 @@ export const OPENAPI_SPEC = {
       post: {
         summary: "Natural-language schedule agent (Gemini)",
         description:
-          "Body: message + week_start + optional history[], or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, no practice day, clear/copy week. Uses GEMINI_API_KEY.",
+          "Body: message + week_start + optional history[], or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, no practice day, clear/copy week, import from Commit. Uses GEMINI_API_KEY.",
+      },
+    },
+    "/api/teams/{slug}/commit/groups": {
+      get: { summary: "List training groups from the connected Commit schedule" },
+    },
+    "/api/teams/{slug}/commit/preview": {
+      get: {
+        summary: "Preview the Commit import plan for a week",
+        parameters: [{ name: "week_start", in: "query", required: true }],
+      },
+    },
+    "/api/teams/{slug}/commit/import": {
+      post: {
+        summary: "Import a week's practices from the connected Commit schedule",
+        description: "Body: week_start + optional group. Fills times/location/no-practice; keeps driver slots.",
       },
     },
     "/api/teams/{slug}/locations": {

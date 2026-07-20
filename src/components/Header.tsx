@@ -106,6 +106,29 @@ export function Header({
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </Link>
+          {onManageTeam && (
+            <button
+              type="button"
+              onClick={onManageTeam}
+              aria-label="Team settings"
+              title="Team settings"
+              className="touch-target-sm shrink-0 flex items-center justify-center text-slate-600 active:text-slate-900 dark:text-slate-400 dark:active:text-slate-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
+          )}
           <div ref={titleRef} className={`min-w-0 flex-1 overflow-hidden ${shouldScroll ? "text-left" : "text-center"}`}>
             {shouldScroll && (
               <style>
@@ -122,27 +145,14 @@ export function Header({
                 `}
               </style>
             )}
-            {onManageTeam ? (
-              <button
-                ref={textRef as React.RefObject<HTMLButtonElement>}
-                type="button"
-                onClick={onManageTeam}
-                className={`block w-full text-base font-semibold text-sky-700 underline decoration-sky-400/70 underline-offset-2 active:text-sky-900 dark:text-sky-400 dark:decoration-sky-500/70 dark:active:text-sky-300 ${
-                  shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
-                }`}
-              >
-                {teamName}
-              </button>
-            ) : (
-              <div
-                ref={textRef as React.RefObject<HTMLDivElement>}
-                className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
-                  shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
-                }`}
-              >
-                {teamName}
-              </div>
-            )}
+            <div
+              ref={textRef as React.RefObject<HTMLDivElement>}
+              className={`text-base font-semibold text-slate-900 dark:text-slate-100 ${
+                shouldScroll ? `marquee-scroll-${scrollKey} whitespace-nowrap` : "truncate"
+              }`}
+            >
+              {teamName}
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             {scheduleUrl && (

@@ -85,3 +85,6 @@ ALTER TABLE teams ADD COLUMN IF NOT EXISTS visible_days JSONB NOT NULL DEFAULT '
 ALTER TABLE practice_sessions ADD COLUMN IF NOT EXISTS no_practice BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE recurring_templates ADD COLUMN IF NOT EXISTS no_practice BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Per-team external schedule integration config (e.g. Commit Swimming). NULL = not configured.
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS schedule_integration JSONB;

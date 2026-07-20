@@ -84,6 +84,8 @@ ALTER TABLE teams ADD COLUMN IF NOT EXISTS visible_days JSONB NOT NULL DEFAULT '
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS delete_password_hash TEXT;
 
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS api_key_hash TEXT;
+
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS schedule_integration JSONB;
 `;
 
 export function getSchemaStatements(): string[] {

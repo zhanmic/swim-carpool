@@ -26,6 +26,55 @@ function textToFields(text: string): NameField[] {
   return parsed.length ? parsed : DEFAULT_FIELDS;
 }
 
+interface JsonResult<T> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+  error?: string;
+}
+
+/**
+ * Fetch JSON with a hard timeout and tolerant parsing. A request can otherwise
+ * hang forever (leaving the button stuck on "Loading…") or throw on a non-JSON
+ * body — e.g. a protected preview URL that redirects to an HTML SSO page.
+ */
+async function fetchJson<T>(
+  url: string,
+  init?: RequestInit,
+  timeoutMs = 20000
+): Promise<JsonResult<T>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const text = await res.text();
+    let data: T | null = null;
+    try {
+      data = text ? (JSON.parse(text) as T) : null;
+    } catch {
+      return {
+        ok: false,
+        status: res.status,
+        data: null,
+        error: `Unexpected response (HTTP ${res.status}). If you opened a preview link, use the live site instead.`,
+      };
+    }
+    return { ok: res.ok, status: res.status, data };
+  } catch (err) {
+    const aborted = err instanceof DOMException && err.name === "AbortError";
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      error: aborted
+        ? "Timed out reaching Commit. Please try again."
+        : "Network error. Check your connection and try again.",
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function ScheduleSourceSettings({
   teamName,
   slug,
@@ -90,20 +139,23 @@ export function ScheduleSourceSettings({
         fields: textToFields(fieldsText).join(","),
         includeMeets: includeMeets ? "true" : "false",
       });
-      const res = await fetch(`/api/teams/${slug}/commit/groups?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Could not load groups");
+      const { ok, data, error: fetchError } = await fetchJson<{
+        groups?: string[];
+        teamName?: string | null;
+        timezone?: string | null;
+        error?: string;
+      }>(`/api/teams/${slug}/commit/groups?${params.toString()}`);
+      if (!ok || !data) {
+        setError(fetchError ?? data?.error ?? "Could not load groups. Check the Super Team ID.");
         return;
       }
-      setGroups(data.groups ?? []);
+      const loaded = data.groups ?? [];
+      setGroups(loaded);
       setCommitTeamName(data.teamName ?? null);
       if (data.timezone && !integration) setTimezone(data.timezone);
-      if ((data.groups ?? []).length === 0) {
+      if (loaded.length === 0) {
         setStatus("Connected, but no groups were detected for the next few weeks.");
       }
-    } catch {
-      setError("Could not reach Commit. Check the Super Team ID.");
     } finally {
       setLoadingGroups(false);
     }
@@ -114,17 +166,19 @@ export function ScheduleSourceSettings({
     setError(null);
     setStatus(null);
     try {
-      const res = await fetch(`/api/teams/${slug}`, {
+      const { ok, data, error: fetchError } = await fetchJson<{
+        team?: { schedule_integration?: ScheduleIntegration | null };
+        error?: string;
+      }>(`/api/teams/${slug}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: teamName, schedule_integration: next }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Could not save");
+      if (!ok || !data) {
+        setError(fetchError ?? data?.error ?? "Could not save");
         return;
       }
-      const saved = (data.team?.schedule_integration ?? null) as ScheduleIntegration | null;
+      const saved = data.team?.schedule_integration ?? null;
       onSaved(saved);
       setStatus(next ? "Schedule source saved." : "Schedule source disconnected.");
     } finally {

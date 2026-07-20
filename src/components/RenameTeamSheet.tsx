@@ -261,7 +261,7 @@ export function RenameTeamSheet({
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
-      <div className="max-h-[90vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
+      <div className="h-[90vh] overflow-y-auto rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-semibold dark:text-slate-100">Team settings</h2>
           <div className="flex shrink-0 items-center gap-1">

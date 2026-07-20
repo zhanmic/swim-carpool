@@ -1,8 +1,6 @@
 import { assertTeamScheduleAccess, isTeamAccessError } from "@/lib/apiAuth";
-import { getWeekOccurrences, planWeekImport } from "@/lib/commit";
-import { ensureSchema, getSessionByDateForTeam, updateSession } from "@/lib/db";
-import type { SessionUpdate } from "@/lib/types";
-import { visibleSessionDates } from "@/lib/visibleDays";
+import { applyCommitWeekImport } from "@/lib/commitImport";
+import { ensureSchema } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,42 +34,16 @@ export async function POST(
       return NextResponse.json({ error: "week_start required (YYYY-MM-DD)" }, { status: 400 });
     }
 
-    const group = body.group !== undefined ? body.group : integration.group;
-    const visibleDates = visibleSessionDates(weekStart, team.visible_days);
-    const { practices } = await getWeekOccurrences(integration, weekStart);
-    const plan = planWeekImport(practices, visibleDates, group);
+    const result = await applyCommitWeekImport({
+      teamId: team.id,
+      teamCreatedAt: team.created_at,
+      visibleDays: team.visible_days,
+      integration,
+      weekStart,
+      ...(body.group !== undefined ? { group: body.group } : {}),
+    });
 
-    let updated = 0;
-    const results: Array<{ date: string; no_practice: boolean; cancelled: boolean }> = [];
-
-    for (const item of plan) {
-      const session = await getSessionByDateForTeam(
-        team.id,
-        item.date,
-        team.created_at,
-        team.visible_days
-      );
-      if (!session) continue;
-
-      const update: SessionUpdate = {
-        no_practice: item.noPractice,
-        // Never leave a stale "cancelled" flag on a no-practice day.
-        cancelled: item.noPractice ? false : item.cancelled,
-      };
-      if (!item.noPractice) {
-        if (item.startTime) update.start_time = item.startTime;
-        if (item.endTime) update.end_time = item.endTime;
-        if (item.location) update.location_name = item.location;
-        // Only overwrite notes when there are extra same-day practices to record.
-        if (item.extraNote) update.location_notes = item.extraNote;
-      }
-
-      await updateSession(session.id, update);
-      updated += 1;
-      results.push({ date: item.date, no_practice: item.noPractice, cancelled: update.cancelled ?? false });
-    }
-
-    return NextResponse.json({ week_start: weekStart, group, updated, results });
+    return NextResponse.json({ week_start: weekStart, ...result });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to import Commit schedule" }, { status: 502 });

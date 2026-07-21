@@ -385,14 +385,6 @@ export function WeekView({ slug }: WeekViewProps) {
           >
             Input Schedule Manually
           </button>
-          <button
-            type="button"
-            disabled={slotsBusy}
-            onClick={handleClearSlots}
-            className="touch-target-compact flex-none whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
-          >
-            Clear
-          </button>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -453,6 +445,17 @@ export function WeekView({ slug }: WeekViewProps) {
                 className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
               >
                 Copy from Last Week
+              </button>
+              <button
+                type="button"
+                disabled={slotsBusy}
+                onClick={() => {
+                  setShowManualMenu(false);
+                  void handleClearSlots();
+                }}
+                className="touch-target w-full rounded-lg border border-red-200 bg-white px-3 text-sm font-medium text-red-600 active:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
+              >
+                Clear Week
               </button>
             </div>
           </div>

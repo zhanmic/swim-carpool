@@ -53,6 +53,7 @@ export function WeekView({ slug }: WeekViewProps) {
   const [showTime, setShowTime] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
+  const [showManualMenu, setShowManualMenu] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
@@ -346,20 +347,6 @@ export function WeekView({ slug }: WeekViewProps) {
         </div>
 
         <div className="mb-2 flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={() => setShowLocations(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
-          >
-            Location
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowTime(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
-          >
-            Time
-          </button>
           {data.team.schedule_integration && (
             <button
               type="button"
@@ -367,16 +354,16 @@ export function WeekView({ slug }: WeekViewProps) {
               onClick={() => setShowImport(true)}
               className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
             >
-              Import
+              Import from Commit
             </button>
           )}
           <button
             type="button"
             disabled={slotsBusy}
-            onClick={() => setShowCopyConfirm(true)}
-            className="touch-target-compact flex-[1.6] whitespace-nowrap rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+            onClick={() => setShowManualMenu(true)}
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
           >
-            Copy week
+            Input Schedule Manually
           </button>
           <button
             type="button"
@@ -400,6 +387,57 @@ export function WeekView({ slug }: WeekViewProps) {
           ))}
         </div>
       </div>
+
+      {showManualMenu && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
+          <button
+            type="button"
+            className="flex-1"
+            aria-label="Close"
+            onClick={() => setShowManualMenu(false)}
+          />
+          <div className="rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
+            <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                Input schedule manually
+              </h2>
+            </div>
+            <div className="mx-auto flex max-w-lg flex-col gap-2 px-3 py-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowManualMenu(false);
+                  setShowTime(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+              >
+                Set Time
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowManualMenu(false);
+                  setShowLocations(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+              >
+                Set Location
+              </button>
+              <button
+                type="button"
+                disabled={slotsBusy}
+                onClick={() => {
+                  setShowManualMenu(false);
+                  setShowCopyConfirm(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+              >
+                Copy from Last Week
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCopyConfirm && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">

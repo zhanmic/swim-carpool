@@ -63,6 +63,7 @@ export function RenameTeamSheet({
   const [error, setError] = useState<string | null>(null);
   const [familyError, setFamilyError] = useState<string | null>(null);
   const [teamUrl, setTeamUrl] = useState("");
+  const [scheduleLinkCopied, setScheduleLinkCopied] = useState(false);
 
   useEffect(() => {
     setTeamUrl(getTeamUrl(slug));
@@ -358,29 +359,55 @@ export function RenameTeamSheet({
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(scheduleUrl);
+                        setScheduleLinkCopied(true);
+                        setTimeout(() => setScheduleLinkCopied(false), 2000);
                       } catch (err) {
                         console.error('Failed to copy:', err);
                       }
                     }}
                     className="shrink-0 touch-target-compact rounded-lg border border-slate-300 bg-white p-2 text-slate-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:active:bg-slate-700"
-                    title="Copy schedule link"
-                    aria-label="Copy schedule link"
+                    title={scheduleLinkCopied ? "Copied" : "Copy schedule link"}
+                    aria-label={scheduleLinkCopied ? "Schedule link copied" : "Copy schedule link"}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5"
-                      aria-hidden
-                    >
-                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                    </svg>
+                    {scheduleLinkCopied ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5 text-green-600 dark:text-green-400"
+                        aria-hidden
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                        aria-hidden
+                      >
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                      </svg>
+                    )}
                   </button>
+                )}
+                {scheduleLinkCopied && (
+                  <span
+                    role="status"
+                    className="shrink-0 text-xs font-medium text-green-600 dark:text-green-400"
+                  >
+                    Copied
+                  </span>
                 )}
               </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

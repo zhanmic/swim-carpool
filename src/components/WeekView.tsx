@@ -52,6 +52,7 @@ export function WeekView({ slug }: WeekViewProps) {
   const [showLocations, setShowLocations] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [showRename, setShowRename] = useState(false);
+  const [renameInitialTab, setRenameInitialTab] = useState<"team" | "schedule">("team");
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
   const [showManualMenu, setShowManualMenu] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -293,7 +294,10 @@ export function WeekView({ slug }: WeekViewProps) {
         weekStart={weekStart}
         families={data.families}
         onSwitchFamily={selectFamily}
-        onManageTeam={() => setShowRename(true)}
+        onManageTeam={() => {
+          setRenameInitialTab("team");
+          setShowRename(true);
+        }}
       />
 
       <div className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))]">
@@ -352,7 +356,7 @@ export function WeekView({ slug }: WeekViewProps) {
         </div>
 
         <div className="mb-2 flex shrink-0 gap-1.5">
-          {data.team.schedule_integration && (
+          {data.team.schedule_integration ? (
             <button
               type="button"
               disabled={slotsBusy}
@@ -360,6 +364,17 @@ export function WeekView({ slug }: WeekViewProps) {
               className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
             >
               Import from Commit
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setRenameInitialTab("schedule");
+                setShowRename(true);
+              }}
+              className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
+            >
+              Setup Commit
             </button>
           )}
           <button
@@ -564,6 +579,7 @@ export function WeekView({ slug }: WeekViewProps) {
           scheduleIntegration={data.team.schedule_integration}
           families={data.families}
           slug={slug}
+          initialTab={renameInitialTab}
           onClose={() => setShowRename(false)}
           onUpdated={(team) => {
             void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: true });

@@ -66,20 +66,37 @@ export function RenameTeamSheet({
   const [scheduleLinkCopied, setScheduleLinkCopied] = useState(false);
 
   useEffect(() => {
+    // getTeamUrl reads window.location, which is only available after mount;
+    // running it here avoids a server/client hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTeamUrl(getTeamUrl(slug));
   }, [slug]);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [syncedFamilies, setSyncedFamilies] = useState(initialFamilies);
+  if (initialFamilies !== syncedFamilies) {
+    setSyncedFamilies(initialFamilies);
     setFamilies(initialFamilies);
-  }, [initialFamilies]);
+  }
 
-  useEffect(() => {
+  const [syncedTeamProps, setSyncedTeamProps] = useState({
+    teamName,
+    scheduleUrl,
+    initialVisibleDays,
+    initialHasDeletePassword,
+  });
+  if (
+    syncedTeamProps.teamName !== teamName ||
+    syncedTeamProps.scheduleUrl !== scheduleUrl ||
+    syncedTeamProps.initialVisibleDays !== initialVisibleDays ||
+    syncedTeamProps.initialHasDeletePassword !== initialHasDeletePassword
+  ) {
+    setSyncedTeamProps({ teamName, scheduleUrl, initialVisibleDays, initialHasDeletePassword });
     setName(teamName);
     setScheduleLink(scheduleUrl ?? "");
     setVisibleDays(initialVisibleDays);
     setHasDeletePassword(initialHasDeletePassword);
-  }, [teamName, scheduleUrl, initialVisibleDays, initialHasDeletePassword]);
+  }
 
   const teamDirty =
     name.trim() !== teamName.trim() ||

@@ -65,22 +65,27 @@ export function WeekView({ slug }: WeekViewProps) {
   );
 
   useEffect(() => {
+    // defaultWeekStartStr depends on the local date, which differs between the
+    // server and client; setting it after mount avoids a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWeekStart(defaultWeekStartStr());
   }, []);
 
   useEffect(() => {
-    if (data?.weekStart && data.weekStart !== weekStart) {
-      setWeekStart(data.weekStart);
-    }
-  }, [data?.weekStart, weekStart]);
-
-  useEffect(() => {
+    // getActiveFamilyId reads from localStorage, which is only available after
+    // mount, so this must run in an effect rather than during render.
     const stored = getActiveFamilyId(slug);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveFamilyIdState(stored);
     if (!stored && data?.families.length) {
       setShowPicker(true);
     }
   }, [slug, data?.families.length]);
+
+  // Sync the visible week to the server-normalized week returned by the fetch.
+  if (data?.weekStart && data.weekStart !== weekStart) {
+    setWeekStart(data.weekStart);
+  }
 
   useEffect(() => {
     if (data?.team) {

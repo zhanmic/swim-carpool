@@ -63,6 +63,9 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
   }, []);
 
   useEffect(() => {
+    // refreshRecent reads known teams from localStorage, which is only
+    // available after mount, so it must run here rather than during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshRecent();
     const start = defaultWeekStartStr();
     void (async () => {

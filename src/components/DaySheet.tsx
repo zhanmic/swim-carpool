@@ -12,7 +12,7 @@ import {
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { TimeInput } from "./TimeInput";
 
@@ -166,7 +166,12 @@ export function DaySheet({
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
 
-  useEffect(() => {
+  // Reset the form only when opening a different day — not on background SWR
+  // refresh. Deriving during render (instead of an effect) avoids a redundant
+  // re-render pass on open.
+  const [syncedSessionId, setSyncedSessionId] = useState(session.id);
+  if (session.id !== syncedSessionId) {
+    setSyncedSessionId(session.id);
     const snapshot = buildScheduleSnapshot(session, skipIds);
     setStartTime(snapshot.start_time);
     setEndTime(snapshot.end_time);
@@ -176,19 +181,17 @@ export function DaySheet({
     setCancelled(snapshot.cancelled);
     setNoPractice(snapshot.no_practice);
     setSavedSnapshot(snapshot);
-    // Only reset when opening a different day — not on background SWR refresh.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- session fields read when session.id changes
-  }, [session.id]);
+  }
 
-  useEffect(() => {
-    if (!dropoffFamilyId) return;
+  // The drop-off driver never has a home-pickup time; drop their entry if present.
+  if (dropoffFamilyId && dropoffPickups[dropoffFamilyId]) {
     setDropoffPickups((current) => {
       if (!current[dropoffFamilyId]) return current;
       const next = { ...current };
       delete next[dropoffFamilyId];
       return next;
     });
-  }, [dropoffFamilyId]);
+  }
 
   const currentSchedule = useMemo<ScheduleSnapshot>(
     () => ({
@@ -325,7 +328,7 @@ export function DaySheet({
           >
             {takenByOther ? (
               <p className="text-xs text-amber-900 dark:text-amber-200">
-                Release {currentName}'s slot? Only if they asked you to.
+                Release {currentName}&apos;s slot? Only if they asked you to.
               </p>
             ) : isMine ? (
               <p className="text-xs text-slate-700 dark:text-slate-300">
@@ -390,7 +393,7 @@ export function DaySheet({
               onClick={() => setConfirmRole(role)}
               className={`touch-target-compact flex-1 min-w-0 rounded-xl px-2 text-sm font-semibold disabled:opacity-50 ${OPEN_SLOT_BUTTON}`}
             >
-              I'll do {label.toLowerCase()}
+              I&apos;ll do {label.toLowerCase()}
             </button>
             <button
               type="button"

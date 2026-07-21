@@ -27,6 +27,8 @@ export function LocationAutocomplete({
 
   useEffect(() => {
     if (!focused || value.trim().length < 2) {
+      // Clearing results is part of driving the debounced search effect below.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setOpen(false);
       return;

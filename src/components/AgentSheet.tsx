@@ -38,7 +38,7 @@ function renderColorizedSummary(
   families: Family[],
   familyColors: Map<string, FamilyColorClasses>
 ): React.ReactNode {
-  let remaining = summary;
+  const remaining = summary;
   const parts: React.ReactNode[] = [];
   let keyIndex = 0;
 

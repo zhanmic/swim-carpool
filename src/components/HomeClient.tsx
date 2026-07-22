@@ -28,7 +28,7 @@ function toListedTeam(team: KnownTeam): ListedTeam {
     name: team.name,
     secret_slug: team.slug,
     schedule_url: null,
-    visible_days: [1, 2, 3, 4, 5, 6],
+    visible_days: [0, 1, 2, 3, 4, 5, 6],
     has_delete_password: false,
     has_api_key: false,
     schedule_integration: null,

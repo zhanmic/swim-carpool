@@ -1,7 +1,7 @@
 import { addDays, formatDateOnly, parseDateOnly } from "./dates";
 
 /** Offsets from Sunday week start: Sunday = 0 … Saturday = 6 */
-export const DEFAULT_VISIBLE_DAYS: readonly number[] = [1, 2, 3, 4, 5, 6];
+export const DEFAULT_VISIBLE_DAYS: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
 
 export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 

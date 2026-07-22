@@ -983,9 +983,12 @@ export async function createTeam(
   const apiKey = generateTeamApiKey();
   const apiKeyHash = hashTeamApiKey(apiKey);
 
+  const visibleDays = [...DEFAULT_VISIBLE_DAYS];
+  const visibleDaysJson = JSON.stringify(visibleDays);
+
   const teamRows = await sql`
-    INSERT INTO teams (name, secret_slug, delete_password_hash, api_key_hash)
-    VALUES (${name}, ${slug}, ${passwordHash}, ${apiKeyHash})
+    INSERT INTO teams (name, secret_slug, delete_password_hash, api_key_hash, visible_days)
+    VALUES (${name}, ${slug}, ${passwordHash}, ${apiKeyHash}, ${visibleDaysJson}::jsonb)
     RETURNING id, name, secret_slug, schedule_url, visible_days, delete_password_hash, api_key_hash, schedule_integration, created_at::text AS created_at
   `;
   const team = mapTeamRow(teamRows[0] as TeamRow);
@@ -1002,7 +1005,7 @@ export async function createTeam(
     families.push(rows[0] as Family);
   }
 
-  for (let day = 0; day < 6; day++) {
+  for (const day of visibleDays) {
     await sql`
       INSERT INTO recurring_templates (team_id, day_of_week, start_time, end_time, location_name)
       VALUES (${team.id}, ${day}, ${startTime}, ${endTime}, ${locationName})

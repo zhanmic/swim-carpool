@@ -52,8 +52,10 @@ export function WeekView({ slug }: WeekViewProps) {
   const [showLocations, setShowLocations] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [showRename, setShowRename] = useState(false);
+  const [renameInitialTab, setRenameInitialTab] = useState<"team" | "schedule">("team");
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showSetupSessions, setShowSetupSessions] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
@@ -287,7 +289,10 @@ export function WeekView({ slug }: WeekViewProps) {
         weekStart={weekStart}
         families={data.families}
         onSwitchFamily={selectFamily}
-        onManageTeam={() => setShowRename(true)}
+        onManageTeam={() => {
+          setRenameInitialTab("team");
+          setShowRename(true);
+        }}
       />
 
       <div className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col px-4 py-3 pb-[max(0.75rem,var(--safe-bottom))]">
@@ -346,45 +351,34 @@ export function WeekView({ slug }: WeekViewProps) {
         </div>
 
         <div className="mb-2 flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={() => setShowLocations(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
-          >
-            Location
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowTime(true)}
-            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
-          >
-            Time
-          </button>
-          {data.team.schedule_integration && (
+          {data.team.schedule_integration ? (
             <button
               type="button"
               disabled={slotsBusy}
               onClick={() => setShowImport(true)}
               className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
             >
-              Import
+              Import from Commit
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setRenameInitialTab("schedule");
+                setShowRename(true);
+              }}
+              className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
+            >
+              Setup Commit
             </button>
           )}
           <button
             type="button"
             disabled={slotsBusy}
-            onClick={() => setShowCopyConfirm(true)}
-            className="touch-target-compact flex-[1.6] whitespace-nowrap rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+            onClick={() => setShowSetupSessions(true)}
+            className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
           >
-            Copy week
-          </button>
-          <button
-            type="button"
-            disabled={slotsBusy}
-            onClick={handleClearSlots}
-            className="touch-target-compact flex-none whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
-          >
-            Clear
+            Set up sessions
           </button>
         </div>
 
@@ -432,6 +426,66 @@ export function WeekView({ slug }: WeekViewProps) {
                 className="flex-1 rounded-lg bg-sky-500 py-2.5 font-medium text-white disabled:opacity-50"
               >
                 {slotsBusy ? "Copying…" : "Copy"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSetupSessions && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
+          <button
+            type="button"
+            className="flex-1"
+            aria-label="Close"
+            onClick={() => setShowSetupSessions(false)}
+          />
+          <div className="rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
+            <div className="border-b border-slate-200 px-3 py-2 dark:border-slate-700">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Set up sessions</h2>
+            </div>
+            <div className="mx-auto max-w-lg space-y-1.5 px-3 py-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSetupSessions(false);
+                  setShowLocations(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+              >
+                Location
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSetupSessions(false);
+                  setShowTime(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm font-medium text-sky-700 active:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-400 dark:active:bg-slate-700"
+              >
+                Time
+              </button>
+              <button
+                type="button"
+                disabled={slotsBusy}
+                onClick={() => {
+                  setShowSetupSessions(false);
+                  setShowCopyConfirm(true);
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
+              >
+                Copy from last week
+              </button>
+              <button
+                type="button"
+                disabled={slotsBusy}
+                onClick={() => {
+                  setShowSetupSessions(false);
+                  void handleClearSlots();
+                }}
+                className="touch-target w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm font-medium text-red-600 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-red-400 dark:active:bg-slate-700"
+              >
+                Clear Week
               </button>
             </div>
           </div>
@@ -514,6 +568,7 @@ export function WeekView({ slug }: WeekViewProps) {
 
       {showRename && (
         <RenameTeamSheet
+          key={renameInitialTab}
           teamName={data.team.name}
           scheduleUrl={data.team.schedule_url}
           visibleDays={data.team.visible_days}
@@ -521,6 +576,7 @@ export function WeekView({ slug }: WeekViewProps) {
           scheduleIntegration={data.team.schedule_integration}
           families={data.families}
           slug={slug}
+          initialTab={renameInitialTab}
           onClose={() => setShowRename(false)}
           onUpdated={(team) => {
             void mutate({ ...data, team: { ...data.team, ...team } }, { revalidate: true });

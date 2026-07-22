@@ -28,6 +28,7 @@ interface RenameTeamSheetProps {
   scheduleIntegration?: ScheduleIntegration | null;
   families: Family[];
   slug: string;
+  initialTab?: SettingsTab;
   onClose: () => void;
   onUpdated: (team: TeamPatch) => void;
   onFamiliesUpdated: (families: Family[]) => void;
@@ -41,12 +42,13 @@ export function RenameTeamSheet({
   scheduleIntegration = null,
   families: initialFamilies,
   slug,
+  initialTab = "team",
   onClose,
   onUpdated,
   onFamiliesUpdated,
 }: RenameTeamSheetProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<SettingsTab>("team");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [integration, setIntegration] = useState<ScheduleIntegration | null>(scheduleIntegration);
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");

@@ -101,7 +101,7 @@ export function CommitImportSheet({ slug, weekStart, onClose, onImported }: Comm
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-900">
           <div className="min-w-0">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              Import from Commit
+              Import Commit Schedule
             </h2>
             {preview && (
               <p className="truncate text-xs text-slate-500 dark:text-slate-400">

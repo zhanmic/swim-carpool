@@ -12,7 +12,7 @@ import {
 import { formatDayLabel, parseDateOnly, snapTimeToStep } from "@/lib/dates";
 import { getFamilyColor, OPEN_SLOT_BUTTON, type FamilyColorClasses } from "@/lib/familyColors";
 import type { AssignmentRole, Family, SavedLocation, SessionWithAssignments } from "@/lib/types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { TimeInput } from "./TimeInput";
 
@@ -164,6 +164,7 @@ export function DaySheet({
   const [busy, setBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [skipOthersOpen, setSkipOthersOpen] = useState(false);
+  const skipOthersRef = useRef<HTMLDivElement>(null);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
   const otherFamilies = useMemo(
@@ -185,6 +186,17 @@ export function DaySheet({
     // Only reset when opening a different day — not on background SWR refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- session fields read when session.id changes
   }, [session.id]);
+
+  useEffect(() => {
+    if (!skipOthersOpen) return;
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (target && skipOthersRef.current?.contains(target)) return;
+      setSkipOthersOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [skipOthersOpen]);
 
   useEffect(() => {
     if (!dropoffFamilyId) return;
@@ -702,52 +714,54 @@ export function DaySheet({
                 </span>
               </label>
               {otherFamilies.length > 0 && (
-                <button
-                  type="button"
-                  disabled={skipBusy}
-                  onClick={() => setSkipOthersOpen((open) => !open)}
-                  className="touch-target-compact shrink-0 rounded-lg border border-amber-300 bg-amber-50/70 px-2.5 text-xs font-semibold text-amber-950 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
-                >
-                  Skip others
-                  {otherSkipping.length > 0 ? ` (${otherSkipping.length})` : ""}
-                </button>
-              )}
-              {skipOthersOpen && otherFamilies.length > 0 && (
-                <div className="absolute right-0 bottom-full z-20 mb-1 w-56 rounded-lg border border-amber-200 bg-white shadow-lg dark:border-amber-800 dark:bg-slate-800">
-                  <div className="border-b border-amber-100 px-2 py-1.5 text-xs font-semibold text-amber-900 dark:border-amber-900 dark:text-amber-200">
-                    Skip other families
-                  </div>
-                  <div className="max-h-48 overflow-y-auto p-1">
-                    {otherFamilies.map((family) => {
-                      const skipping = skipIds.has(family.id);
-                      return (
-                        <button
-                          key={family.id}
-                          type="button"
-                          disabled={skipBusy}
-                          title={family.name}
-                          onClick={() => void handleSkipOther(family.id)}
-                          className={`touch-target-compact flex w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium disabled:opacity-50 ${
-                            skipping
-                              ? "bg-amber-100 text-amber-950 dark:bg-amber-900/60 dark:text-amber-100"
-                              : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
-                              skipping
-                                ? "border-amber-600 bg-amber-600 text-white dark:border-amber-400 dark:bg-amber-400 dark:text-amber-950"
-                                : "border-slate-300 dark:border-slate-500"
-                            }`}
-                            aria-hidden
-                          >
-                            {skipping ? "✓" : ""}
-                          </span>
-                          <span className="min-w-0 truncate">{family.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div ref={skipOthersRef} className="relative shrink-0">
+                  <button
+                    type="button"
+                    disabled={skipBusy}
+                    onClick={() => setSkipOthersOpen((open) => !open)}
+                    className="touch-target-compact rounded-lg border border-amber-300 bg-amber-50/70 px-2.5 text-xs font-semibold text-amber-950 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                  >
+                    Skip others
+                    {otherSkipping.length > 0 ? ` (${otherSkipping.length})` : ""}
+                  </button>
+                  {skipOthersOpen && (
+                    <div className="absolute right-0 bottom-full z-20 mb-1 w-56 rounded-lg border border-amber-200 bg-white shadow-lg dark:border-amber-800 dark:bg-slate-800">
+                      <div className="border-b border-amber-100 px-2 py-1.5 text-xs font-semibold text-amber-900 dark:border-amber-900 dark:text-amber-200">
+                        Skip other families
+                      </div>
+                      <div className="max-h-48 overflow-y-auto p-1">
+                        {otherFamilies.map((family) => {
+                          const skipping = skipIds.has(family.id);
+                          return (
+                            <button
+                              key={family.id}
+                              type="button"
+                              disabled={skipBusy}
+                              title={family.name}
+                              onClick={() => void handleSkipOther(family.id)}
+                              className={`touch-target-compact flex w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium disabled:opacity-50 ${
+                                skipping
+                                  ? "bg-amber-100 text-amber-950 dark:bg-amber-900/60 dark:text-amber-100"
+                                  : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                                  skipping
+                                    ? "border-amber-600 bg-amber-600 text-white dark:border-amber-400 dark:bg-amber-400 dark:text-amber-950"
+                                    : "border-slate-300 dark:border-slate-500"
+                                }`}
+                                aria-hidden
+                              >
+                                {skipping ? "✓" : ""}
+                              </span>
+                              <span className="min-w-0 truncate">{family.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

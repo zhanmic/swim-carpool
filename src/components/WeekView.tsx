@@ -359,7 +359,7 @@ export function WeekView({ slug }: WeekViewProps) {
               onClick={() => setShowImport(true)}
               className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-sky-200 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700 active:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300 dark:active:bg-sky-900"
             >
-              Import from Commit
+              Import Commit Schedule
             </button>
           ) : (
             <button
@@ -379,7 +379,7 @@ export function WeekView({ slug }: WeekViewProps) {
             onClick={() => setShowSetupSessions(true)}
             className="touch-target-compact min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-medium text-slate-700 active:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:active:bg-slate-700"
           >
-            Setup Practice Schedule
+            Manual Schedule Setup
           </button>
         </div>
 
@@ -443,7 +443,7 @@ export function WeekView({ slug }: WeekViewProps) {
           />
           <div className="rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
             <div className="border-b border-slate-200 px-3 py-2 dark:border-slate-700">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Setup Practice Schedule</h2>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Manual Schedule Setup</h2>
             </div>
             <div className="mx-auto max-w-lg space-y-1.5 px-3 py-2">
               <button

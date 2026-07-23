@@ -57,7 +57,7 @@ interface DaySheetProps {
     no_practice: boolean;
   }) => Promise<boolean>;
   onClaim: (role: AssignmentRole, action: "claim" | "release", targetFamilyId?: string) => Promise<void>;
-  onSkip: (action: "mark" | "clear") => Promise<void>;
+  onSkip: (action: "mark" | "clear", familyId?: string) => Promise<void>;
 }
 
 type ScheduleSnapshot = {
@@ -163,8 +163,13 @@ export function DaySheet({
   const [assignDropdownRole, setAssignDropdownRole] = useState<AssignmentRole | null>(null);
   const [busy, setBusy] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
+  const [skipOthersOpen, setSkipOthersOpen] = useState(false);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
   const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const otherFamilies = useMemo(
+    () => sortedFamilies.filter((family) => family.id !== activeFamilyId),
+    [sortedFamilies, activeFamilyId]
+  );
 
   useEffect(() => {
     const snapshot = buildScheduleSnapshot(session, skipIds);
@@ -176,6 +181,7 @@ export function DaySheet({
     setCancelled(snapshot.cancelled);
     setNoPractice(snapshot.no_practice);
     setSavedSnapshot(snapshot);
+    setSkipOthersOpen(false);
     // Only reset when opening a different day — not on background SWR refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- session fields read when session.id changes
   }, [session.id]);
@@ -301,6 +307,16 @@ export function DaySheet({
     setSkipBusy(true);
     try {
       await onSkip(activeFamilySkipping ? "clear" : "mark");
+    } finally {
+      setSkipBusy(false);
+    }
+  }
+
+  async function handleSkipOther(familyId: string) {
+    if (skipBusy) return;
+    setSkipBusy(true);
+    try {
+      await onSkip(skipIds.has(familyId) ? "clear" : "mark", familyId);
     } finally {
       setSkipBusy(false);
     }
@@ -503,28 +519,6 @@ export function DaySheet({
         </div>
 
         <div className="min-w-0 space-y-2 px-3 py-2 max-w-lg mx-auto">
-          {!cancelled && !noPractice && activeFamilyId && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/70 px-2.5 py-2 dark:border-amber-800 dark:bg-amber-950/40">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={activeFamilySkipping}
-                  disabled={skipBusy}
-                  onChange={() => void handleSkipToggle()}
-                  className="h-4 w-4 rounded"
-                />
-                <span className="text-sm font-medium text-amber-950 dark:text-amber-100">
-                  Skip{activeFamilyName ? ` — ${activeFamilyName}` : ""}
-                </span>
-              </label>
-              {otherSkipping.length > 0 && (
-                <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-200/80">
-                  Also skipping: {otherSkipping.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-
           {!cancelled && !noPractice && (
             <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
               <label className="block min-w-0">
@@ -693,8 +687,74 @@ export function DaySheet({
             {saving ? "Saving…" : "Save schedule"}
           </button>
 
+          {!cancelled && !noPractice && activeFamilyId && (
+            <div className="relative flex items-center gap-2 border-t border-slate-100 pt-1.5 dark:border-slate-800">
+              <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/70 px-2.5 py-2 dark:border-amber-800 dark:bg-amber-950/40">
+                <input
+                  type="checkbox"
+                  checked={activeFamilySkipping}
+                  disabled={skipBusy}
+                  onChange={() => void handleSkipToggle()}
+                  className="h-4 w-4 shrink-0 rounded"
+                />
+                <span className="truncate text-sm font-medium text-amber-950 dark:text-amber-100">
+                  Skip{activeFamilyName ? ` — ${activeFamilyName}` : ""}
+                </span>
+              </label>
+              {otherFamilies.length > 0 && (
+                <button
+                  type="button"
+                  disabled={skipBusy}
+                  onClick={() => setSkipOthersOpen((open) => !open)}
+                  className="touch-target-compact shrink-0 rounded-lg border border-amber-300 bg-amber-50/70 px-2.5 text-xs font-semibold text-amber-950 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                >
+                  Skip others
+                  {otherSkipping.length > 0 ? ` (${otherSkipping.length})` : ""}
+                </button>
+              )}
+              {skipOthersOpen && otherFamilies.length > 0 && (
+                <div className="absolute right-0 bottom-full z-20 mb-1 w-56 rounded-lg border border-amber-200 bg-white shadow-lg dark:border-amber-800 dark:bg-slate-800">
+                  <div className="border-b border-amber-100 px-2 py-1.5 text-xs font-semibold text-amber-900 dark:border-amber-900 dark:text-amber-200">
+                    Skip other families
+                  </div>
+                  <div className="max-h-48 overflow-y-auto p-1">
+                    {otherFamilies.map((family) => {
+                      const skipping = skipIds.has(family.id);
+                      return (
+                        <button
+                          key={family.id}
+                          type="button"
+                          disabled={skipBusy}
+                          title={family.name}
+                          onClick={() => void handleSkipOther(family.id)}
+                          className={`touch-target-compact flex w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium disabled:opacity-50 ${
+                            skipping
+                              ? "bg-amber-100 text-amber-950 dark:bg-amber-900/60 dark:text-amber-100"
+                              : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                              skipping
+                                ? "border-amber-600 bg-amber-600 text-white dark:border-amber-400 dark:bg-amber-400 dark:text-amber-950"
+                                : "border-slate-300 dark:border-slate-500"
+                            }`}
+                            aria-hidden
+                          >
+                            {skipping ? "✓" : ""}
+                          </span>
+                          <span className="min-w-0 truncate">{family.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {!cancelled && !noPractice && !activeFamilySkipping && (
-            <div className="space-y-1.5 border-t border-slate-100 pt-1.5 dark:border-slate-800">
+            <div className="space-y-1.5">
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Driver spots</p>
               {renderClaimButton("dropoff", "Drop off (to pool)", drop?.family_name)}
               {renderClaimButton("pickup", "Pick up (from pool)", pick?.family_name)}
@@ -702,7 +762,7 @@ export function DaySheet({
           )}
 
           {!cancelled && !noPractice && activeFamilySkipping && (
-            <p className="border-t border-slate-100 pt-1.5 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
               Driver spots hidden while you&apos;re skipping
             </p>
           )}

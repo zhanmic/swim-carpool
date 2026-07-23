@@ -136,14 +136,15 @@ export function WeekView({ slug }: WeekViewProps) {
     await mutate();
   }
 
-  async function handleSkip(action: "mark" | "clear") {
-    if (!openSession || !activeFamilyId) return;
+  async function handleSkip(action: "mark" | "clear", familyId?: string) {
+    const targetFamilyId = familyId ?? activeFamilyId;
+    if (!openSession || !targetFamilyId) return;
     const res = await fetch("/api/absences", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId: openSession.id,
-        familyId: activeFamilyId,
+        familyId: targetFamilyId,
         action,
         slug,
       }),

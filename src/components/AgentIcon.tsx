@@ -132,28 +132,32 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
           {/* Soft long color-changing tail */}
           <path
             d={OUTLINE_PATH}
-            strokeWidth="3"
+            pathLength={100}
+            strokeWidth="2.8"
             className={`comet-tail-${uid}`}
             style={{ filter: "drop-shadow(0 0 2.5px #22D3EE)" }}
           />
           {/* Mid trail — brighter, shorter, shifts hue with the tail */}
           <path
             d={OUTLINE_PATH}
-            strokeWidth="2.4"
+            pathLength={100}
+            strokeWidth="2.2"
             className={`comet-mid-${uid}`}
             style={{ filter: "drop-shadow(0 0 2px #A78BFA)" }}
           />
           {/* Near-head cool highlight */}
           <path
             d={OUTLINE_PATH}
-            strokeWidth="2.2"
+            pathLength={100}
+            strokeWidth="2"
             className={`comet-near-${uid}`}
             style={{ filter: "drop-shadow(0 0 2px #BFDBFE)" }}
           />
           {/* Bright leading tip */}
           <path
             d={OUTLINE_PATH}
-            strokeWidth="2.6"
+            pathLength={100}
+            strokeWidth="2.4"
             className={`comet-head-${uid}`}
             style={{ filter: "drop-shadow(0 0 3px #FFFFFF)" }}
           />

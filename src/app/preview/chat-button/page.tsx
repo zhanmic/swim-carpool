@@ -7,7 +7,7 @@ export default function ChatButtonPreviewPage() {
         <header>
           <h1 className="text-xl font-semibold">Chat button animation</h1>
           <p className="mt-1 text-sm text-slate-400">
-            White circling tip with a darker slate trailing tail around the bubble edge.
+            White tip leads clockwise; darker slate trail follows behind.
           </p>
           <p className="mt-1 font-mono text-[10px] text-slate-500">/preview/chat-button</p>
         </header>

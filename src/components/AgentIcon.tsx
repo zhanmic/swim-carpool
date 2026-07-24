@@ -23,9 +23,9 @@ function sparkle(cx: number, cy: number, hy: number, hx: number): string {
   ].join(" ");
 }
 
-/** Continuous outline so dash travel follows the bubble + tail tip. */
+/** Continuous outline (counterclockwise) so dash travel reads as clockwise with the tip leading. */
 const OUTLINE_PATH =
-  "M5 3 h14 a3 3 0 0 1 3 3 v9 a3 3 0 0 1 -3 3 h-9 L8 18 L6 22 L10 19 L8 18 h-3 a3 3 0 0 1 -3 -3 v-9 a3 3 0 0 1 3 -3 Z";
+  "M5 3 a3 3 0 0 0 -3 3 v9 a3 3 0 0 0 3 3 h3 L10 19 L6 22 L8 18 h11 a3 3 0 0 0 3 -3 v-9 a3 3 0 0 0 -3 -3 h-14 Z";
 
 /** Rounded rectangle chat bubble with neon outline and a white-tip / dark-tail comet. */
 export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIconProps) {
@@ -62,9 +62,10 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
               33% { stroke: #38BDF8; filter: drop-shadow(0 0 2.5px #38BDF8); }
               66% { stroke: #67E8F9; filter: drop-shadow(0 0 2px #67E8F9); }
             }
+            /* Increasing offset: short white tip leads, longer dark dashes trail behind. */
             @keyframes dash-travel-${uid} {
-              0% { stroke-dashoffset: 100; }
-              100% { stroke-dashoffset: 0; }
+              0% { stroke-dashoffset: 0; }
+              100% { stroke-dashoffset: 100; }
             }
             /* Darker shade cycle along the fading tail */
             @keyframes tail-shade-${uid} {
@@ -129,7 +130,7 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
       </g>
       {animated && (
         <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-          {/* Long dark fading tail */}
+          {/* Long dark fading tail (behind the tip) */}
           <path
             d={OUTLINE_PATH}
             pathLength={100}

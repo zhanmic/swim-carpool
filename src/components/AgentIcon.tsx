@@ -1,3 +1,7 @@
+"use client";
+
+import { useId } from "react";
+
 interface AgentIconProps {
   className?: string;
   animated?: boolean;
@@ -19,8 +23,16 @@ function sparkle(cx: number, cy: number, hy: number, hx: number): string {
   ].join(" ");
 }
 
-/** Rounded rectangle chat bubble with neon animated outline and sparkles inside. */
+/** Continuous outline so dash travel follows the bubble + tail tip. */
+const OUTLINE_PATH =
+  "M5 3 h14 a3 3 0 0 1 3 3 v9 a3 3 0 0 1 -3 3 h-9 L8 18 L6 22 L10 19 L8 18 h-3 a3 3 0 0 1 -3 -3 v-9 a3 3 0 0 1 3 -3 Z";
+
+/** Rounded rectangle chat bubble with neon outline and a color-changing comet trail. */
 export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIconProps) {
+  const uid = useId().replace(/:/g, "");
+  const fillGradId = `ai-fill-${uid}`;
+  const sparkleBgId = `sparkle-bg-${uid}`;
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -29,11 +41,11 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
       aria-hidden
     >
       <defs>
-        <linearGradient id="ai-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={fillGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#3B82F6" />
           <stop offset="100%" stopColor="#8B5CF6" />
         </linearGradient>
-        <radialGradient id="sparkle-bg" cx="50%" cy="50%">
+        <radialGradient id={sparkleBgId} cx="50%" cy="50%">
           <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.7" />
           <stop offset="100%" stopColor="#1E40AF" stopOpacity="0.5" />
         </radialGradient>
@@ -41,62 +53,143 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
       {animated && (
         <style>
           {`
-            @keyframes sparkle-blink {
+            @keyframes sparkle-blink-${uid} {
               0%, 100% { opacity: 1; filter: drop-shadow(0 0 1px #FFD700); }
               50% { opacity: 0.3; filter: drop-shadow(0 0 0px #FFD700); }
             }
-            @keyframes neon-glow {
-              0% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
-              25% { stroke: #8B5CF6; filter: drop-shadow(0 0 3px #8B5CF6); }
-              50% { stroke: #EC4899; filter: drop-shadow(0 0 2px #EC4899); }
-              75% { stroke: #8B5CF6; filter: drop-shadow(0 0 3px #8B5CF6); }
-              100% { stroke: #3B82F6; filter: drop-shadow(0 0 2px #3B82F6); }
+            @keyframes border-glow-${uid} {
+              0%, 100% { stroke: #22D3EE; filter: drop-shadow(0 0 2px #22D3EE); }
+              33% { stroke: #38BDF8; filter: drop-shadow(0 0 2.5px #38BDF8); }
+              66% { stroke: #67E8F9; filter: drop-shadow(0 0 2px #67E8F9); }
             }
-            @keyframes dash-travel {
+            @keyframes dash-travel-${uid} {
               0% { stroke-dashoffset: 100; }
               100% { stroke-dashoffset: 0; }
             }
-            .sparkle-animate {
-              animation: sparkle-blink 2.5s ease-in-out infinite;
+            @keyframes tail-hue-${uid} {
+              0% { stroke: #22D3EE; }
+              20% { stroke: #60A5FA; }
+              40% { stroke: #A78BFA; }
+              60% { stroke: #F472B6; }
+              80% { stroke: #34D399; }
+              100% { stroke: #22D3EE; }
             }
-            .neon-animate {
-              animation: neon-glow 4s ease-in-out infinite;
+            @keyframes mid-hue-${uid} {
+              0% { stroke: #67E8F9; }
+              20% { stroke: #93C5FD; }
+              40% { stroke: #C4B5FD; }
+              60% { stroke: #F9A8D4; }
+              80% { stroke: #6EE7B7; }
+              100% { stroke: #67E8F9; }
             }
-            .dash-animate {
-              stroke-dasharray: 3 97;
-              animation: dash-travel 3s linear infinite;
+            .sparkle-animate-${uid} {
+              animation: sparkle-blink-${uid} 2.5s ease-in-out infinite;
+            }
+            .border-animate-${uid} {
+              animation: border-glow-${uid} 4s ease-in-out infinite;
+            }
+            .comet-tail-${uid} {
+              stroke-dasharray: 22 78;
+              stroke-opacity: 0.45;
+              animation:
+                dash-travel-${uid} 2.8s linear infinite,
+                tail-hue-${uid} 2.8s linear infinite;
+            }
+            .comet-mid-${uid} {
+              stroke-dasharray: 11 89;
+              stroke-opacity: 0.85;
+              animation:
+                dash-travel-${uid} 2.8s linear infinite,
+                mid-hue-${uid} 2.8s linear infinite;
+            }
+            .comet-near-${uid} {
+              stroke-dasharray: 5 95;
+              stroke: #E0F2FE;
+              animation: dash-travel-${uid} 2.8s linear infinite;
+            }
+            .comet-head-${uid} {
+              stroke-dasharray: 2.2 97.8;
+              stroke: #FFFFFF;
+              animation: dash-travel-${uid} 2.8s linear infinite;
             }
           `}
         </style>
       )}
-      <rect x="2" y="3" width="20" height="15" rx="3" ry="3" fill="url(#sparkle-bg)" />
+      <rect x="2" y="3" width="20" height="15" rx="3" ry="3" fill={`url(#${sparkleBgId})`} />
       <g
         fill="none"
-        stroke={animated ? "#3B82F6" : "url(#ai-gradient)"}
+        stroke={animated ? "#22D3EE" : `url(#${fillGradId})`}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={animated ? "neon-animate" : ""}
+        className={animated ? `border-animate-${uid}` : ""}
       >
         <rect x="2" y="3" width="20" height="15" rx="3" ry="3" />
         <path d="M8 18 L6 22 L10 19" />
       </g>
       {animated && (
-        <path
-          d="M5 3 h14 a3 3 0 0 1 3 3 v9 a3 3 0 0 1 -3 3 h-9 L8 18 L6 22 L10 19 L8 18 h-3 a3 3 0 0 1 -3 -3 v-9 a3 3 0 0 1 3 -3 Z"
-          fill="none"
-          stroke="#E0F2FE"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="dash-animate"
-          style={{ filter: 'drop-shadow(0 0 2px #BFDBFE)' }}
-        />
+        <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+          {/* Soft long color-changing tail */}
+          <path
+            d={OUTLINE_PATH}
+            strokeWidth="3"
+            className={`comet-tail-${uid}`}
+            style={{ filter: "drop-shadow(0 0 2.5px #22D3EE)" }}
+          />
+          {/* Mid trail — brighter, shorter, shifts hue with the tail */}
+          <path
+            d={OUTLINE_PATH}
+            strokeWidth="2.4"
+            className={`comet-mid-${uid}`}
+            style={{ filter: "drop-shadow(0 0 2px #A78BFA)" }}
+          />
+          {/* Near-head cool highlight */}
+          <path
+            d={OUTLINE_PATH}
+            strokeWidth="2.2"
+            className={`comet-near-${uid}`}
+            style={{ filter: "drop-shadow(0 0 2px #BFDBFE)" }}
+          />
+          {/* Bright leading tip */}
+          <path
+            d={OUTLINE_PATH}
+            strokeWidth="2.6"
+            className={`comet-head-${uid}`}
+            style={{ filter: "drop-shadow(0 0 3px #FFFFFF)" }}
+          />
+        </g>
       )}
-      <path d={sparkle(12, 10.5, 3.2, 3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.3" className={animated ? "sparkle-animate" : ""} />
-      <path d={sparkle(16, 7.5, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.3s" } : undefined} />
-      <path d={sparkle(8, 13, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.6s" } : undefined} />
-      <path d={sparkle(16, 13.5, 1.4, 1.3)} fill="#FFF700" stroke="#FFA500" strokeWidth="0.2" className={animated ? "sparkle-animate" : ""} style={animated ? { animationDelay: "0.9s" } : undefined} />
+      <path
+        d={sparkle(12, 10.5, 3.2, 3)}
+        fill="#FFF700"
+        stroke="#FFA500"
+        strokeWidth="0.3"
+        className={animated ? `sparkle-animate-${uid}` : ""}
+      />
+      <path
+        d={sparkle(16, 7.5, 1.4, 1.3)}
+        fill="#FFF700"
+        stroke="#FFA500"
+        strokeWidth="0.2"
+        className={animated ? `sparkle-animate-${uid}` : ""}
+        style={animated ? { animationDelay: "0.3s" } : undefined}
+      />
+      <path
+        d={sparkle(8, 13, 1.4, 1.3)}
+        fill="#FFF700"
+        stroke="#FFA500"
+        strokeWidth="0.2"
+        className={animated ? `sparkle-animate-${uid}` : ""}
+        style={animated ? { animationDelay: "0.6s" } : undefined}
+      />
+      <path
+        d={sparkle(16, 13.5, 1.4, 1.3)}
+        fill="#FFF700"
+        stroke="#FFA500"
+        strokeWidth="0.2"
+        className={animated ? `sparkle-animate-${uid}` : ""}
+        style={animated ? { animationDelay: "0.9s" } : undefined}
+      />
     </svg>
   );
 }

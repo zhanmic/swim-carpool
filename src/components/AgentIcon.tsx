@@ -27,7 +27,7 @@ function sparkle(cx: number, cy: number, hy: number, hx: number): string {
 const OUTLINE_PATH =
   "M5 3 h14 a3 3 0 0 1 3 3 v9 a3 3 0 0 1 -3 3 h-9 L8 18 L6 22 L10 19 L8 18 h-3 a3 3 0 0 1 -3 -3 v-9 a3 3 0 0 1 3 -3 Z";
 
-/** Rounded rectangle chat bubble with neon outline and a color-changing comet trail. */
+/** Rounded rectangle chat bubble with neon outline and a white-tip / dark-tail comet. */
 export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIconProps) {
   const uid = useId().replace(/:/g, "");
   const fillGradId = `ai-fill-${uid}`;
@@ -66,21 +66,20 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
               0% { stroke-dashoffset: 100; }
               100% { stroke-dashoffset: 0; }
             }
-            @keyframes tail-hue-${uid} {
-              0% { stroke: #22D3EE; }
-              20% { stroke: #60A5FA; }
-              40% { stroke: #A78BFA; }
-              60% { stroke: #F472B6; }
-              80% { stroke: #34D399; }
-              100% { stroke: #22D3EE; }
+            /* Darker shade cycle along the fading tail */
+            @keyframes tail-shade-${uid} {
+              0% { stroke: #334155; }
+              25% { stroke: #1E293B; }
+              50% { stroke: #0F172A; }
+              75% { stroke: #1E293B; }
+              100% { stroke: #334155; }
             }
-            @keyframes mid-hue-${uid} {
-              0% { stroke: #67E8F9; }
-              20% { stroke: #93C5FD; }
-              40% { stroke: #C4B5FD; }
-              60% { stroke: #F9A8D4; }
-              80% { stroke: #6EE7B7; }
-              100% { stroke: #67E8F9; }
+            @keyframes mid-shade-${uid} {
+              0% { stroke: #64748B; }
+              25% { stroke: #475569; }
+              50% { stroke: #334155; }
+              75% { stroke: #475569; }
+              100% { stroke: #64748B; }
             }
             .sparkle-animate-${uid} {
               animation: sparkle-blink-${uid} 2.5s ease-in-out infinite;
@@ -90,21 +89,22 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
             }
             .comet-tail-${uid} {
               stroke-dasharray: 22 78;
-              stroke-opacity: 0.45;
+              stroke-opacity: 0.55;
               animation:
                 dash-travel-${uid} 2.8s linear infinite,
-                tail-hue-${uid} 2.8s linear infinite;
+                tail-shade-${uid} 2.8s linear infinite;
             }
             .comet-mid-${uid} {
               stroke-dasharray: 11 89;
-              stroke-opacity: 0.85;
+              stroke-opacity: 0.75;
               animation:
                 dash-travel-${uid} 2.8s linear infinite,
-                mid-hue-${uid} 2.8s linear infinite;
+                mid-shade-${uid} 2.8s linear infinite;
             }
             .comet-near-${uid} {
               stroke-dasharray: 5 95;
-              stroke: #E0F2FE;
+              stroke: #94A3B8;
+              stroke-opacity: 0.9;
               animation: dash-travel-${uid} 2.8s linear infinite;
             }
             .comet-head-${uid} {
@@ -129,35 +129,35 @@ export function AgentIcon({ className = "h-6 w-6", animated = false }: AgentIcon
       </g>
       {animated && (
         <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-          {/* Soft long color-changing tail */}
+          {/* Long dark fading tail */}
           <path
             d={OUTLINE_PATH}
             pathLength={100}
             strokeWidth="2.8"
             className={`comet-tail-${uid}`}
-            style={{ filter: "drop-shadow(0 0 2.5px #22D3EE)" }}
+            style={{ filter: "drop-shadow(0 0 1.5px #1E293B)" }}
           />
-          {/* Mid trail — brighter, shorter, shifts hue with the tail */}
+          {/* Mid slate trail */}
           <path
             d={OUTLINE_PATH}
             pathLength={100}
             strokeWidth="2.2"
             className={`comet-mid-${uid}`}
-            style={{ filter: "drop-shadow(0 0 2px #A78BFA)" }}
+            style={{ filter: "drop-shadow(0 0 1.5px #475569)" }}
           />
-          {/* Near-head cool highlight */}
+          {/* Near-head light grey bridge into the white tip */}
           <path
             d={OUTLINE_PATH}
             pathLength={100}
             strokeWidth="2"
             className={`comet-near-${uid}`}
-            style={{ filter: "drop-shadow(0 0 2px #BFDBFE)" }}
+            style={{ filter: "drop-shadow(0 0 1.5px #94A3B8)" }}
           />
-          {/* Bright leading tip */}
+          {/* Bright white leading tip */}
           <path
             d={OUTLINE_PATH}
             pathLength={100}
-            strokeWidth="2.4"
+            strokeWidth="2.6"
             className={`comet-head-${uid}`}
             style={{ filter: "drop-shadow(0 0 3px #FFFFFF)" }}
           />

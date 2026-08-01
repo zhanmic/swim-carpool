@@ -76,7 +76,7 @@ export const OPENAPI_SPEC = {
       patch: {
         summary: "Set or clear a team's deletion password",
         description:
-          "Admin only when ADMIN_PASSWORD is set. Body: delete_password (empty string clears). Authorization: Bearer <admin password>.",
+          "Body: delete_password (empty clears). Auth: admin Bearer, or current_password when a deletion password is already set. First-time set needs no current password.",
       },
     },
     "/api/teams/{slug}/commit/config": {

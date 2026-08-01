@@ -10,7 +10,6 @@ import {
 import { getTeamUrl } from "@/lib/shareTeam";
 import {
   clearActiveFamilyId,
-  getAdminSessionPassword,
   isAdminUnlocked,
   removeKnownTeam,
   setAdminSession,
@@ -34,7 +33,7 @@ interface RenameTeamSheetProps {
   scheduleIntegration?: ScheduleIntegration | null;
   families: Family[];
   slug: string;
-  /** When true, schedule source + deletion password require admin unlock. */
+  /** When true, Schedule source requires admin unlock (ADMIN_PASSWORD is set). */
   adminEnabled?: boolean;
   initialTab?: SettingsTab;
   onClose: () => void;
@@ -69,6 +68,7 @@ export function RenameTeamSheet({
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
   const [visibleDays, setVisibleDays] = useState<number[]>(initialVisibleDays);
   const [hasDeletePassword, setHasDeletePassword] = useState(initialHasDeletePassword);
+  const [currentDeletePassword, setCurrentDeletePassword] = useState("");
   const [newDeletePassword, setNewDeletePassword] = useState("");
   const [deletePwdBusy, setDeletePwdBusy] = useState(false);
   const [deletePwdError, setDeletePwdError] = useState<string | null>(null);
@@ -290,20 +290,22 @@ export function RenameTeamSheet({
   }
 
   async function persistDeletePassword(nextPassword: string) {
+    if (hasDeletePassword && !currentDeletePassword.trim()) {
+      setDeletePwdError("Enter the current deletion password");
+      return;
+    }
     setDeletePwdBusy(true);
     setDeletePwdError(null);
     setDeletePwdStatus(null);
     try {
-      const password = getAdminSessionPassword();
       const res = await fetch(`/api/teams/${slug}/delete-password`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(password ? { Authorization: `Bearer ${password}` } : {}),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           delete_password: nextPassword,
-          ...(password ? { adminPassword: password } : {}),
+          ...(hasDeletePassword
+            ? { current_password: currentDeletePassword.trim() }
+            : {}),
         }),
       });
       const data = await res.json();
@@ -313,6 +315,7 @@ export function RenameTeamSheet({
       }
       const nextHas = !!data.team?.has_delete_password;
       setHasDeletePassword(nextHas);
+      setCurrentDeletePassword("");
       setNewDeletePassword("");
       setDeletePwdStatus(nextHas ? "Deletion password saved." : "Deletion password cleared.");
       onUpdated({ has_delete_password: nextHas });
@@ -513,82 +516,80 @@ export function RenameTeamSheet({
               <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 Deletion password
               </span>
-              {adminEnabled && !adminUnlocked ? (
-                <form onSubmit={handleAdminUnlock} className="space-y-2 rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Admin password required to set or change the deletion password.
-                    {hasDeletePassword ? " A deletion password is currently set." : ""}
-                  </p>
+              {hasDeletePassword && (
+                <label className="block">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Current password</span>
                   <input
                     type="password"
-                    required
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="Admin password"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
-                    autoComplete="current-password"
-                  />
-                  {adminError && <p className="text-sm text-red-600">{adminError}</p>}
-                  <button
-                    type="submit"
-                    disabled={adminBusy || !adminPassword}
-                    className="touch-target-compact w-full rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    {adminBusy ? "Checking…" : "Unlock admin"}
-                  </button>
-                </form>
-              ) : (
-                <>
-                  <input
-                    type="password"
-                    value={newDeletePassword}
+                    value={currentDeletePassword}
                     onChange={(e) => {
-                      setNewDeletePassword(e.target.value);
+                      setCurrentDeletePassword(e.target.value);
                       setDeletePwdError(null);
                       setDeletePwdStatus(null);
                     }}
-                    placeholder={
-                      hasDeletePassword
-                        ? "Enter new password to change"
-                        : "Optional — set a deletion password"
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
-                    autoComplete="new-password"
+                    placeholder="Enter current deletion password"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                    autoComplete="current-password"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {hasDeletePassword
-                      ? "A deletion password is set. It is never shown — enter a new one and save."
-                      : "Used to delete this team (admin password also works)."}
-                  </p>
-                  {deletePwdError && <p className="text-sm text-red-600">{deletePwdError}</p>}
-                  {deletePwdStatus && (
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400">{deletePwdStatus}</p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void persistDeletePassword(newDeletePassword.trim())}
-                      disabled={deletePwdBusy || !newDeletePassword.trim()}
-                      className="touch-target-compact flex-1 rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
-                    >
-                      {deletePwdBusy ? "Saving…" : "Save deletion password"}
-                    </button>
-                    {hasDeletePassword && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!confirm("Clear the deletion password for this team?")) return;
-                          void persistDeletePassword("");
-                        }}
-                        disabled={deletePwdBusy}
-                        className="touch-target-compact rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </>
+                </label>
               )}
+              <label className="block">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {hasDeletePassword ? "New password" : "Password"}
+                </span>
+                <input
+                  type="password"
+                  value={newDeletePassword}
+                  onChange={(e) => {
+                    setNewDeletePassword(e.target.value);
+                    setDeletePwdError(null);
+                    setDeletePwdStatus(null);
+                  }}
+                  placeholder={
+                    hasDeletePassword
+                      ? "Enter new deletion password"
+                      : "Optional — set a deletion password"
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  autoComplete="new-password"
+                />
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {hasDeletePassword
+                  ? "Enter the current password to change or clear it."
+                  : "Used to delete this team (admin password also works)."}
+              </p>
+              {deletePwdError && <p className="text-sm text-red-600">{deletePwdError}</p>}
+              {deletePwdStatus && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">{deletePwdStatus}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void persistDeletePassword(newDeletePassword.trim())}
+                  disabled={
+                    deletePwdBusy ||
+                    !newDeletePassword.trim() ||
+                    (hasDeletePassword && !currentDeletePassword.trim())
+                  }
+                  className="touch-target-compact flex-1 rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {deletePwdBusy ? "Saving…" : "Save deletion password"}
+                </button>
+                {hasDeletePassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!confirm("Clear the deletion password for this team?")) return;
+                      void persistDeletePassword("");
+                    }}
+                    disabled={deletePwdBusy || !currentDeletePassword.trim()}
+                    className="touch-target-compact rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}

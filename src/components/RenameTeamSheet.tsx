@@ -512,86 +512,6 @@ export function RenameTeamSheet({
               </p>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Deletion password
-              </span>
-              {hasDeletePassword && (
-                <label className="block">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Current password</span>
-                  <input
-                    type="password"
-                    value={currentDeletePassword}
-                    onChange={(e) => {
-                      setCurrentDeletePassword(e.target.value);
-                      setDeletePwdError(null);
-                      setDeletePwdStatus(null);
-                    }}
-                    placeholder="Enter current deletion password"
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
-                    autoComplete="current-password"
-                  />
-                </label>
-              )}
-              <label className="block">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {hasDeletePassword ? "New password" : "Password"}
-                </span>
-                <input
-                  type="password"
-                  value={newDeletePassword}
-                  onChange={(e) => {
-                    setNewDeletePassword(e.target.value);
-                    setDeletePwdError(null);
-                    setDeletePwdStatus(null);
-                  }}
-                  placeholder={
-                    hasDeletePassword
-                      ? "Enter new deletion password"
-                      : "Optional — set a deletion password"
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
-                  autoComplete="new-password"
-                />
-              </label>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {hasDeletePassword
-                  ? "Enter the current password to change or clear it."
-                  : "Used to delete this team (admin password also works)."}
-              </p>
-              {deletePwdError && <p className="text-sm text-red-600">{deletePwdError}</p>}
-              {deletePwdStatus && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">{deletePwdStatus}</p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void persistDeletePassword(newDeletePassword.trim())}
-                  disabled={
-                    deletePwdBusy ||
-                    !newDeletePassword.trim() ||
-                    (hasDeletePassword && !currentDeletePassword.trim())
-                  }
-                  className="touch-target-compact flex-1 rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {deletePwdBusy ? "Saving…" : "Save deletion password"}
-                </button>
-                {hasDeletePassword && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!confirm("Clear the deletion password for this team?")) return;
-                      void persistDeletePassword("");
-                    }}
-                    disabled={deletePwdBusy || !currentDeletePassword.trim()}
-                    className="touch-target-compact rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-
             {error && <p className="text-sm text-red-600">{error}</p>}
           </section>
 
@@ -674,37 +594,123 @@ export function RenameTeamSheet({
             {familyError && <p className="text-sm text-red-600">{familyError}</p>}
           </section>
 
-          <form onSubmit={handleDelete} className="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-700">
+          <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700">
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Remove team</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Permanently delete <span className="font-medium">{teamName}</span> and all schedule data.
-                This cannot be undone.
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Set a deletion password, or permanently delete{" "}
+                <span className="font-medium text-slate-600 dark:text-slate-300">{teamName}</span>.
               </p>
             </div>
 
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Team or admin password</span>
-              <input
-                type="password"
-                required
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
-                autoComplete="current-password"
-              />
-            </label>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Deletion password
+              </p>
+              {hasDeletePassword && (
+                <label className="block">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Current password</span>
+                  <input
+                    type="password"
+                    value={currentDeletePassword}
+                    onChange={(e) => {
+                      setCurrentDeletePassword(e.target.value);
+                      setDeletePwdError(null);
+                      setDeletePwdStatus(null);
+                    }}
+                    placeholder="Current deletion password"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                    autoComplete="current-password"
+                  />
+                </label>
+              )}
+              <label className="block">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {hasDeletePassword ? "New password" : "Password"}
+                </span>
+                <input
+                  type="password"
+                  value={newDeletePassword}
+                  onChange={(e) => {
+                    setNewDeletePassword(e.target.value);
+                    setDeletePwdError(null);
+                    setDeletePwdStatus(null);
+                  }}
+                  placeholder={
+                    hasDeletePassword
+                      ? "Enter new deletion password"
+                      : "Optional — set a deletion password"
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  autoComplete="new-password"
+                />
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {hasDeletePassword
+                  ? "Enter the current password to change or clear it."
+                  : "Used with Delete team below (admin password also works)."}
+              </p>
+              {deletePwdError && <p className="text-sm text-red-600">{deletePwdError}</p>}
+              {deletePwdStatus && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">{deletePwdStatus}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void persistDeletePassword(newDeletePassword.trim())}
+                  disabled={
+                    deletePwdBusy ||
+                    !newDeletePassword.trim() ||
+                    (hasDeletePassword && !currentDeletePassword.trim())
+                  }
+                  className="touch-target-compact flex-1 rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {deletePwdBusy ? "Saving…" : "Save password"}
+                </button>
+                {hasDeletePassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!confirm("Clear the deletion password for this team?")) return;
+                      void persistDeletePassword("");
+                    }}
+                    disabled={deletePwdBusy || !currentDeletePassword.trim()}
+                    className="touch-target-compact rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
 
-            {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
-
-            <button
-              type="submit"
-              disabled={deleteBusy || !deletePassword}
-              className="w-full rounded-lg bg-red-600 py-2.5 font-medium text-white disabled:opacity-50"
-            >
-              {deleteBusy ? "Deleting…" : "Delete team"}
-            </button>
-          </form>
+            <form onSubmit={handleDelete} className="space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  Delete this team
+                </span>
+                <input
+                  type="password"
+                  required
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Team or admin password"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  autoComplete="current-password"
+                />
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Permanently deletes all schedule data. This cannot be undone.
+              </p>
+              {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+              <button
+                type="submit"
+                disabled={deleteBusy || !deletePassword}
+                className="touch-target w-full rounded-lg bg-red-600 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {deleteBusy ? "Deleting…" : "Delete team"}
+              </button>
+            </form>
+          </section>
         </div>
         )}
       </div>

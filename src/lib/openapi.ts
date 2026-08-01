@@ -72,6 +72,13 @@ export const OPENAPI_SPEC = {
           "Body: message + week_start + optional history[], or confirm { token, approved }. Tools: slots, skip, notes, pickups, times, locations, cancel day, no practice day, clear/copy week, import from Commit. Uses GEMINI_API_KEY.",
       },
     },
+    "/api/teams/{slug}/delete-password": {
+      patch: {
+        summary: "Set or clear a team's deletion password",
+        description:
+          "Admin only when ADMIN_PASSWORD is set. Body: delete_password (empty string clears). Authorization: Bearer <admin password>.",
+      },
+    },
     "/api/teams/{slug}/commit/config": {
       get: {
         summary: "Get full schedule-source config including Super Team ID",

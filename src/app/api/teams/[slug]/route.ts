@@ -34,6 +34,12 @@ export async function PATCH(
         : null;
     }
 
+    // Changing the team deletion password is admin-only when configured.
+    if (body.delete_password !== undefined) {
+      const denied = requireAdmin(request, body.adminPassword);
+      if (denied) return denied;
+    }
+
     const team = await updateTeam(slug, {
       name: body.name,
       schedule_url: body.schedule_url ?? null,

@@ -1,5 +1,5 @@
-import { verifyAdminPassword } from "@/lib/admin";
-import { parseScheduleIntegration } from "@/lib/commit/config";
+import { isAdminConfigured, requireAdmin, verifyAdminPassword } from "@/lib/admin";
+import { parseScheduleIntegration, redactScheduleIntegration } from "@/lib/commit/config";
 import { deleteTeamBySlug, updateTeam, verifyTeamDeletePassword } from "@/lib/db";
 import type { ScheduleIntegration } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,15 +17,18 @@ export async function PATCH(
       visible_days?: number[];
       delete_password?: string;
       schedule_integration?: unknown;
+      adminPassword?: string;
     };
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
 
     // Only touch schedule_integration when the key is present. An empty/invalid
-    // value clears it (disables the integration).
+    // value clears it (disables the integration). Admin-only when configured.
     let integration: ScheduleIntegration | null | undefined;
     if ("schedule_integration" in body) {
+      const denied = requireAdmin(request, body.adminPassword);
+      if (denied) return denied;
       integration = body.schedule_integration
         ? parseScheduleIntegration(body.schedule_integration)
         : null;
@@ -40,6 +43,21 @@ export async function PATCH(
     });
     if (!team) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Never return the Super Team ID on a non-admin schedule write path; admin
+    // writes already verified above when schedule_integration was present.
+    if (
+      isAdminConfigured() &&
+      team.schedule_integration &&
+      !("schedule_integration" in body)
+    ) {
+      return NextResponse.json({
+        team: {
+          ...team,
+          schedule_integration: redactScheduleIntegration(team.schedule_integration),
+        },
+      });
     }
 
     return NextResponse.json({ team });

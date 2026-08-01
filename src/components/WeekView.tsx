@@ -42,9 +42,11 @@ const fetcher = (url: string) =>
 
 interface WeekViewProps {
   slug: string;
+  /** When true, Schedule source requires admin unlock. */
+  adminEnabled?: boolean;
 }
 
-export function WeekView({ slug }: WeekViewProps) {
+export function WeekView({ slug, adminEnabled = false }: WeekViewProps) {
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const [activeFamilyId, setActiveFamilyIdState] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -577,6 +579,7 @@ export function WeekView({ slug }: WeekViewProps) {
           scheduleIntegration={data.team.schedule_integration}
           families={data.families}
           slug={slug}
+          adminEnabled={adminEnabled}
           initialTab={renameInitialTab}
           onClose={() => setShowRename(false)}
           onUpdated={(team) => {

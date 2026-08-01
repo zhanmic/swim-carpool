@@ -46,6 +46,13 @@ export function normalizePracticeNameFormat(value: unknown): PracticeNameFormat 
   };
 }
 
+/** Strip the Super Team ID for public API responses (keeps configured flag via object). */
+export function redactScheduleIntegration(
+  integration: ScheduleIntegration
+): ScheduleIntegration {
+  return { ...integration, superTeamId: "" };
+}
+
 /**
  * Parse/validate a raw JSON value (from the DB or an API request) into a
  * ScheduleIntegration, or null when it is missing/invalid. A blank superTeamId

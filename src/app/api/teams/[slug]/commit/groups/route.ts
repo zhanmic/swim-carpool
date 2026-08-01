@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import { assertTeamScheduleAccess, isTeamAccessError } from "@/lib/apiAuth";
 import { fetchTeamMeta, listGroups } from "@/lib/commit";
 import { integrationFromParams } from "@/lib/commit/request";
@@ -15,6 +16,11 @@ export async function GET(
 
   try {
     await ensureSchema();
+    // Loading groups is part of schedule-source setup (and may include a
+    // Super Team ID override) — admin only when ADMIN_PASSWORD is set.
+    const denied = requireAdmin(request);
+    if (denied) return denied;
+
     const access = await assertTeamScheduleAccess(request, slug);
     if (isTeamAccessError(access)) return access;
 

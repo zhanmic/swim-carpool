@@ -8,7 +8,12 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/visibleDays";
 import { getTeamUrl } from "@/lib/shareTeam";
-import { clearActiveFamilyId, removeKnownTeam } from "@/lib/storage";
+import {
+  clearActiveFamilyId,
+  isAdminUnlocked,
+  removeKnownTeam,
+  setAdminSession,
+} from "@/lib/storage";
 import { ScheduleSourceSettings } from "@/components/ScheduleSourceSettings";
 import { ShareTeamButton } from "@/components/ShareTeamButton";
 import { useRouter } from "next/navigation";
@@ -28,6 +33,8 @@ interface RenameTeamSheetProps {
   scheduleIntegration?: ScheduleIntegration | null;
   families: Family[];
   slug: string;
+  /** When true, Schedule source requires admin unlock (ADMIN_PASSWORD is set). */
+  adminEnabled?: boolean;
   initialTab?: SettingsTab;
   onClose: () => void;
   onUpdated: (team: TeamPatch) => void;
@@ -42,6 +49,7 @@ export function RenameTeamSheet({
   scheduleIntegration = null,
   families: initialFamilies,
   slug,
+  adminEnabled = false,
   initialTab = "team",
   onClose,
   onUpdated,
@@ -49,6 +57,12 @@ export function RenameTeamSheet({
 }: RenameTeamSheetProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  const [scheduleUnlocked, setScheduleUnlocked] = useState(
+    () => !adminEnabled || isAdminUnlocked()
+  );
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
   const [integration, setIntegration] = useState<ScheduleIntegration | null>(scheduleIntegration);
   const [name, setName] = useState(teamName);
   const [scheduleLink, setScheduleLink] = useState(scheduleUrl ?? "");
@@ -260,6 +274,31 @@ export function RenameTeamSheet({
     }
   }
 
+  async function handleScheduleAdminUnlock(e: FormEvent) {
+    e.preventDefault();
+    setAdminBusy(true);
+    setAdminError(null);
+    try {
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAdminError(data.error ?? "Incorrect admin password");
+        return;
+      }
+      setAdminSession(adminPassword);
+      setScheduleUnlocked(true);
+      setAdminPassword("");
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Could not unlock admin");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="Close" onClick={onClose} />
@@ -319,15 +358,51 @@ export function RenameTeamSheet({
 
         {activeTab === "schedule" ? (
           <div className="max-w-lg mx-auto p-4">
-            <ScheduleSourceSettings
-              teamName={teamName}
-              slug={slug}
-              integration={integration}
-              onSaved={(next) => {
-                setIntegration(next);
-                onUpdated({ schedule_integration: next });
-              }}
-            />
+            {adminEnabled && !scheduleUnlocked ? (
+              <form onSubmit={handleScheduleAdminUnlock} className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Admin required
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Enter the admin password to view and edit the schedule source (including team
+                    IDs).
+                  </p>
+                </div>
+                <label className="block">
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    Admin password
+                  </span>
+                  <input
+                    type="password"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                    autoComplete="current-password"
+                  />
+                </label>
+                {adminError && <p className="text-sm text-red-600">{adminError}</p>}
+                <button
+                  type="submit"
+                  disabled={adminBusy || !adminPassword}
+                  className="touch-target w-full rounded-lg bg-sky-500 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {adminBusy ? "Checking…" : "Unlock"}
+                </button>
+              </form>
+            ) : (
+              <ScheduleSourceSettings
+                teamName={teamName}
+                slug={slug}
+                integration={integration}
+                adminEnabled={adminEnabled}
+                onSaved={(next) => {
+                  setIntegration(next);
+                  onUpdated({ schedule_integration: next });
+                }}
+              />
+            )}
           </div>
         ) : (
         <div className="max-w-lg mx-auto space-y-6 p-4">

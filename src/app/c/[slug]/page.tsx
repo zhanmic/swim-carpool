@@ -6,6 +6,7 @@ interface PageProps {
 
 export default async function CarpoolPage({ params }: PageProps) {
   const { slug } = await params;
+  const adminEnabled = !!process.env.ADMIN_PASSWORD;
 
-  return <WeekView slug={slug} />;
+  return <WeekView slug={slug} adminEnabled={adminEnabled} />;
 }

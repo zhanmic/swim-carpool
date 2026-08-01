@@ -1,7 +1,8 @@
 "use client";
 
 import type { NameField, PracticeNameFormat, ScheduleIntegration } from "@/lib/types";
-import { useMemo, useState } from "react";
+import { getAdminSessionPassword } from "@/lib/storage";
+import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_TIMEZONE = "America/New_York";
 const DEFAULT_FIELDS: NameField[] = ["group", "location", "time"];
@@ -10,6 +11,8 @@ interface ScheduleSourceSettingsProps {
   teamName: string;
   slug: string;
   integration: ScheduleIntegration | null;
+  /** When true, Super Team ID is hidden unless loaded via admin session. */
+  adminEnabled?: boolean;
   onSaved: (integration: ScheduleIntegration | null) => void;
 }
 
@@ -75,13 +78,39 @@ async function fetchJson<T>(
   }
 }
 
+function applyIntegration(
+  next: ScheduleIntegration | null,
+  setters: {
+    setSuperTeamId: (v: string) => void;
+    setTimezone: (v: string) => void;
+    setGroup: (v: string | null) => void;
+    setIncludeMeets: (v: boolean) => void;
+    setMode: (v: PracticeNameFormat["mode"]) => void;
+    setSeparator: (v: string) => void;
+    setFieldsText: (v: string) => void;
+    setGroups: (v: string[]) => void;
+  }
+) {
+  setters.setSuperTeamId(next?.superTeamId ?? "");
+  setters.setTimezone(next?.timezone ?? DEFAULT_TIMEZONE);
+  setters.setGroup(next?.group ?? null);
+  setters.setIncludeMeets(next?.includeMeets ?? false);
+  setters.setMode(next?.nameFormat.mode ?? "fields");
+  setters.setSeparator(next?.nameFormat.separator ?? "-");
+  setters.setFieldsText(fieldsToText(next?.nameFormat.fields ?? DEFAULT_FIELDS));
+  setters.setGroups(next?.group ? [next.group] : []);
+}
+
 export function ScheduleSourceSettings({
   teamName,
   slug,
   integration,
+  adminEnabled = false,
   onSaved,
 }: ScheduleSourceSettingsProps) {
-  const [superTeamId, setSuperTeamId] = useState(integration?.superTeamId ?? "");
+  const [superTeamId, setSuperTeamId] = useState(
+    adminEnabled ? "" : (integration?.superTeamId ?? "")
+  );
   const [timezone, setTimezone] = useState(integration?.timezone ?? DEFAULT_TIMEZONE);
   const [group, setGroup] = useState<string | null>(integration?.group ?? null);
   const [includeMeets, setIncludeMeets] = useState(integration?.includeMeets ?? false);
@@ -98,10 +127,51 @@ export function ScheduleSourceSettings({
     integration?.group ? [integration.group] : []
   );
   const [commitTeamName, setCommitTeamName] = useState<string | null>(null);
+  const [loadingConfig, setLoadingConfig] = useState(
+    () => adminEnabled && !!getAdminSessionPassword()
+  );
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!adminEnabled) return;
+    const password = getAdminSessionPassword();
+    if (!password) return;
+
+    let cancelled = false;
+    void (async () => {
+      const { ok, data, error: fetchError } = await fetchJson<{
+        schedule_integration?: ScheduleIntegration | null;
+        error?: string;
+      }>(`/api/teams/${slug}/commit/config`, {
+        headers: { Authorization: `Bearer ${password}` },
+      });
+      if (cancelled) return;
+      if (!ok || !data) {
+        setError(fetchError ?? data?.error ?? "Could not load schedule source");
+        setLoadingConfig(false);
+        return;
+      }
+      const next = data.schedule_integration ?? null;
+      applyIntegration(next, {
+        setSuperTeamId,
+        setTimezone,
+        setGroup,
+        setIncludeMeets,
+        setMode,
+        setSeparator,
+        setFieldsText,
+        setGroups,
+      });
+      setLoadingConfig(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [adminEnabled, slug]);
 
   const nameFormat: PracticeNameFormat = useMemo(
     () => ({ mode, separator, fields: textToFields(fieldsText) }),
@@ -119,6 +189,11 @@ export function ScheduleSourceSettings({
       nameFormat,
       includeMeets,
     };
+  }
+
+  function adminHeaders(): HeadersInit {
+    const password = getAdminSessionPassword();
+    return password ? { Authorization: `Bearer ${password}` } : {};
   }
 
   async function loadGroups() {
@@ -144,7 +219,9 @@ export function ScheduleSourceSettings({
         teamName?: string | null;
         timezone?: string | null;
         error?: string;
-      }>(`/api/teams/${slug}/commit/groups?${params.toString()}`);
+      }>(`/api/teams/${slug}/commit/groups?${params.toString()}`, {
+        headers: adminHeaders(),
+      });
       if (!ok || !data) {
         setError(fetchError ?? data?.error ?? "Could not load groups. Check the Super Team ID.");
         return;
@@ -166,13 +243,21 @@ export function ScheduleSourceSettings({
     setError(null);
     setStatus(null);
     try {
+      const password = getAdminSessionPassword();
       const { ok, data, error: fetchError } = await fetchJson<{
         team?: { schedule_integration?: ScheduleIntegration | null };
         error?: string;
       }>(`/api/teams/${slug}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: teamName, schedule_integration: next }),
+        headers: {
+          "Content-Type": "application/json",
+          ...adminHeaders(),
+        },
+        body: JSON.stringify({
+          name: teamName,
+          schedule_integration: next,
+          ...(password ? { adminPassword: password } : {}),
+        }),
       });
       if (!ok || !data) {
         setError(fetchError ?? data?.error ?? "Could not save");
@@ -180,10 +265,21 @@ export function ScheduleSourceSettings({
       }
       const saved = data.team?.schedule_integration ?? null;
       onSaved(saved);
+      if (saved?.superTeamId) {
+        setSuperTeamId(saved.superTeamId);
+      } else if (!next) {
+        setSuperTeamId("");
+      }
       setStatus(next ? "Schedule source saved." : "Schedule source disconnected.");
     } finally {
       setSaving(false);
     }
+  }
+
+  if (loadingConfig) {
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400">Loading schedule source…</p>
+    );
   }
 
   return (

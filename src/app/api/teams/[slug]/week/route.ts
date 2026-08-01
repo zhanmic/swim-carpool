@@ -1,3 +1,5 @@
+import { isAdminConfigured } from "@/lib/admin";
+import { redactScheduleIntegration } from "@/lib/commit/config";
 import { ensureSchema, getWeekData } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -18,6 +20,18 @@ export async function GET(
     if (!data) {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
+
+    // Hide Commit Super Team IDs from anyone with the share link.
+    if (isAdminConfigured() && data.team.schedule_integration) {
+      return NextResponse.json({
+        ...data,
+        team: {
+          ...data.team,
+          schedule_integration: redactScheduleIntegration(data.team.schedule_integration),
+        },
+      });
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     console.error(err);

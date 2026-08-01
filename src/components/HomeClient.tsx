@@ -44,6 +44,9 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
   const [adminPassword, setAdminPassword] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ListedTeam | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
+  const [pwdTarget, setPwdTarget] = useState<ListedTeam | null>(null);
+  const [newTeamDeletePassword, setNewTeamDeletePassword] = useState("");
+  const [pwdStatus, setPwdStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,6 +164,50 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
     }
   }
 
+  async function handleSaveTeamDeletePassword(e: FormEvent) {
+    e.preventDefault();
+    if (!pwdTarget) return;
+    const adminPassword = getAdminSessionPassword();
+    if (!adminPassword) {
+      setError("Admin session expired. Unlock admin again.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setPwdStatus(null);
+    try {
+      const res = await fetch(`/api/teams/${pwdTarget.secret_slug}/delete-password`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminPassword}`,
+        },
+        body: JSON.stringify({
+          delete_password: newTeamDeletePassword.trim(),
+          adminPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Could not save deletion password");
+        return;
+      }
+      const nextHas = !!data.team?.has_delete_password;
+      setAllTeams(
+        (current) =>
+          current?.map((team) =>
+            team.secret_slug === pwdTarget.secret_slug
+              ? { ...team, has_delete_password: nextHas }
+              : team
+          ) ?? null
+      );
+      setNewTeamDeletePassword("");
+      setPwdStatus(nextHas ? "Deletion password saved." : "Deletion password cleared.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <>
       <section className="space-y-2">
@@ -197,17 +244,36 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
                   className="border-l border-slate-200 px-3 dark:border-slate-700"
                 />
                 {adminMode && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeleteTarget(team);
-                      setDeletePassword("");
-                      setError(null);
-                    }}
-                    className="border-l border-slate-200 px-3 text-sm font-medium text-red-600 active:bg-red-50 dark:border-slate-700 dark:text-red-400 dark:active:bg-red-950"
-                  >
-                    Delete
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPwdTarget(team);
+                        setNewTeamDeletePassword("");
+                        setPwdStatus(null);
+                        setError(null);
+                      }}
+                      className="border-l border-slate-200 px-3 text-sm font-medium text-sky-600 active:bg-slate-50 dark:border-slate-700 dark:text-sky-400 dark:active:bg-slate-700"
+                      title={
+                        "has_delete_password" in team && team.has_delete_password
+                          ? "Change deletion password"
+                          : "Set deletion password"
+                      }
+                    >
+                      Pwd
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeleteTarget(team);
+                        setDeletePassword("");
+                        setError(null);
+                      }}
+                      className="border-l border-slate-200 px-3 text-sm font-medium text-red-600 active:bg-red-50 dark:border-slate-700 dark:text-red-400 dark:active:bg-red-950"
+                    >
+                      Delete
+                    </button>
+                  </>
                 )}
               </li>
             ))}
@@ -341,6 +407,77 @@ export function HomeClient({ adminEnabled }: HomeClientProps) {
                   className="flex-1 rounded-lg bg-red-600 py-2.5 font-medium text-white disabled:opacity-50"
                 >
                   {busy ? "Deleting…" : "Delete team"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {pwdTarget && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
+          <button
+            type="button"
+            className="flex-1"
+            aria-label="Close"
+            onClick={() => {
+              setPwdTarget(null);
+              setPwdStatus(null);
+            }}
+          />
+          <div className="rounded-t-2xl bg-white safe-bottom dark:bg-slate-900">
+            <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Deletion password
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Set or change the deletion password for{" "}
+                <span className="font-medium">{pwdTarget.name}</span>.
+                {"has_delete_password" in pwdTarget && pwdTarget.has_delete_password
+                  ? " A password is currently set."
+                  : " No password is set yet."}
+              </p>
+            </div>
+            <form onSubmit={handleSaveTeamDeletePassword} className="mx-auto max-w-md space-y-3 p-4">
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  New deletion password
+                </span>
+                <input
+                  type="password"
+                  autoFocus
+                  value={newTeamDeletePassword}
+                  onChange={(e) => {
+                    setNewTeamDeletePassword(e.target.value);
+                    setPwdStatus(null);
+                    setError(null);
+                  }}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-base dark:border-slate-600"
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
+                />
+              </label>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              {pwdStatus && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">{pwdStatus}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPwdTarget(null);
+                    setPwdStatus(null);
+                  }}
+                  className="flex-1 rounded-lg border border-slate-300 py-2.5 font-medium dark:border-slate-600 dark:text-slate-200"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy || !newTeamDeletePassword.trim()}
+                  className="touch-target flex-1 rounded-lg bg-sky-500 py-2.5 font-medium text-white disabled:opacity-50"
+                >
+                  {busy ? "Saving…" : "Save"}
                 </button>
               </div>
             </form>

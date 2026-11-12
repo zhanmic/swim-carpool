@@ -40,7 +40,10 @@ function getSql() {
   return neon(url);
 }
 
-export async function ensureSchema(): Promise<void> {
+/** Once per warm Fluid/Node instance — avoids re-running DDL on every poll. */
+let schemaReady: Promise<void> | null = null;
+
+async function ensureSchemaOnce(): Promise<void> {
   const sql = getSql();
   const statements = getSchemaStatements();
 
@@ -51,6 +54,16 @@ export async function ensureSchema(): Promise<void> {
   await migrateVisibleDaysToSundayWeekStart();
   await migrateTeamDeletePasswords();
   await migrateTeamApiKeys();
+}
+
+export async function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = ensureSchemaOnce().catch((err) => {
+      schemaReady = null;
+      throw err;
+    });
+  }
+  return schemaReady;
 }
 
 async function migrateVisibleDaysToSundayWeekStart(): Promise<void> {
@@ -487,6 +500,20 @@ export async function ensureWeekSessions(
   const weekStart = parseDateOnly(weekStartDate);
   const dates = getVisibleWeekDates(weekStart, visibleDays);
 
+  const dateStrs = dates.map((date) => formatDateOnly(date));
+  if (dateStrs.length === 0) return;
+
+  const existingRows = (await sql`
+    SELECT session_date::text AS session_date
+    FROM practice_sessions
+    WHERE team_id = ${teamId}
+      AND session_date >= ${dateStrs[0]}
+      AND session_date <= ${dateStrs[dateStrs.length - 1]}
+  `) as { session_date: string }[];
+  const existingDates = new Set(existingRows.map((row) => row.session_date));
+  const missingDates = dateStrs.filter((dateStr) => !existingDates.has(dateStr));
+  if (missingDates.length === 0) return;
+
   const templates = (await sql`
     SELECT day_of_week, start_time::text, end_time::text, location_name, cancelled, COALESCE(no_practice, FALSE) AS no_practice
     FROM recurring_templates
@@ -495,18 +522,10 @@ export async function ensureWeekSessions(
 
   const templateByDay = new Map(templates.map((t) => [t.day_of_week, t]));
 
-  for (let i = 0; i < dates.length; i++) {
-    const date = dates[i];
-    const dateStr = formatDateOnly(date);
+  for (const dateStr of missingDates) {
+    const date = parseDateOnly(dateStr);
     const jsDay = date.getDay();
     const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
-
-    const existing = await sql`
-      SELECT id FROM practice_sessions
-      WHERE team_id = ${teamId} AND session_date = ${dateStr}
-      LIMIT 1
-    `;
-    if (existing.length > 0) continue;
 
     const tmpl = templateByDay.get(dayOfWeek);
     const startTime = normalizeTime(tmpl?.start_time?.slice(0, 5) ?? "05:45");
@@ -518,6 +537,7 @@ export async function ensureWeekSessions(
     await sql`
       INSERT INTO practice_sessions (team_id, session_date, start_time, end_time, location_name, cancelled, no_practice)
       VALUES (${teamId}, ${dateStr}, ${startTime}, ${endTime}, ${locationName}, ${cancelled}, ${noPractice})
+      ON CONFLICT (team_id, session_date) DO NOTHING
     `;
   }
 }

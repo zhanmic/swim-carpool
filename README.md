@@ -47,7 +47,7 @@ Mobile-first web app for swim team families to coordinate practice drop-offs and
 
 ### Data & Privacy
 - **Local family selection** - your driver selection saved on device only
-- **Real-time updates** - 15-second polling keeps everyone in sync
+- **Near real-time updates** - 30-second polling keeps everyone in sync (pauses when the tab is hidden)
 - **Team isolation** - each team has unique slug, no cross-team access
 - **No authentication** - simple link sharing, no login required
 

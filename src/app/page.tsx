@@ -1,11 +1,10 @@
 import { HomeClient } from "@/components/HomeClient";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ensureSchema } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  await ensureSchema();
+  // Schema is ensured on API routes; skip DDL here to keep home cheap on Fluid CPU.
   const adminEnabled = !!process.env.ADMIN_PASSWORD;
 
   return (

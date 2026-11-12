@@ -61,10 +61,12 @@ export function WeekView({ slug, adminEnabled = false }: WeekViewProps) {
   const [showAgent, setShowAgent] = useState(false);
   const [slotsBusy, setSlotsBusy] = useState(false);
 
+  // 30s polling (was 15s) cuts week-route invocations ~50%. SWR already
+  // skips refresh while the tab is hidden (refreshWhenHidden: false).
   const { data, error, isLoading, mutate } = useSWR<WeekData>(
     weekStart ? `/api/teams/${slug}/week?start=${weekStart}` : null,
     fetcher,
-    { refreshInterval: 15000 }
+    { refreshInterval: 30_000, refreshWhenHidden: false, dedupingInterval: 5_000 }
   );
 
   useEffect(() => {

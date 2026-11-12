@@ -1,0 +1,6 @@
+# Keep crawlers off dynamic team/API routes (Fluid Active CPU).
+User-agent: *
+Disallow: /api/
+Disallow: /c/
+Disallow: /setup
+Allow: /

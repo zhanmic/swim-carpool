@@ -21,18 +21,27 @@ export async function GET(
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
+    // Secret team slugs are the access control; short CDN cache collapses
+    // multi-parent 30s polls onto fewer function invocations (Fluid CPU).
+    const headers = {
+      "Cache-Control": "public, s-maxage=8, stale-while-revalidate=22",
+    };
+
     // Hide Commit Super Team IDs from anyone with the share link.
     if (isAdminConfigured() && data.team.schedule_integration) {
-      return NextResponse.json({
-        ...data,
-        team: {
-          ...data.team,
-          schedule_integration: redactScheduleIntegration(data.team.schedule_integration),
+      return NextResponse.json(
+        {
+          ...data,
+          team: {
+            ...data.team,
+            schedule_integration: redactScheduleIntegration(data.team.schedule_integration),
+          },
         },
-      });
+        { headers }
+      );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to load week data" }, { status: 500 });
